@@ -8,7 +8,9 @@ vendor
 .idea
 .vscode
 *.log
-*.sql
+# *.sql - KEEP SQL files for migration!
+# Exclude only non-schema SQL files:
+# database/migrate_*.sql
 *.sqlite
 *.db
 .DS_Store
