@@ -17,6 +17,9 @@ COPY . /app
 # Copy Nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Make start script executable
+RUN chmod +x /app/start.sh
+
 # Ensure log directory exists
 RUN mkdir -p /app/logs && chmod -R 755 /app/logs
 
