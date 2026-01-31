@@ -14,6 +14,9 @@ WORKDIR /app
 # Copy application
 COPY . /app
 
+# Explicitly copy database folder to ensure it's included
+COPY database/ /app/database/
+
 # Copy Nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
