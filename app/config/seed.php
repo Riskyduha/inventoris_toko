@@ -46,12 +46,15 @@ function seedIfNeeded(PDO $conn): void
                 'admin',
                 'Administrator'
             ]);
-        } elseif ($force) {
+            error_log("Created admin user");
+        } else {
+            // Always update password to ensure it's correct (password_hash creates new hash each time)
             $stmtUpdate = $conn->prepare("UPDATE users SET password = ? WHERE username = ?");
             $stmtUpdate->execute([
                 password_hash('admin123', PASSWORD_DEFAULT),
                 'admin'
             ]);
+            error_log("Updated admin password");
         }
 
         if (!$kasirExists) {
@@ -62,12 +65,15 @@ function seedIfNeeded(PDO $conn): void
                 'kasir',
                 'Kasir Utama'
             ]);
-        } elseif ($force) {
+            error_log("Created kasir user");
+        } else {
+            // Always update password to ensure it's correct
             $stmtUpdate = $conn->prepare("UPDATE users SET password = ? WHERE username = ?");
             $stmtUpdate->execute([
                 password_hash('kasir123', PASSWORD_DEFAULT),
                 'kasir'
             ]);
+            error_log("Updated kasir password");
         }
 
         // kategori (insert if empty)
