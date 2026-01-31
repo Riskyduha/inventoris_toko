@@ -69,6 +69,10 @@ class Database {
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             $this->conn->exec("SET NAMES 'UTF8'");
 
+            // Run migration to create tables if needed
+            require_once __DIR__ . '/migrate.php';
+            runMigration($this->conn);
+
             // Seed initial data if needed
             require_once __DIR__ . '/seed.php';
             seedIfNeeded($this->conn);
