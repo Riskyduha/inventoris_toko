@@ -82,8 +82,8 @@ class Config {
                 header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
             }
             
-            // Content Security Policy (basic)
-            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'");
+            // Content Security Policy (allow required CDNs)
+            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com data:");
         }
     }
 }
