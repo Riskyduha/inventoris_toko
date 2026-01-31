@@ -3,11 +3,15 @@
 function seedIfNeeded(PDO $conn): void
 {
     $force = (getenv('SEED_FORCE') === 'true');
+    
+    error_log("Seed check started (FORCE=" . ($force ? 'true' : 'false') . ")");
 
     try {
         $stmt = $conn->query("SELECT COUNT(*) FROM users");
         $userCount = (int)$stmt->fetchColumn();
+        error_log("Users table exists, current count: " . $userCount);
     } catch (Exception $e) {
+        error_log("ERROR in seed: Users table not ready - " . $e->getMessage());
         return; // Table not ready
     }
 
@@ -114,6 +118,9 @@ function seedIfNeeded(PDO $conn): void
 
         $conn->commit();
     } catch (Exception $e) {
+        error_log("ERROR in seed: Transaction failed - " . $e->getMessage());
         $conn->rollBack();
     }
+    
+    error_log("Seed check completed");
 }

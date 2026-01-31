@@ -11,33 +11,45 @@ function runMigration(PDO $conn): void
             )
         ");
         $tableExists = $stmt->fetchColumn();
+        
+        error_log("Migration check: users table exists = " . ($tableExists ? 'YES' : 'NO'));
 
         if (!$tableExists) {
             // Baca schema file - dari root project directory
             $projectRoot = dirname(__DIR__, 2); // Go up from app/config to root
             $schemaFile = $projectRoot . '/database/skema_postgresql.sql';
+            
+            error_log("Looking for schema at: " . $schemaFile);
+            
             if (file_exists($schemaFile)) {
+                error_log("Schema file found, starting migration...");
                 $schema = file_get_contents($schemaFile);
                 
                 // Pisahkan statements (remove CREATE DATABASE dan \c commands untuk Railway)
                 $statements = array_filter(array_map('trim', preg_split('/;/', $schema)));
                 
-                foreach ($statements as $statement) {
+                error_log("Total statements to execute: " . count($statements));
+                
+                $successCount = 0;
+                foreach ($statements as $index => $statement) {
                     if (!empty($statement) && !preg_match('/^(CREATE DATABASE|\\\\c)/i', $statement)) {
                         try {
                             $conn->exec($statement . ';');
+                            $successCount++;
                         } catch (Exception $e) {
                             // Skip jika table sudah ada (CREATE TABLE IF NOT EXISTS)
                             if (strpos($e->getMessage(), 'already exists') === false) {
-                                error_log("Migration error: " . $e->getMessage());
+                                error_log("Statement error: " . $e->getMessage());
+                            } else {
+                                $successCount++;
                             }
                         }
                     }
                 }
                 
-                error_log("Migration completed: Tables created successfully");
+                error_log("Migration completed: " . $successCount . " table statements executed");
             } else {
-                error_log("Warning: Schema file not found at " . $schemaFile);
+                error_log("ERROR: Schema file not found at " . $schemaFile);
             }
         }
     } catch (Exception $e) {
