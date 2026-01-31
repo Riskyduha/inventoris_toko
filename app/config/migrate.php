@@ -20,10 +20,20 @@ function runMigration(PDO $conn): void
             
             error_log("Looking for schema at: " . $schemaFile);
             
+            $schema = null;
+            
+            // Try to load from file first
             if (file_exists($schemaFile)) {
                 error_log("Schema file found, starting migration...");
                 $schema = file_get_contents($schemaFile);
-                
+            } else {
+                // Fallback: use embedded schema
+                error_log("Schema file not found, using embedded schema");
+                require_once __DIR__ . '/schema_embedded.php';
+                $schema = getEmbeddedSchema();
+            }
+            
+            if ($schema) {
                 // Pisahkan statements (remove CREATE DATABASE dan \c commands untuk Railway)
                 $statements = array_filter(array_map('trim', preg_split('/;/', $schema)));
                 
@@ -48,7 +58,7 @@ function runMigration(PDO $conn): void
                 
                 error_log("Migration completed: " . $successCount . " table statements executed");
             } else {
-                error_log("ERROR: Schema file not found at " . $schemaFile);
+                error_log("ERROR: No schema available (neither file nor embedded)");
             }
         }
     } catch (Exception $e) {
