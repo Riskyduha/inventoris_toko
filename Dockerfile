@@ -18,6 +18,9 @@ WORKDIR /var/www/html
 # Copy application
 COPY . /var/www/html
 
+# Make start script executable
+RUN chmod +x /var/www/html/start.sh
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/public \
@@ -27,5 +30,5 @@ RUN chown -R www-data:www-data /var/www/html \
 # Expose port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start Apache (Railway uses $PORT)
+CMD ["/var/www/html/start.sh"]
