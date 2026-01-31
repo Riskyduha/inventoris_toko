@@ -12,7 +12,10 @@ RUN apt-get update && apt-get install -y \
 
 # Configure Apache to use /public as document root
 RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
-    && sed -ri 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+    && sed -ri 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
+    && sed -ri 's!^ErrorLog .*!!' /etc/apache2/sites-available/000-default.conf \
+    && sed -ri 's!^CustomLog .*!!' /etc/apache2/sites-available/000-default.conf \
+    && printf '\nErrorLog /proc/self/fd/2\nCustomLog /proc/self/fd/1 combined\n' >> /etc/apache2/sites-available/000-default.conf
 
 # Set working directory
 WORKDIR /var/www/html
