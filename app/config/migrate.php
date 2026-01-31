@@ -3,16 +3,15 @@
 function runMigration(PDO $conn): void
 {
     try {
-        // Cek apakah table users sudah ada
-        $stmt = $conn->query("
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.tables 
-                WHERE table_name = 'users'
-            )
-        ");
-        $tableExists = $stmt->fetchColumn();
-        
-        error_log("Migration check: users table exists = " . ($tableExists ? 'YES' : 'NO'));
+        // Cek apakah table users sudah ada (gunakan simple query)
+        try {
+            $stmt = $conn->query("SELECT 1 FROM users LIMIT 1");
+            $tableExists = true;
+            error_log("Migration check: users table EXISTS (query succeeded)");
+        } catch (Exception $checkError) {
+            $tableExists = false;
+            error_log("Migration check: users table DOES NOT EXIST (query failed as expected)");
+        }
 
         if (!$tableExists) {
             // Baca schema file - dari root project directory
