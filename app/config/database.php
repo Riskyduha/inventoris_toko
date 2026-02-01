@@ -24,6 +24,35 @@ class Database {
         $envPass = $getEnv('DB_PASS');
         $envPort = $getEnv('DB_PORT');
 
+        // Railway: support DATABASE_URL or PG* variables
+        $databaseUrl = $getEnv('DATABASE_URL') ?: $getEnv('RAILWAY_DATABASE_URL');
+        $pgHost = $getEnv('PGHOST');
+        $pgName = $getEnv('PGDATABASE');
+        $pgUser = $getEnv('PGUSER');
+        $pgPass = $getEnv('PGPASSWORD');
+        $pgPort = $getEnv('PGPORT');
+
+        if ($databaseUrl) {
+            $parts = parse_url($databaseUrl);
+            if ($parts !== false) {
+                $this->host = $parts['host'] ?? 'localhost';
+                $this->port = isset($parts['port']) ? (string)$parts['port'] : '5432';
+                $this->db_name = isset($parts['path']) ? ltrim($parts['path'], '/') : 'toko_inventori';
+                $this->username = $parts['user'] ?? 'postgres';
+                $this->password = $parts['pass'] ?? 'password';
+                return;
+            }
+        }
+
+        if ($pgHost || $pgName || $pgUser || $pgPass || $pgPort) {
+            $this->host = $pgHost ?? 'localhost';
+            $this->db_name = $pgName ?? 'toko_inventori';
+            $this->username = $pgUser ?? 'postgres';
+            $this->password = $pgPass ?? 'password';
+            $this->port = $pgPort ?? '5432';
+            return;
+        }
+
         if ($envHost || $envName || $envUser || $envPass || $envPort) {
             $this->host = $envHost ?? 'localhost';
             $this->db_name = $envName ?? 'toko_inventori';
