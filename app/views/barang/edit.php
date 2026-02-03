@@ -38,15 +38,11 @@
             <select id="satuan" name="satuan" required
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">-- Pilih Satuan --</option>
-                <option value="pcs" <?= $barang['satuan'] == 'pcs' ? 'selected' : '' ?>>Pcs (Pieces)</option>
-                <option value="unit" <?= $barang['satuan'] == 'unit' ? 'selected' : '' ?>>Unit</option>
-                <option value="box" <?= $barang['satuan'] == 'box' ? 'selected' : '' ?>>Box</option>
-                <option value="pack" <?= $barang['satuan'] == 'pack' ? 'selected' : '' ?>>Pack</option>
-                <option value="kg" <?= $barang['satuan'] == 'kg' ? 'selected' : '' ?>>Kg (Kilogram)</option>
-                <option value="gram" <?= $barang['satuan'] == 'gram' ? 'selected' : '' ?>>Gram</option>
-                <option value="liter" <?= $barang['satuan'] == 'liter' ? 'selected' : '' ?>>Liter</option>
-                <option value="meter" <?= $barang['satuan'] == 'meter' ? 'selected' : '' ?>>Meter</option>
-                <option value="lusin" <?= $barang['satuan'] == 'lusin' ? 'selected' : '' ?>>Lusin</option>
+                <?php foreach ($satuan as $sat): ?>
+                    <option value="<?= htmlspecialchars($sat['nama_satuan']) ?>" <?= $barang['satuan'] == $sat['nama_satuan'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($sat['nama_satuan']) ?>
+                    </option>
+                <?php endforeach; ?>
             </select>
         </div>
 

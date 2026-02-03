@@ -25,6 +25,7 @@ class BarangController {
 
     public function create() {
         $kategori = $this->model->getAllKategori();
+        $satuan = $this->model->getAllSatuan();
         require_once __DIR__ . '/../views/barang/create.php';
     }
 
@@ -57,6 +58,7 @@ class BarangController {
             redirect('/barang');
         }
         $kategori = $this->model->getAllKategori();
+        $satuan = $this->model->getAllSatuan();
         require_once __DIR__ . '/../views/barang/edit.php';
     }
 

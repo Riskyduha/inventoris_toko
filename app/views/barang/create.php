@@ -35,15 +35,9 @@
             <select id="satuan" name="satuan" required
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">-- Pilih Satuan --</option>
-                <option value="pcs">Pcs (Pieces)</option>
-                <option value="unit">Unit</option>
-                <option value="box">Box</option>
-                <option value="pack">Pack</option>
-                <option value="kg">Kg (Kilogram)</option>
-                <option value="gram">Gram</option>
-                <option value="liter">Liter</option>
-                <option value="meter">Meter</option>
-                <option value="lusin">Lusin</option>
+                <?php foreach ($satuan as $sat): ?>
+                    <option value="<?= htmlspecialchars($sat['nama_satuan']) ?>"><?= htmlspecialchars($sat['nama_satuan']) ?></option>
+                <?php endforeach; ?>
             </select>
         </div>
 
