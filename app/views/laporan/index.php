@@ -92,9 +92,9 @@
             <i class="fas fa-shopping-cart text-green-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Input Pembelian</p>
         </a>
-        <a href="/setting/kategori-satuan" class="bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 rounded-lg p-4 text-center transition">
-            <i class="fas fa-tags text-indigo-600 text-3xl mb-2"></i>
-            <p class="font-semibold text-gray-700">Edit Kategori</p>
+        <a href="/laporan/stok" class="bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-boxes text-orange-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Cek Stok</p>
         </a>
         <?php endif; ?>
     </div>
