@@ -111,8 +111,10 @@ class Laporan {
     }
 
     public function getTotalPembelian($start, $end) {
-        $query = "SELECT SUM(total_harga) as total FROM pembelian 
-                  WHERE DATE(tanggal) BETWEEN :start AND :end";
+        $query = "SELECT SUM(dp.subtotal) as total 
+                  FROM pembelian p
+                  JOIN detail_pembelian dp ON p.id_pembelian = dp.id_pembelian
+                  WHERE DATE(p.tanggal) BETWEEN :start AND :end";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':start', $start);
         $stmt->bindParam(':end', $end);
@@ -122,8 +124,10 @@ class Laporan {
     }
 
     public function getTotalPenjualan($start, $end) {
-        $query = "SELECT SUM(total_harga) as total FROM penjualan 
-                  WHERE DATE(tanggal) BETWEEN :start AND :end";
+        $query = "SELECT SUM(dp.subtotal) as total 
+                  FROM penjualan p
+                  JOIN detail_penjualan dp ON p.id_penjualan = dp.id_penjualan
+                  WHERE DATE(p.tanggal) BETWEEN :start AND :end";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':start', $start);
         $stmt->bindParam(':end', $end);
