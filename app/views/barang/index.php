@@ -1,42 +1,85 @@
 <?php ob_start(); ?>
 
-<div class="bg-white rounded-lg shadow-md p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">
+<div class="bg-white rounded-lg shadow-md p-3 sm:p-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-800">
             <i class="fas fa-box text-blue-600 mr-2"></i>Daftar Barang
         </h2>
-        <a href="/barang/create" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
+        <a href="/barang/create" class="w-full sm:w-auto text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded transition">
             <i class="fas fa-plus mr-2"></i>Tambah Barang
         </a>
     </div>
 
     <?php if (!empty($kategori)): ?>
     <div class="flex flex-wrap items-center gap-2 mb-4">
-        <button class="px-3 py-2 rounded border text-sm bg-blue-600 text-white" data-kat="all" onclick="filterKategori('all')">Semua</button>
+        <button class="px-3 py-2 rounded border text-xs sm:text-sm bg-blue-600 text-white" data-kat="all" onclick="filterKategori('all')">Semua</button>
         <?php foreach ($kategori as $kat): ?>
-            <button class="px-3 py-2 rounded border text-sm bg-gray-100 hover:bg-gray-200" data-kat="<?= $kat['id_kategori'] ?>" onclick="filterKategori('<?= $kat['id_kategori'] ?>')">
+            <button class="px-3 py-2 rounded border text-xs sm:text-sm bg-gray-100 hover:bg-gray-200" data-kat="<?= $kat['id_kategori'] ?>" onclick="filterKategori('<?= $kat['id_kategori'] ?>')">
                 <?= htmlspecialchars($kat['nama_kategori']) ?>
             </button>
         <?php endforeach; ?>
     </div>
     <?php endif; ?>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="border-2 border-blue-300 rounded-lg p-4 bg-blue-50 text-center">
-            <p class="text-gray-600 text-sm font-medium mb-2">Total Harga Beli</p>
-            <p class="text-2xl font-bold text-blue-700" id="sum_beli">Rp 0</p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div class="border-2 border-blue-300 rounded-lg p-3 sm:p-4 bg-blue-50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Beli</p>
+            <p class="text-lg sm:text-2xl font-bold text-blue-700" id="sum_beli">Rp 0</p>
         </div>
-        <div class="border-2 border-green-300 rounded-lg p-4 bg-green-50 text-center">
-            <p class="text-gray-600 text-sm font-medium mb-2">Total Harga Jual</p>
-            <p class="text-2xl font-bold text-green-700" id="sum_jual">Rp 0</p>
+        <div class="border-2 border-green-300 rounded-lg p-3 sm:p-4 bg-green-50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual</p>
+            <p class="text-lg sm:text-2xl font-bold text-green-700" id="sum_jual">Rp 0</p>
         </div>
-        <div class="border-2 border-purple-300 rounded-lg p-4 bg-purple-50 text-center">
-            <p class="text-gray-600 text-sm font-medium mb-2">Total Stok</p>
-            <p class="text-2xl font-bold text-purple-700" id="sum_stok">0</p>
+        <div class="border-2 border-purple-300 rounded-lg p-3 sm:p-4 bg-purple-50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok</p>
+            <p class="text-lg sm:text-2xl font-bold text-purple-700" id="sum_stok">0</p>
         </div>
     </div>
 
-    <div class="overflow-x-auto">
+    <!-- Mobile Card View -->
+    <div class="block md:hidden space-y-3">
+        <?php if (empty($barang)): ?>
+            <div class="text-center py-8 text-gray-400 italic">Tidak ada data barang</div>
+        <?php else: ?>
+            <?php foreach ($barang as $index => $item): ?>
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <div class="font-mono text-xs text-gray-500 mb-1"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></div>
+                            <h3 class="font-bold text-gray-800 mb-1"><?= htmlspecialchars($item['nama_barang']) ?></h3>
+                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-bold">
+                                <?= htmlspecialchars($item['nama_kategori']) ?>
+                            </span>
+                        </div>
+                        <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> px-3 py-1 rounded-full text-xs font-bold">
+                            <?= $item['stok'] ?> <?= htmlspecialchars($item['satuan']) ?>
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
+                        <div>
+                            <div class="text-gray-500 text-xs">Harga Beli</div>
+                            <div class="font-semibold text-gray-800"><?= formatRupiah($item['harga_beli']) ?></div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500 text-xs">Harga Jual</div>
+                            <div class="font-semibold text-gray-800"><?= formatRupiah($item['harga_jual']) ?></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="/barang/edit/<?= $item['id_barang'] ?>" class="flex-1 text-center bg-yellow-100 text-yellow-700 hover:bg-yellow-600 hover:text-white py-2 rounded transition text-sm font-medium">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </a>
+                        <button onclick="confirmDelete(<?= $item['id_barang'] ?>)" class="flex-1 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white py-2 rounded transition text-sm font-medium">
+                            <i class="fas fa-trash mr-1"></i>Hapus
+                        </button>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="hidden md:block overflow-x-auto">
         <table class="w-full border border-gray-300 rounded-lg">
             <thead class="bg-blue-100 border-b-2 border-blue-300">
                 <tr>

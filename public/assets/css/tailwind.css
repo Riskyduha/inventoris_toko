@@ -6,6 +6,100 @@
     transition: all 0.3s ease-in-out;
 }
 
+/* Responsive table wrapper */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive cards on mobile */
+@media (max-width: 640px) {
+    .responsive-card {
+        padding: 1rem;
+    }
+    
+    .responsive-text {
+        font-size: 0.875rem;
+    }
+    
+    /* Stack form inputs vertically on mobile */
+    .form-row {
+        flex-direction: column;
+    }
+    
+    /* Smaller buttons on mobile */
+    .btn-mobile {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+    button, a, input[type="submit"], input[type="button"] {
+        min-height: 44px;
+    }
+    
+    /* Larger input fields for mobile */
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"],
+    select,
+    textarea {
+        min-height: 44px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
+
+/* Horizontal scroll for tables on mobile */
+@media (max-width: 768px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    /* Alternative: convert table to cards on mobile */
+    .table-mobile-card {
+        display: block;
+    }
+    
+    .table-mobile-card thead {
+        display: none;
+    }
+    
+    .table-mobile-card tbody,
+    .table-mobile-card tr,
+    .table-mobile-card td {
+        display: block;
+        width: 100%;
+    }
+    
+    .table-mobile-card tr {
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .table-mobile-card td {
+        text-align: left;
+        padding: 0.5rem 0;
+        border: none;
+    }
+    
+    .table-mobile-card td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 0.25rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+}
+
 /* Print styles */
 @media print {
     nav, footer, .no-print {
@@ -16,5 +110,15 @@
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+    }
+    
+    /* Ensure tables print properly */
+    table {
+        page-break-inside: auto;
+    }
+    
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
     }
 }
