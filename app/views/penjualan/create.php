@@ -105,17 +105,29 @@
         </div>
 
         <!-- Buttons -->
-        <div class="flex gap-3">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition flex items-center gap-2">
-                <i class="fas fa-save"></i>Simpan Penjualan
-            </button>
-            <button type="button" onclick="printNota()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition flex items-center gap-2">
-                <i class="fas fa-print"></i>Print Nota
-            </button>
-            <a href="/penjualan" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition flex items-center gap-2">
-                <i class="fas fa-arrow-left"></i>Kembali
-            </a>
-        </div>
+<div class="flex flex-col sm:flex-row gap-3 w-full">
+    <button
+        type="submit"
+        class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition flex items-center justify-center gap-2">
+        <i class="fas fa-save"></i>
+        Simpan
+    </button>
+
+    <button
+        type="button"
+        onclick="printNota()"
+        class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition flex items-center justify-center gap-2">
+        <i class="fas fa-print"></i>
+        Print Nota
+    </button>
+
+    <a
+        href="/penjualan"
+        class="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition flex items-center justify-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        Kembali
+    </a>
+</div>
     </form>
 </div>
 
