@@ -92,4 +92,38 @@ class BarangController {
         }
         redirect('/barang');
     }
+
+    public function exportExcel() {
+        $barang = $this->model->getAll();
+
+        $filename = 'daftar-barang-' . date('Y-m-d') . '.csv';
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        $output = fopen('php://output', 'w');
+        // UTF-8 BOM for Excel
+        fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+        fputcsv($output, ['No', 'Kode Barang', 'Nama Barang', 'Kategori', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok']);
+
+        $no = 1;
+        foreach ($barang as $item) {
+            fputcsv($output, [
+                $no++,
+                $item['kode_barang'] ?? '',
+                $item['nama_barang'] ?? '',
+                $item['nama_kategori'] ?? '',
+                $item['satuan'] ?? '',
+                $item['harga_beli'] ?? 0,
+                $item['harga_jual'] ?? 0,
+                $item['stok'] ?? 0,
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
 }

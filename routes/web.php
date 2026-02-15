@@ -36,6 +36,7 @@ $routes = [
     '/barang' => ['controller' => 'BarangController', 'method' => 'index'],
     '/barang/create' => ['controller' => 'BarangController', 'method' => 'create'],
     '/barang/store' => ['controller' => 'BarangController', 'method' => 'store'],
+    '/barang/export' => ['controller' => 'BarangController', 'method' => 'exportExcel'],
     
     // Pembelian routes
     '/pembelian' => ['controller' => 'PembelianController', 'method' => 'index'],
