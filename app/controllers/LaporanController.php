@@ -81,7 +81,11 @@ class LaporanController {
             $total = $this->model->getTotalPenjualan($startDate, $endDate);
         }
 
-        $this->exportPenjualanPDF($penjualan, $total, $start, $end);
+        if ($format === 'excel') {
+            $this->exportPenjualanExcel($penjualan, $total, $start, $end);
+        } else {
+            $this->exportPenjualanPDF($penjualan, $total, $start, $end);
+        }
     }
 
     private function exportPenjualanPDF($penjualan, $total, $start, $end) {
@@ -320,6 +324,46 @@ class LaporanController {
         exit;
     }
 
+    private function exportPenjualanExcel($penjualan, $total, $start, $end) {
+        $timestamp = date('Ymd_His');
+        $filename = 'Laporan_Penjualan_' . $timestamp . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        echo "\xEF\xBB\xBF";
+
+        $period = 'Semua Data';
+        if ($start && $end) {
+            $period = $start . ' s/d ' . $end;
+        }
+
+        fputcsv(STDOUT, ['Laporan Penjualan', $period]);
+        fputcsv(STDOUT, []);
+        fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Jual', 'Total']);
+
+        foreach ($penjualan as $index => $item) {
+            $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
+            $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
+            fputcsv(STDOUT, [
+                $index + 1,
+                $tanggal,
+                $jam,
+                $item['username'] ?? '-',
+                $item['kode_barang'] ?? '-',
+                $item['nama_barang'] ?? '',
+                $item['jumlah'] ?? 0,
+                $item['satuan'] ?? '',
+                $item['harga_satuan'] ?? 0,
+                $item['total_harga'] ?? 0,
+            ]);
+        }
+
+        fputcsv(STDOUT, []);
+        fputcsv(STDOUT, ['Total Penjualan', $total]);
+        exit;
+    }
+
     public function stok() {
         $page = max(1, (int)($_GET['page'] ?? 1));
         $items_per_page = 10;
@@ -395,7 +439,11 @@ class LaporanController {
             $total = $this->model->getTotalPembelian($startDate, $endDate);
         }
 
-        $this->exportPembelianPDF($pembelian, $total, $start, $end);
+        if ($format === 'excel') {
+            $this->exportPembelianExcel($pembelian, $total, $start, $end);
+        } else {
+            $this->exportPembelianPDF($pembelian, $total, $start, $end);
+        }
     }
 
     private function exportPembelianPDF($pembelian, $total, $start, $end) {
@@ -632,6 +680,45 @@ class LaporanController {
         exit;
     }
 
+    private function exportPembelianExcel($pembelian, $total, $start, $end) {
+        $timestamp = date('Ymd_His');
+        $filename = 'Laporan_Pembelian_' . $timestamp . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        echo "\xEF\xBB\xBF";
+
+        $period = 'Semua Data';
+        if ($start && $end) {
+            $period = $start . ' s/d ' . $end;
+        }
+
+        fputcsv(STDOUT, ['Laporan Pembelian', $period]);
+        fputcsv(STDOUT, []);
+        fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Satuan', 'Subtotal']);
+
+        foreach ($pembelian as $index => $item) {
+            $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
+            $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
+            fputcsv(STDOUT, [
+                $index + 1,
+                $tanggal,
+                $jam,
+                $item['kode_barang'] ?? '-',
+                $item['nama_barang'] ?? '',
+                $item['jumlah'] ?? 0,
+                $item['satuan'] ?? '',
+                $item['harga_satuan'] ?? 0,
+                $item['subtotal'] ?? ($item['total_harga'] ?? 0),
+            ]);
+        }
+
+        fputcsv(STDOUT, []);
+        fputcsv(STDOUT, ['Total Pembelian', $total]);
+        exit;
+    }
+
     public function exportKeuntungan() {
         $start = $_GET['start'] ?? '';
         $end = $_GET['end'] ?? '';
@@ -647,7 +734,11 @@ class LaporanController {
             $totalKeuntungan = $this->model->getTotalKeuntungan($startDate, $endDate);
         }
 
-        $this->exportKeuntunganPDF($keuntungan, $totalKeuntungan, $start, $end);
+        if ($format === 'excel') {
+            $this->exportKeuntunganExcel($keuntungan, $totalKeuntungan, $start, $end);
+        } else {
+            $this->exportKeuntunganPDF($keuntungan, $totalKeuntungan, $start, $end);
+        }
     }
 
     private function exportKeuntunganPDF($keuntungan, $totalKeuntungan, $start, $end) {
@@ -870,6 +961,48 @@ class LaporanController {
         header('Content-Type: text/html; charset=utf-8');
         header('Content-Disposition: attachment; filename="Laporan_Keuntungan_' . $timestamp . '.html"');
         echo $html;
+        exit;
+    }
+
+    private function exportKeuntunganExcel($keuntungan, $totalKeuntungan, $start, $end) {
+        $timestamp = date('Ymd_His');
+        $filename = 'Laporan_Keuntungan_' . $timestamp . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        echo "\xEF\xBB\xBF";
+
+        $period = 'Semua Data';
+        if ($start && $end) {
+            $period = $start . ' s/d ' . $end;
+        }
+
+        fputcsv(STDOUT, ['Laporan Keuntungan', $period]);
+        fputcsv(STDOUT, []);
+        fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Beli', 'Harga Jual', 'Keuntungan/Unit', 'Total Keuntungan']);
+
+        foreach ($keuntungan as $index => $item) {
+            $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
+            $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
+            fputcsv(STDOUT, [
+                $index + 1,
+                $tanggal,
+                $jam,
+                $item['username'] ?? '-',
+                $item['kode_barang'] ?? '-',
+                $item['nama_barang'] ?? '',
+                $item['jumlah'] ?? 0,
+                $item['satuan'] ?? '',
+                $item['harga_beli'] ?? 0,
+                $item['harga_jual'] ?? 0,
+                $item['keuntungan_per_unit'] ?? 0,
+                $item['keuntungan_total'] ?? 0,
+            ]);
+        }
+
+        fputcsv(STDOUT, []);
+        fputcsv(STDOUT, ['Total Keuntungan', $totalKeuntungan]);
         exit;
     }
 

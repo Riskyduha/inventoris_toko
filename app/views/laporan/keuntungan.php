@@ -7,7 +7,7 @@
 
     <!-- Filter -->
     <form method="GET" class="mb-6 bg-gray-50 p-4 rounded-lg">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Tanggal Mulai</label>
                 <input type="date" id="startDate" name="start" value="<?= $start ?>" 
@@ -29,6 +29,12 @@
                     <span>Download PDF</span>
                 </button>
             </div>
+            <div class="flex items-end">
+                <button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2" onclick="downloadKeuntunganExcel()">
+                    <i class="fas fa-file-excel"></i>
+                    <span>Download Excel</span>
+                </button>
+            </div>
         </div>
     </form>
 
@@ -37,6 +43,15 @@
         const start = document.getElementById('startDate').value;
         const end = document.getElementById('endDate').value;
         let url = '/laporan/keuntungan/export?format=pdf';
+        if (start) url += '&start=' + start;
+        if (end) url += '&end=' + end;
+        window.location.href = url;
+    }
+
+    function downloadKeuntunganExcel() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        let url = '/laporan/keuntungan/export?format=excel';
         if (start) url += '&start=' + start;
         if (end) url += '&end=' + end;
         window.location.href = url;
