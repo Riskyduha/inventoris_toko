@@ -5,9 +5,19 @@
         <h2 class="text-xl sm:text-2xl font-bold text-gray-800">
             <i class="fas fa-box text-blue-600 mr-2"></i>Daftar Barang
         </h2>
-        <a href="/barang/create" class="w-full sm:w-auto text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded transition">
-            <i class="fas fa-plus mr-2"></i>Tambah Barang
-        </a>
+        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div class="w-full sm:w-72">
+                <input
+                    id="searchBarang"
+                    type="text"
+                    placeholder="Cari nama/kode/kategori/satuan..."
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+            <a href="/barang/create" class="w-full sm:w-auto text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded transition">
+                <i class="fas fa-plus mr-2"></i>Tambah Barang
+            </a>
+        </div>
     </div>
 
     <?php if (!empty($kategori)): ?>
@@ -36,13 +46,17 @@
         </div>
     </div>
 
+    <div class="text-sm text-gray-600 mb-4">
+        Menampilkan <span id="visible_count">0</span> dari <span id="total_count">0</span> barang (halaman ini)
+    </div>
+
     <!-- Mobile Card View -->
     <div class="block md:hidden space-y-3">
         <?php if (empty($barang)): ?>
             <div class="text-center py-8 text-gray-400 italic">Tidak ada data barang</div>
         <?php else: ?>
             <?php foreach ($barang as $index => $item): ?>
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>">
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '')))) ?>">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex-1">
                             <div class="font-mono text-xs text-gray-500 mb-1"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></div>
@@ -101,7 +115,7 @@
                     </tr>
                 <?php else: ?>
                     <?php foreach ($barang as $index => $item): ?>
-                        <tr class="hover:bg-blue-50 transition duration-200" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>">
+                        <tr class="hover:bg-blue-50 transition duration-200" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '')))) ?>">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700"><?= (($current_page - 1) * $items_per_page) + $index + 1 ?></td>
                             <td class="px-6 py-4 font-mono text-sm text-gray-600"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
                             <td class="px-6 py-4 font-medium text-gray-800"><?= htmlspecialchars($item['nama_barang']) ?></td>
@@ -187,13 +201,12 @@
 <script>
 const currentPage = <?= (int)$current_page ?>;
 const itemsPerPage = <?= (int)$items_per_page ?>;
+let currentKategori = 'all';
+let currentQuery = '';
 
 function filterKategori(katId) {
-    const rows = document.querySelectorAll('tbody tr[data-kategori]');
-    rows.forEach(row => {
-        const match = katId === 'all' || row.getAttribute('data-kategori') === katId;
-        row.style.display = match ? '' : 'none';
-    });
+    currentKategori = katId;
+    applyFilters();
 
     document.querySelectorAll('[data-kat]').forEach(btn => {
         const active = btn.getAttribute('data-kat') === katId;
@@ -202,13 +215,32 @@ function filterKategori(katId) {
         btn.classList.toggle('bg-gray-100', !active);
         btn.classList.toggle('text-gray-800', !active);
     });
+}
+
+function applyFilters() {
+    const query = (currentQuery || '').trim().toLowerCase();
+
+    document.querySelectorAll('[data-item="barang-row"]').forEach(row => {
+        const matchKat = currentKategori === 'all' || row.getAttribute('data-kategori') === currentKategori;
+        const searchData = (row.getAttribute('data-search') || '').toLowerCase();
+        const matchSearch = !query || searchData.includes(query);
+        row.style.display = (matchKat && matchSearch) ? '' : 'none';
+    });
+
+    document.querySelectorAll('[data-item="barang-card"]').forEach(card => {
+        const matchKat = currentKategori === 'all' || card.getAttribute('data-kategori') === currentKategori;
+        const searchData = (card.getAttribute('data-search') || '').toLowerCase();
+        const matchSearch = !query || searchData.includes(query);
+        card.style.display = (matchKat && matchSearch) ? '' : 'none';
+    });
 
     updateRowNumbers();
-    updateSummary(katId);
+    updateSummary();
+    updateVisibleCount();
 }
 
 function updateRowNumbers() {
-    const visibleRows = Array.from(document.querySelectorAll('tbody tr[data-kategori]')).filter(row => row.style.display !== 'none');
+    const visibleRows = Array.from(document.querySelectorAll('tbody tr[data-item="barang-row"]')).filter(row => row.style.display !== 'none');
     visibleRows.forEach((row, index) => {
         const noCell = row.querySelector('td:first-child');
         if (noCell) {
@@ -221,14 +253,13 @@ function formatRupiah(num) {
     return 'Rp ' + (num || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
 }
 
-function updateSummary(katId = 'all') {
+function updateSummary() {
     let sumBeli = 0;
     let sumJual = 0;
     let sumStok = 0;
 
-    document.querySelectorAll('tbody tr[data-kategori]').forEach(row => {
-        const match = katId === 'all' || row.getAttribute('data-kategori') === katId;
-        if (!match) return;
+    document.querySelectorAll('tbody tr[data-item="barang-row"]').forEach(row => {
+        if (row.style.display === 'none') return;
         sumBeli += parseFloat(row.getAttribute('data-beli')) || 0;
         sumJual += parseFloat(row.getAttribute('data-jual')) || 0;
         sumStok += parseFloat(row.getAttribute('data-stok')) || 0;
@@ -239,8 +270,25 @@ function updateSummary(katId = 'all') {
     document.getElementById('sum_stok').textContent = (sumStok || 0).toLocaleString('id-ID');
 }
 
-// Init summary
-updateSummary('all');
+function updateVisibleCount() {
+    const totalRows = document.querySelectorAll('tbody tr[data-item="barang-row"]').length;
+    const visibleRows = Array.from(document.querySelectorAll('tbody tr[data-item="barang-row"]')).filter(row => row.style.display !== 'none').length;
+    const visibleEl = document.getElementById('visible_count');
+    const totalEl = document.getElementById('total_count');
+    if (visibleEl) visibleEl.textContent = visibleRows.toLocaleString('id-ID');
+    if (totalEl) totalEl.textContent = totalRows.toLocaleString('id-ID');
+}
+
+const searchInput = document.getElementById('searchBarang');
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        currentQuery = e.target.value || '';
+        applyFilters();
+    });
+}
+
+// Init summary & counts
+applyFilters();
 </script>
 
 <?php 
