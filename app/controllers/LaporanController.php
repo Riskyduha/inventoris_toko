@@ -333,18 +333,18 @@ class LaporanController {
 
         echo "\xEF\xBB\xBF";
 
-        fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Jual', 'Total']);
+        fputcsv(STDOUT, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Jual', 'Total']);
 
         foreach ($penjualan as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
             fputcsv(STDOUT, [
                 $index + 1,
-                $tanggal,
-                $jam,
                 $item['username'] ?? '-',
                 $item['kode_barang'] ?? '-',
                 $item['nama_barang'] ?? '',
+                $tanggal,
+                $jam,
                 $item['jumlah'] ?? 0,
                 $item['satuan'] ?? '',
                 $item['harga_satuan'] ?? 0,
@@ -680,17 +680,17 @@ class LaporanController {
 
         echo "\xEF\xBB\xBF";
 
-        fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Satuan', 'Total']);
+        fputcsv(STDOUT, ['No', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Satuan', 'Total']);
 
         foreach ($pembelian as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
             fputcsv(STDOUT, [
                 $index + 1,
-                $tanggal,
-                $jam,
                 $item['kode_barang'] ?? '-',
                 $item['nama_barang'] ?? '',
+                $tanggal,
+                $jam,
                 $item['jumlah'] ?? 0,
                 $item['satuan'] ?? '',
                 $item['harga_satuan'] ?? 0,
@@ -954,18 +954,18 @@ class LaporanController {
 
         echo "\xEF\xBB\xBF";
 
-        fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Beli', 'Harga Jual', 'Keuntungan/Unit', 'Total Keuntungan']);
+        fputcsv(STDOUT, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Beli', 'Harga Jual', 'Keuntungan/Unit', 'Total Keuntungan']);
 
         foreach ($keuntungan as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
             fputcsv(STDOUT, [
                 $index + 1,
-                $tanggal,
-                $jam,
                 $item['username'] ?? '-',
                 $item['kode_barang'] ?? '-',
                 $item['nama_barang'] ?? '',
+                $tanggal,
+                $jam,
                 $item['jumlah'] ?? 0,
                 $item['satuan'] ?? '',
                 $item['harga_beli'] ?? 0,
