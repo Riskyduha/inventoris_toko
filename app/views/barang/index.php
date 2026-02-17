@@ -366,7 +366,8 @@ function updateVisibleCount() {
 }
 
 function formatRupiah(num) {
-    return 'Rp ' + (num || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
+    const value = Number(num) || 0;
+    return 'Rp ' + value.toLocaleString('id-ID', { maximumFractionDigits: 0 });
 }
 
 function updateKategoriSummary() {
