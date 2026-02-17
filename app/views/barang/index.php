@@ -431,7 +431,33 @@ async function performSearch(query, page = 1) {
         console.log('Fetching search:', url);
         const response = await fetch(url);
         console.log('Response status:', response.status);
-        const data = await response.json();
+        const rawBody = await response.text();
+
+        if (!response.ok) {
+            const message = rawBody && rawBody.trim().length > 0
+                ? rawBody.trim()
+                : `Server error (${response.status})`;
+            throw new Error(message);
+        }
+
+        let data;
+        if (rawBody && rawBody.trim().length > 0) {
+            try {
+                data = JSON.parse(rawBody);
+            } catch (parseError) {
+                console.error('Gagal mem-parsing respon pencarian:', parseError, rawBody);
+                throw new Error('Respons server tidak valid. Silakan coba lagi.');
+            }
+        } else {
+            data = {
+                results: [],
+                total: 0,
+                page: 1,
+                per_page: itemsPerPage,
+                total_pages: 0
+            };
+        }
+
         console.log('Search results:', data);
         
         currentSearchPage = data.page || 1;
@@ -441,7 +467,7 @@ async function performSearch(query, page = 1) {
         renderSearchResults(data.results || [], data);
     } catch (error) {
         console.error('Search error:', error);
-        alert('Error saat mencari: ' + error.message);
+        alert('Error saat mencari: ' + (error && error.message ? error.message : 'Terjadi kesalahan tak terduga.'));
     }
 }
 
@@ -494,10 +520,17 @@ function renderSearchResults(results, apiResponse = {}) {
     const totalEl = document.getElementById('total_count');
     if (visibleEl) visibleEl.textContent = results.length.toLocaleString('id-ID');
     if (totalEl) totalEl.textContent = totalResults.toLocaleString('id-ID');
+
+    const kategoriLabel = currentKategori && currentKategori !== 'all'
+        ? htmlSpecialChars(kategoriNames[currentKategori] || '-')
+        : null;
+    const noResultsText = kategoriLabel
+        ? `Tidak ada barang di kategori ${kategoriLabel} yang cocok dengan pencarian ini`
+        : 'Tidak ada barang yang cocok dengan pencarian';
     
     // Render mobile
     if (results.length === 0) {
-        mobileResults.innerHTML = '<div class="text-center py-8 text-gray-400 italic">Tidak ada barang yang cocok dengan pencarian</div>';
+        mobileResults.innerHTML = `<div class="text-center py-8 text-gray-400 italic">${noResultsText}</div>`;
     } else {
         mobileResults.innerHTML = results.map((item, index) => `
                 <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
@@ -539,7 +572,7 @@ function renderSearchResults(results, apiResponse = {}) {
     
     // Render desktop
     if (results.length === 0) {
-        tableResults.innerHTML = '<div class="text-center py-8 text-gray-400 italic">Tidak ada barang yang cocok dengan pencarian</div>';
+        tableResults.innerHTML = `<div class="text-center py-8 text-gray-400 italic">${noResultsText}</div>`;
     } else {
         tableResults.innerHTML = `
             <table class="w-full border border-gray-300 rounded-lg">
