@@ -35,11 +35,11 @@
 
     <?php if (!empty($kategori)): ?>
     <div class="flex flex-wrap items-center gap-2 mb-4">
-        <a href="/barang" class="px-3 py-2 rounded border text-xs sm:text-sm <?= empty($selected_kategori) ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>" data-kat="all">Semua</a>
+        <button onclick="filterByKategori('all')" class="px-3 py-2 rounded border text-xs sm:text-sm bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition" id="kat-all">Semua</button>
         <?php foreach ($kategori as $kat): ?>
-            <a href="/barang?kategori=<?= $kat['id_kategori'] ?>" class="px-3 py-2 rounded border text-xs sm:text-sm <?= (!empty($selected_kategori) && (int)$selected_kategori === (int)$kat['id_kategori']) ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>" data-kat="<?= $kat['id_kategori'] ?>">
+            <button onclick="filterByKategori('<?= $kat['id_kategori'] ?>')" class="px-3 py-2 rounded border text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 cursor-pointer transition" id="kat-<?= $kat['id_kategori'] ?>">
                 <?= htmlspecialchars($kat['nama_kategori']) ?>
-            </a>
+            </button>
         <?php endforeach; ?>
     </div>
     <?php endif; ?>
@@ -699,6 +699,40 @@ async function loadAllBarang(page = 1) {
         renderSearchResults(data.results || [], data);
     } catch (error) {
         console.error('Error loading barang:', error);
+    }
+}
+
+// Filter barang by kategori
+async function filterByKategori(kategoriId) {
+    // Update currentKategori variable
+    currentKategori = String(kategoriId);
+    currentQuery = ''; // Clear search query
+    
+    // Update button styling
+    document.querySelectorAll('[id^="kat-"]').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+        btn.classList.add('bg-gray-100', 'hover:bg-gray-200');
+    });
+    
+    // Highlight selected kategori
+    const selectedBtn = document.getElementById(`kat-${kategoriId}`);
+    if (selectedBtn) {
+        selectedBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200');
+        selectedBtn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+    }
+    
+    // Load barang
+    try {
+        const kategoriParam = kategoriId !== 'all' ? `&kategori=${kategoriId}` : '';
+        const url = `/api/search-barang?q=${kategoriParam}&page=1`;
+        console.log('Loading kategori:', url);
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log('Kategori filtered:', data);
+        
+        renderSearchResults(data.results || [], data);
+    } catch (error) {
+        console.error('Error filtering barang:', error);
     }
 }
 </script>
