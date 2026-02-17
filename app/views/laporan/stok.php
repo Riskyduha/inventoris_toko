@@ -201,7 +201,7 @@
                 <tr>
                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-12">No</th>
                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Kode Barang</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama Barang</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-64">Nama Barang</th>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-20">Satuan</th>
                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Harga Beli</th>
                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Harga Jual</th>
@@ -219,7 +219,7 @@
                         <tr class="hover:bg-gray-50" data-kategori-id="<?= $item['id_kategori'] ?>" data-beli="<?= (float)$item['harga_beli'] ?>" data-jual="<?= (float)$item['harga_jual'] ?>" data-stok="<?= (int)$item['stok'] ?>">
                             <td class="px-4 py-3"><?= (($current_page - 1) * 10) + $index + 1 ?></td>
                             <td class="px-4 py-3 font-mono text-sm text-gray-700"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
-                            <td class="px-4 py-3 font-medium"><?= htmlspecialchars($item['nama_barang']) ?></td>
+                            <td class="px-4 py-3 font-medium truncate max-w-xs" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
                             <td class="px-4 py-3 text-center text-gray-700 font-semibold">
                                 <?= htmlspecialchars($item['satuan'] ?? '-') ?>
                             </td>
