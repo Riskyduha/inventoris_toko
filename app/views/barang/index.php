@@ -295,10 +295,10 @@ function formatRupiah(num) {
 function updateKategoriSummary() {
     const summaryEl = document.getElementById('kategori_summary');
     const nameEl = document.getElementById('kategori_name');
+    const stokEl = document.getElementById('kategori_stok');
     const beliEl = document.getElementById('kategori_beli');
     const jualEl = document.getElementById('kategori_jual');
-    const stokEl = document.getElementById('kategori_stok');
-    if (!summaryEl || !nameEl || !beliEl || !jualEl || !stokEl) return;
+    if (!summaryEl || !nameEl || !stokEl) return;
 
     if (currentKategori === 'all') {
         summaryEl.classList.add('hidden');
@@ -327,8 +327,8 @@ function updateKategoriSummary() {
     }
 
     nameEl.textContent = kategoriNames[currentKategori] || '-';
-    beliEl.textContent = formatRupiah(totalBeli);
-    jualEl.textContent = formatRupiah(totalJual);
+    if (beliEl) beliEl.textContent = formatRupiah(totalBeli);
+    if (jualEl) jualEl.textContent = formatRupiah(totalJual);
     stokEl.textContent = (totalStok || 0).toLocaleString('id-ID');
     summaryEl.classList.remove('hidden');
 }

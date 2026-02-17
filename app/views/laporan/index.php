@@ -1,5 +1,6 @@
 <?php ob_start(); ?>
 
+<?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'kasir'): ?>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <!-- Card Total Barang Terjual Hari Ini -->
     <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
@@ -53,6 +54,61 @@
         </div>
     </div>
 </div>
+<?php else: ?>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Card Total Harga Beli -->
+    <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-semibold">Total Harga Beli</p>
+                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['total_harga_beli']) ?></p>
+            </div>
+            <div class="bg-blue-500 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-receipt text-3xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Total Harga Jual -->
+    <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-semibold">Total Harga Jual</p>
+                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['total_harga_jual']) ?></p>
+            </div>
+            <div class="bg-green-500 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-tags text-3xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Total Stok -->
+    <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-semibold">Total Stok</p>
+                <p class="text-3xl font-bold mt-2"><?= $stats['total_stok'] ?></p>
+            </div>
+            <div class="bg-purple-500 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-cubes text-3xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Penjualan Hari Ini -->
+    <div class="bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-orange-100 text-sm font-semibold">Penjualan Hari Ini</p>
+                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['penjualan_hari_ini']) ?></p>
+            </div>
+            <div class="bg-orange-500 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-money-bill-wave text-3xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Quick Actions -->
 <div class="bg-white rounded-lg shadow-md p-6 mb-8">

@@ -194,6 +194,15 @@ class Laporan {
         $stmtStok->execute();
         $totalStok = $stmtStok->fetch()['total'] ?? 0;
 
+        // Total Nilai Persediaan (Harga Beli & Jual)
+        $queryNilaiPersediaan = "SELECT
+                        COALESCE(SUM(harga_beli * stok), 0) as total_harga_beli,
+                        COALESCE(SUM(harga_jual * stok), 0) as total_harga_jual
+                     FROM barang";
+        $stmtNilaiPersediaan = $this->conn->prepare($queryNilaiPersediaan);
+        $stmtNilaiPersediaan->execute();
+        $nilaiPersediaan = $stmtNilaiPersediaan->fetch() ?: [];
+
         // Total Penjualan Hari Ini
         $queryPenjualan = "SELECT SUM(total_harga) as total FROM penjualan WHERE DATE(tanggal) = CURRENT_DATE";
         $stmtPenjualan = $this->conn->prepare($queryPenjualan);
@@ -209,6 +218,8 @@ class Laporan {
         return [
             'barang_terjual_hari_ini' => $barangTerjualHariIni,
             'total_stok' => $totalStok,
+            'total_harga_beli' => $nilaiPersediaan['total_harga_beli'] ?? 0,
+            'total_harga_jual' => $nilaiPersediaan['total_harga_jual'] ?? 0,
             'penjualan_hari_ini' => $totalPenjualanHariIni,
             'pembelian_hari_ini' => $totalPembelianHariIni
         ];

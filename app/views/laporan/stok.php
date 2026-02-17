@@ -132,10 +132,10 @@
     function updateKategoriSummary(katId) {
         const summaryEl = document.getElementById('kategori_summary');
         const nameEl = document.getElementById('kategori_name');
+        const stokEl = document.getElementById('kategori_stok');
         const beliEl = document.getElementById('kategori_beli');
         const jualEl = document.getElementById('kategori_jual');
-        const stokEl = document.getElementById('kategori_stok');
-        if (!summaryEl || !nameEl || !beliEl || !jualEl || !stokEl) return;
+        if (!summaryEl || !nameEl || !stokEl) return;
 
         if (!katId || katId === 'all') {
             summaryEl.classList.add('hidden');
@@ -144,8 +144,8 @@
 
         const data = totalsByKategori[katId] || { total_harga_beli: 0, total_harga_jual: 0, total_stok: 0 };
         nameEl.textContent = kategoriNames[katId] || '-';
-        beliEl.textContent = formatRupiah(data.total_harga_beli || 0);
-        jualEl.textContent = formatRupiah(data.total_harga_jual || 0);
+        if (beliEl) beliEl.textContent = formatRupiah(data.total_harga_beli || 0);
+        if (jualEl) jualEl.textContent = formatRupiah(data.total_harga_jual || 0);
         stokEl.textContent = (data.total_stok || 0).toLocaleString('id-ID');
         summaryEl.classList.remove('hidden');
     }
