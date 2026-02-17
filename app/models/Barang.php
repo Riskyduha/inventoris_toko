@@ -67,8 +67,8 @@ class Barang {
 
     public function getTotals() {
                 $query = "SELECT
-                                        COALESCE(SUM(harga_beli), 0) as total_harga_beli,
-                                        COALESCE(SUM(harga_jual), 0) as total_harga_jual,
+                                        COALESCE(SUM(harga_beli * stok), 0) as total_harga_beli,
+                                        COALESCE(SUM(harga_jual * stok), 0) as total_harga_jual,
                                         COALESCE(SUM(stok), 0) as total_stok
                                     FROM " . $this->table . "
                                     WHERE stok > 0";
