@@ -91,8 +91,16 @@
         </div>
     </div>
 
+    <!-- Search Results View (Hidden by default) -->
+    <div id="search_results_container" class="hidden">
+        <div id="search_results_mobile" class="block md:hidden space-y-3"></div>
+        <div id="search_results_table" class="hidden md:block overflow-x-auto"></div>
+    </div>
+
     <!-- Mobile Card View -->
-    <div class="block md:hidden space-y-3">
+    <div class="block md:hidden space-y-3" data-view="mobile-container">
+        <div id="search_results_mobile" class="hidden space-y-3"></div>
+        <div id="normal_barang_mobile">
         <?php if (empty($barang)): ?>
             <div class="text-center py-8 text-gray-400 italic">Tidak ada data barang</div>
         <?php else: ?>
@@ -136,7 +144,7 @@
     </div>
 
     <!-- Desktop Table View -->
-    <div class="hidden md:block overflow-x-auto">
+    <div class="hidden md:block overflow-x-auto" data-view="desktop-container">
         <table class="w-full border border-gray-300 rounded-lg">
             <thead class="bg-blue-100 border-b-2 border-blue-300">
                 <tr>
@@ -279,6 +287,23 @@ function filterKategori(katId) {
 
 function applyFilters() {
     const query = (currentQuery || '').trim().toLowerCase();
+    
+    // Jika search kosong, sembunyikan search results dan tampilkan normal view
+    if (query.length === 0) {
+        const searchContainer = document.getElementById('search_results_container');
+        const mobileContainer = document.querySelector('[data-view="mobile-container"]');
+        const desktopContainer = document.querySelector('[data-view="desktop-container"]');
+        
+        if (searchContainer) searchContainer.classList.add('hidden');
+        if (mobileContainer) mobileContainer.style.display = '';
+        if (desktopContainer) desktopContainer.style.display = '';
+        
+        const paginationDiv = document.querySelector('.flex.justify-center.items-center.gap-2.mt-6');
+        if (paginationDiv) paginationDiv.style.display = '';
+        
+        const searchInfoContainer = document.getElementById('search_info_container');
+        if (searchInfoContainer) searchInfoContainer.classList.add('hidden');
+    }
 
     document.querySelectorAll('[data-item="barang-row"]').forEach(row => {
         const matchKat = currentKategori === 'all' || String(row.getAttribute('data-kategori')) === currentKategori;
@@ -381,27 +406,32 @@ function updateKategoriSummary() {
 
 const searchInput = document.getElementById('searchBarang');
 if (searchInput) {
+    console.log('Search input found:', searchInput);
     searchInput.addEventListener('input', debounce(async (e) => {
         currentQuery = e.target.value || '';
+        console.log('Search query:', currentQuery);
         
         if (currentQuery.trim().length === 0) {
-            // Jika search kosong, kembali ke tampilan normal dengan filter kategori
             applyFilters();
             return;
         }
         
-        // Lakukan AJAX search ke endpoint /api/search-barang
         try {
             const kategoriParam = currentKategori && currentKategori !== 'all' ? `&kategori=${currentKategori}` : '';
-            const response = await fetch(`/api/search-barang?q=${encodeURIComponent(currentQuery)}${kategoriParam}`);
+            const url = `/api/search-barang?q=${encodeURIComponent(currentQuery)}${kategoriParam}`;
+            console.log('Fetching:', url);
+            const response = await fetch(url);
+            console.log('Response status:', response.status);
             const data = await response.json();
-            
-            // Render hasil search
+            console.log('Search results:', data);
             renderSearchResults(data.results || []);
         } catch (error) {
             console.error('Search error:', error);
+            alert('Error saat mencari: ' + error.message);
         }
     }, 300));
+} else {
+    console.error('Search input element not found! Check if element with id="searchBarang" exists');
 }
 
 // Debounce utility untuk mengurangi API calls
@@ -415,17 +445,25 @@ function debounce(func, delay) {
 
 // Render hasil search ke halaman
 function renderSearchResults(results) {
-    const container = document.querySelector('.block.md\\:hidden.space-y-3');
-    const tableContainer = document.querySelector('.hidden.md\\:block.overflow-x-auto');
+    const searchContainer = document.getElementById('search_results_container');
+    const mobileResults = document.getElementById('search_results_mobile');
+    const tableResults = document.getElementById('search_results_table');
+    const mobileContainer = document.querySelector('[data-view="mobile-container"]');
+    const desktopContainer = document.querySelector('[data-view="desktop-container"]');
     
-    if (!container && !tableContainer) return;
-        
-        // Update counter
-        const visibleEl = document.getElementById('visible_count');
-        const totalEl = document.getElementById('total_count');
-        if (visibleEl) visibleEl.textContent = results.length.toLocaleString('id-ID');
-        if (totalEl) totalEl.textContent = results.length.toLocaleString('id-ID');
-            container.innerHTML = results.map((item, index) => `
+    if (!searchContainer || !mobileResults || !tableResults) return;
+    
+    // Update counter
+    const visibleEl = document.getElementById('visible_count');
+    const totalEl = document.getElementById('total_count');
+    if (visibleEl) visibleEl.textContent = results.length.toLocaleString('id-ID');
+    if (totalEl) totalEl.textContent = results.length.toLocaleString('id-ID');
+    
+    // Render mobile
+    if (results.length === 0) {
+        mobileResults.innerHTML = '<div class="text-center py-8 text-gray-400 italic">Tidak ada barang yang cocok dengan pencarian</div>';
+    } else {
+        mobileResults.innerHTML = results.map((item, index) => `
                 <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex-1">
@@ -461,80 +499,58 @@ function renderSearchResults(results) {
                     </div>
                 </div>
             `).join('');
-        }
     }
     
-    // Desktop table view
-    if (tableContainer) {
-        if (results.length === 0) {
-            tableContainer.innerHTML = '<div class="text-center py-8 text-gray-400 italic">Tidak ada barang yang cocok dengan pencarian</div>';
-        } else {
-            const tableHTML = `
-                <table class="w-full border border-gray-300 rounded-lg">
-                    <thead class="bg-blue-100 border-b-2 border-blue-300">
-                        <tr>
-                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-12">No</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-20">Kode</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-40">Nama Barang</th>
-                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
-                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
-                            ${userRole === 'admin' ? `<th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>` : ''}
-                            <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
-                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
-                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
+    // Render desktop
+    if (results.length === 0) {
+        tableResults.innerHTML = '<div class="text-center py-8 text-gray-400 italic">Tidak ada barang yang cocok dengan pencarian</div>';
+    } else {
+        tableResults.innerHTML = `
+            <table class="w-full border border-gray-300 rounded-lg">
+                <thead class="bg-blue-100 border-b-2 border-blue-300">
+                    <tr>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-12">No</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-20">Kode</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-40">Nama Barang</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
+                        ${userRole === 'admin' ? `<th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>` : ''}
+                        <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    ${results.map((item, index) => `
+                        <tr class="hover:bg-blue-50 transition duration-200">
+                            <td class="px-6 py-4 text-center text-sm font-medium text-gray-700">${index + 1}</td>
+                            <td class="px-6 py-4 font-mono text-sm text-gray-600">${htmlSpecialChars(item.kode_barang || '-')}</td>
+                            <td class="px-6 py-4 font-medium text-gray-800">${htmlSpecialChars(item.nama_barang)}</td>
+                            <td class="px-6 py-4 text-center"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">${htmlSpecialChars(item.nama_kategori || '-')}</span></td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium">${htmlSpecialChars(item.satuan || 'pcs')}</td>
+                            ${userRole === 'admin' ? `<td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_beli)}</td>` : ''}
+                            <td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</td>
+                            <td class="px-6 py-4 text-center"><span class="${item.stok <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-xs font-bold">${item.stok}</span></td>
+                            <td class="px-6 py-4 text-center"><div class="flex justify-center gap-3"><a href="/barang/edit/${item.id_barang}" class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded transition"><i class="fas fa-edit text-sm"></i></a><a href="/barang/delete/${item.id_barang}" onclick="return confirm('Yakin ingin menghapus barang ini?')" class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded transition"><i class="fas fa-trash text-sm"></i></a></div></td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        ${results.map((item, index) => `
-                            <tr class="hover:bg-blue-50 transition duration-200">
-                                <td class="px-6 py-4 text-center text-sm font-medium text-gray-700">${index + 1}</td>
-                                <td class="px-6 py-4 font-mono text-sm text-gray-600">${htmlSpecialChars(item.kode_barang || '-')}</td>
-                                <td class="px-6 py-4 font-medium text-gray-800">${htmlSpecialChars(item.nama_barang)}</td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
-                                        ${htmlSpecialChars(item.nama_kategori || '-')}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium">${htmlSpecialChars(item.satuan || 'pcs')}</td>
-                                ${userRole === 'admin' ? `<td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_beli)}</td>` : ''}
-                                <td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="${item.stok <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-xs font-bold">
-                                        ${item.stok}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <div class="flex justify-center gap-3">
-                                        <a href="/barang/edit/${item.id_barang}" class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded transition">
-                                            <i class="fas fa-edit text-sm"></i>
-                                        </a>
-                                        <a href="/barang/delete/${item.id_barang}" 
-                                           onclick="return confirm('Yakin ingin menghapus barang ini?')" 
-                                           class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded transition">
-                                            <i class="fas fa-trash text-sm"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            tableContainer.innerHTML = tableHTML;
-        }
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
     }
     
-    // Update kontrol pagination - sembunyikan saat search
+    // Hide normal view, show search results
+    if (mobileContainer) mobileContainer.style.display = 'none';
+    if (desktopContainer) desktopContainer.style.display = 'none';
+    searchContainer.classList.remove('hidden');
+    
+    // Hide pagination
     const paginationDiv = document.querySelector('.flex.justify-center.items-center.gap-2.mt-6');
-    if (paginationDiv) {
-        paginationDiv.style.display = 'none';
-    }
+    if (paginationDiv) paginationDiv.style.display = 'none';
     
-    // Tampilkan tombol clear search
+    // Show clear search button
     const searchInfoContainer = document.getElementById('search_info_container');
-    if (searchInfoContainer) {
-        searchInfoContainer.classList.remove('hidden');
-    }
+    if (searchInfoContainer) searchInfoContainer.classList.remove('hidden');
 }
 
 // Helper untuk escape HTML
@@ -557,11 +573,7 @@ function clearSearch() {
         searchInput.value = '';
         currentQuery = '';
     }
-    
-    // Reload halaman untuk kembali ke normal view (pagination normal)
-    const url = new URL(window.location);
-    url.searchParams.delete('search'); // Jika ada param search, hapus
-    window.location.href = url.toString();
+    applyFilters();
 }
 
 // Init summary & counts
