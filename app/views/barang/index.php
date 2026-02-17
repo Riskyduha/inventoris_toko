@@ -51,21 +51,6 @@
             <p class="text-lg sm:text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
         </div>
     </div>
-
-    <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6 hidden">
-        <div class="border border-blue-200 rounded-lg p-3 sm:p-4 bg-blue-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Beli (Kategori: <span id="kategori_name">-</span>)</p>
-            <p class="text-base sm:text-xl font-bold text-blue-700" id="kategori_beli">Rp 0</p>
-        </div>
-        <div class="border border-green-200 rounded-lg p-3 sm:p-4 bg-green-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual (Kategori: <span id="kategori_name2">-</span>)</p>
-            <p class="text-base sm:text-xl font-bold text-green-700" id="kategori_jual">Rp 0</p>
-        </div>
-        <div class="border border-purple-200 rounded-lg p-3 sm:p-4 bg-purple-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok (Kategori: <span id="kategori_name3">-</span>)</p>
-            <p class="text-base sm:text-xl font-bold text-purple-700" id="kategori_stok">0</p>
-        </div>
-    </div>
     <?php else: ?>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div class="border-2 border-blue-300 rounded-lg p-3 sm:p-4 bg-blue-50 text-center">
@@ -81,6 +66,7 @@
             <p class="text-lg sm:text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
         </div>
     </div>
+    <?php endif; ?>
 
     <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6 hidden">
         <div class="border border-blue-200 rounded-lg p-3 sm:p-4 bg-blue-50/50 text-center">
@@ -88,15 +74,14 @@
             <p class="text-base sm:text-xl font-bold text-blue-700" id="kategori_beli">Rp 0</p>
         </div>
         <div class="border border-green-200 rounded-lg p-3 sm:p-4 bg-green-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual (Kategori)</p>
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual (Kategori: <span id="kategori_name2">-</span>)</p>
             <p class="text-base sm:text-xl font-bold text-green-700" id="kategori_jual">Rp 0</p>
         </div>
         <div class="border border-purple-200 rounded-lg p-3 sm:p-4 bg-purple-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok (Kategori)</p>
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok (Kategori: <span id="kategori_name3">-</span>)</p>
             <p class="text-base sm:text-xl font-bold text-purple-700" id="kategori_stok">0</p>
         </div>
     </div>
-    <?php endif; ?>
 
     <div class="flex justify-between items-center mb-4">
         <div class="text-sm text-gray-600">
@@ -387,12 +372,17 @@ function formatRupiah(num) {
 function updateKategoriSummary() {
     const summaryEl = document.getElementById('kategori_summary');
     const nameEl = document.getElementById('kategori_name');
+    const nameEl2 = document.getElementById('kategori_name2');
+    const nameEl3 = document.getElementById('kategori_name3');
     const stokEl = document.getElementById('kategori_stok');
     const beliEl = document.getElementById('kategori_beli');
     const jualEl = document.getElementById('kategori_jual');
     if (!summaryEl || !nameEl || !stokEl) return;
 
     if (currentKategori === 'all') {
+        nameEl.textContent = '-';
+        if (nameEl2) nameEl2.textContent = '-';
+        if (nameEl3) nameEl3.textContent = '-';
         summaryEl.classList.add('hidden');
         return;
     }
@@ -418,7 +408,10 @@ function updateKategoriSummary() {
         totalStok = data.total_stok || 0;
     }
 
-    nameEl.textContent = kategoriNames[currentKategori] || '-';
+    const kategoriLabel = kategoriNames[currentKategori] || '-';
+    nameEl.textContent = kategoriLabel;
+    if (nameEl2) nameEl2.textContent = kategoriLabel;
+    if (nameEl3) nameEl3.textContent = kategoriLabel;
     if (beliEl) beliEl.textContent = formatRupiah(totalBeli);
     if (jualEl) jualEl.textContent = formatRupiah(totalJual);
     stokEl.textContent = (totalStok || 0).toLocaleString('id-ID');
@@ -761,30 +754,38 @@ async function filterByKategori(kategoriId) {
         // Show kategori summary if not 'all'
         const kategoriSummary = document.getElementById('kategori_summary');
         if (kategoriId !== 'all' && kategoriSummary) {
-            // Calculate totals from results
-            const results = data.results || [];
-            let totalHargaBeli = 0;
-            let totalHargaJual = 0;
-            let totalStok = 0;
-            let kategoriName = '-';
-            
-            results.forEach(barang => {
-                totalHargaBeli += (parseFloat(barang.harga_beli) || 0) * (parseInt(barang.stok) || 0);
-                totalHargaJual += (parseFloat(barang.harga_jual) || 0) * (parseInt(barang.stok) || 0);
-                totalStok += parseInt(barang.stok) || 0;
-                if (barang.nama_kategori && kategoriName === '-') {
-                    kategoriName = barang.nama_kategori;
-                }
-            });
-            
-            // Update kategori summary display
-            document.getElementById('kategori_name').textContent = kategoriName;
-            document.getElementById('kategori_name2').textContent = kategoriName;
-            document.getElementById('kategori_name3').textContent = kategoriName;
-            document.getElementById('kategori_beli').textContent = formatRupiah(totalHargaBeli);
-            document.getElementById('kategori_jual').textContent = formatRupiah(totalHargaJual);
-            document.getElementById('kategori_stok').textContent = totalStok.toLocaleString('id-ID');
-            
+            const kategoriKey = String(kategoriId);
+            const kategoriData = totalsByKategori && Object.prototype.hasOwnProperty.call(totalsByKategori, kategoriKey)
+                ? totalsByKategori[kategoriKey]
+                : null;
+            const kategoriLabel = kategoriNames && Object.prototype.hasOwnProperty.call(kategoriNames, kategoriKey)
+                ? kategoriNames[kategoriKey]
+                : ((data.results && data.results[0] && data.results[0].nama_kategori) ? data.results[0].nama_kategori : '-');
+
+            const beliValue = kategoriData ? kategoriData.total_harga_beli : (data.results || []).reduce((sum, barang) => {
+                return sum + ((parseFloat(barang.harga_beli) || 0) * (parseInt(barang.stok) || 0));
+            }, 0);
+            const jualValue = kategoriData ? kategoriData.total_harga_jual : (data.results || []).reduce((sum, barang) => {
+                return sum + ((parseFloat(barang.harga_jual) || 0) * (parseInt(barang.stok) || 0));
+            }, 0);
+            const stokValue = kategoriData ? kategoriData.total_stok : (data.results || []).reduce((sum, barang) => {
+                return sum + (parseInt(barang.stok) || 0);
+            }, 0);
+
+            const nameEl = document.getElementById('kategori_name');
+            const nameEl2 = document.getElementById('kategori_name2');
+            const nameEl3 = document.getElementById('kategori_name3');
+            const beliEl = document.getElementById('kategori_beli');
+            const jualEl = document.getElementById('kategori_jual');
+            const stokEl = document.getElementById('kategori_stok');
+
+            if (nameEl) nameEl.textContent = kategoriLabel;
+            if (nameEl2) nameEl2.textContent = kategoriLabel;
+            if (nameEl3) nameEl3.textContent = kategoriLabel;
+            if (beliEl) beliEl.textContent = formatRupiah(beliValue);
+            if (jualEl) jualEl.textContent = formatRupiah(jualValue);
+            if (stokEl) stokEl.textContent = (stokValue || 0).toLocaleString('id-ID');
+
             kategoriSummary.classList.remove('hidden');
         } else if (kategoriId === 'all' && kategoriSummary) {
             kategoriSummary.classList.add('hidden');
