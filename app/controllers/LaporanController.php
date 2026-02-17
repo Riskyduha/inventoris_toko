@@ -153,30 +153,6 @@ class LaporanController {
         }
         
         .summary-card {
-            padding: 20px;
-            background-color: #f3f4f6;
-            border-left: 4px solid #2563eb;
-            border-radius: 4px;
-            text-align: center;
-        }
-        
-        .summary-card .label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-        
-        .summary-card .value {
-            font-size: 20px;
-            font-weight: 600;
-            color: #2563eb;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
             margin-top: 20px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
@@ -1050,29 +1026,7 @@ class LaporanController {
             }
             $kategoriSummaryHtml .= '</tbody></table>';
         }
-                    margin: 10px 0 8px;
-                    font-size: 14px;
-                    font-weight: 600;
-                    color: #1e40af;
-                }
 
-                .summary-table thead {
-                    background-color: #e0e7ff;
-                    color: #1e40af;
-                }
-
-                .summary-table th {
-                    border-bottom: 1px solid #c7d2fe;
-                }
-
-                .summary-table td {
-                    font-size: 12px;
-                }
-
-            ' . $kategoriSummaryHtml . '
-
-            <table>
-        
         // Generate HTML for PDF
         $html = '<!DOCTYPE html>
 <html>
@@ -1146,6 +1100,30 @@ class LaporanController {
             font-size: 20px;
             font-weight: 600;
             color: #1e40af;
+        }
+
+        .section-title {
+            margin: 10px 0 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .summary-table {
+            margin-top: 10px;
+        }
+
+        .summary-table thead {
+            background-color: #e0e7ff;
+            color: #1e40af;
+        }
+
+        .summary-table th {
+            border-bottom: 1px solid #c7d2fe;
+        }
+
+        .summary-table td {
+            font-size: 12px;
         }
         
         table {
@@ -1313,7 +1291,9 @@ class LaporanController {
                 <div class="value">' . number_format($totalStok, 0, ',', '.') . ' Unit</div>
             </div>
         </div>
-        
+
+        ' . $kategoriSummaryHtml . '
+
         <table>
             <thead>
                 <tr>
