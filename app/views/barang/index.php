@@ -5,28 +5,32 @@
         <h2 class="text-xl sm:text-2xl font-bold text-gray-800">
             <i class="fas fa-box text-blue-600 mr-2"></i>Daftar Barang
         </h2>
-        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div class="w-full flex gap-2">
-                <input
-                    id="searchBarang"
-                    type="text"
-                    placeholder="Cari nama/kode/kategori/satuan..."
-                    class="flex-1 sm:w-72 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button 
-                    id="searchBtn"
-                    onclick="triggerSearch()"
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition text-sm font-medium">
-                    <i class="fas fa-search mr-1"></i>Cari
-                </button>
-            </div>
-            <a href="/barang/export<?= !empty($selected_kategori) ? '?kategori=' . (int)$selected_kategori : '' ?>" class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 sm:py-2 rounded transition">
-                <i class="fas fa-file-excel mr-2"></i>Download Excel
-            </a>
-            <a href="/barang/create" class="w-full sm:w-auto text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded transition">
-                <i class="fas fa-plus mr-2"></i>Tambah Barang
-            </a>
-        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="flex gap-2 mb-4 sm:mb-6">
+        <input
+            id="searchBarang"
+            type="text"
+            placeholder="Cari nama/kode/kategori/satuan..."
+            class="flex-1 border border-gray-300 rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button 
+            id="searchBtn"
+            onclick="triggerSearch()"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded transition text-sm font-medium whitespace-nowrap">
+            <i class="fas fa-search mr-2"></i>Cari
+        </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mb-4 sm:mb-6">
+        <a href="/barang/export<?= !empty($selected_kategori) ? '?kategori=' . (int)$selected_kategori : '' ?>" class="flex-1 sm:flex-none text-center bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded transition text-sm font-medium">
+            <i class="fas fa-file-excel mr-2"></i>Download Excel
+        </a>
+        <a href="/barang/create" class="flex-1 sm:flex-none text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded transition text-sm font-medium">
+            <i class="fas fa-plus mr-2"></i>Tambah Barang
+        </a>
     </div>
 
     <?php if (!empty($kategori)): ?>
