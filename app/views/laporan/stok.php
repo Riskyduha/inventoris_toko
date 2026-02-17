@@ -196,17 +196,17 @@
     </div>
 
     <div class="overflow-x-auto">
-        <table class="min-w-full table-auto">
+        <table class="min-w-full table-fixed">
             <thead class="bg-gray-200">
                 <tr>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">No</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kode Barang</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-12">No</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Kode Barang</th>
                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama Barang</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Satuan</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Harga Beli</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Harga Jual</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Stok</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-20">Satuan</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Harga Beli</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Harga Jual</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-16">Stok</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-24">Status</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
