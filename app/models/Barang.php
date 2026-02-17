@@ -228,18 +228,33 @@ class Barang {
         return $stmt->fetchAll();
     }
 
-    public function searchBarang($keyword) {
-        $query = "SELECT id_barang, kode_barang, nama_barang, satuan, harga_beli, harga_jual, stok 
-                  FROM " . $this->table . " 
-                  WHERE nama_barang LIKE :keyword OR kode_barang LIKE :keyword 
-                  ORDER BY nama_barang ASC 
-                  LIMIT 10";
+    public function searchBarang($keyword, $kategoriId = null) {
+        $where = "WHERE (nama_barang ILIKE :keyword OR kode_barang ILIKE :keyword)";
+        if (!empty($kategoriId)) {
+            $where .= " AND id_kategori = :id_kategori";
+        }
+        
+        $query = "SELECT b.*, k.nama_kategori 
+                  FROM " . $this->table . " b
+                  LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  " . $where . " 
+                  ORDER BY b.nama_barang ASC";
         
         $stmt = $this->conn->prepare($query);
         $keyword = '%' . $keyword . '%';
         $stmt->bindParam(':keyword', $keyword);
+        if (!empty($kategoriId)) {
+            $stmt->bindParam(':id_kategori', $kategoriId, PDO::PARAM_INT);
+        }
         $stmt->execute();
-        return $stmt->fetchAll();
+        $results = $stmt->fetchAll();
+        
+        // Trim spasi
+        foreach ($results as &$row) {
+            $row['nama_barang'] = trim($row['nama_barang']);
+            $row['kode_barang'] = trim($row['kode_barang']);
+        }
+        return $results;
     }
 
     public function getAllKategori() {

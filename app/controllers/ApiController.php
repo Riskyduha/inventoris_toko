@@ -8,19 +8,29 @@ class ApiController {
         $this->barang = new Barang();
     }
 
-    // Search barang by name
+    // Search barang by name with optional kategori filter
     public function searchBarang() {
         header('Content-Type: application/json');
         
         $query = $_GET['q'] ?? '';
+        $kategori = $_GET['kategori'] ?? null;
         
         if (strlen($query) < 1) {
-            echo json_encode([]);
+            echo json_encode(['results' => [], 'total' => 0]);
             return;
         }
 
-        $results = $this->barang->searchBarang($query);
-        echo json_encode($results);
+        // Parse kategori if provided (handle 'all' value)
+        $kategoriId = null;
+        if ($kategori && $kategori !== 'all' && $kategori !== '') {
+            $kategoriId = (int)$kategori;
+        }
+
+        $results = $this->barang->searchBarang($query, $kategoriId);
+        echo json_encode([
+            'results' => $results,
+            'total' => count($results)
+        ]);
     }
 
     // Create barang cepat (dipakai di form pembelian)

@@ -80,8 +80,15 @@
     </div>
     <?php endif; ?>
 
-    <div class="text-sm text-gray-600 mb-4">
-        Menampilkan <span id="visible_count">0</span> dari <span id="total_count">0</span> barang (halaman ini)
+    <div class="flex justify-between items-center mb-4">
+        <div class="text-sm text-gray-600">
+            Menampilkan <span id="visible_count">0</span> dari <span id="total_count">0</span> barang (halaman ini)
+        </div>
+        <div id="search_info_container" class="hidden">
+            <button onclick="clearSearch()" class="text-xs bg-gray-300 hover:bg-gray-400 text-gray-800 px-2 py-1 rounded transition">
+                <i class="fas fa-times mr-1"></i>Clear Search
+            </button>
+        </div>
     </div>
 
     <!-- Mobile Card View -->
@@ -261,6 +268,7 @@ const totalsByKategori = <?= json_encode((object)array_reduce($totals_by_kategor
 const currentPage = <?= (int)$current_page ?>;
 const itemsPerPage = <?= (int)$items_per_page ?>;
 let currentKategori = <?= json_encode($selected_kategori !== null ? (string)$selected_kategori : 'all') ?>;
+const userRole = <?= json_encode($_SESSION['role'] ?? 'kasir') ?>;
 let currentQuery = '';
 
 function filterKategori(katId) {
@@ -289,6 +297,22 @@ function applyFilters() {
     updateRowNumbers();
     updateVisibleCount();
     updateKategoriSummary();
+    
+    // Show/hide pagination
+    const paginationDiv = document.querySelector('.flex.justify-center.items-center.gap-2.mt-6');
+    if (paginationDiv) {
+        paginationDiv.style.display = (query.length === 0) ? '' : 'none';
+    }
+    
+    // Show/hide search info
+    const searchInfoContainer = document.getElementById('search_info_container');
+    if (searchInfoContainer) {
+        if (query.length > 0) {
+            searchInfoContainer.classList.remove('hidden');
+        } else {
+            searchInfoContainer.classList.add('hidden');
+        }
+    }
 }
 
 function updateRowNumbers() {
@@ -357,10 +381,187 @@ function updateKategoriSummary() {
 
 const searchInput = document.getElementById('searchBarang');
 if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
+    searchInput.addEventListener('input', debounce(async (e) => {
         currentQuery = e.target.value || '';
-        applyFilters();
-    });
+        
+        if (currentQuery.trim().length === 0) {
+            // Jika search kosong, kembali ke tampilan normal dengan filter kategori
+            applyFilters();
+            return;
+        }
+        
+        // Lakukan AJAX search ke endpoint /api/search-barang
+        try {
+            const kategoriParam = currentKategori && currentKategori !== 'all' ? `&kategori=${currentKategori}` : '';
+            const response = await fetch(`/api/search-barang?q=${encodeURIComponent(currentQuery)}${kategoriParam}`);
+            const data = await response.json();
+            
+            // Render hasil search
+            renderSearchResults(data.results || []);
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+    }, 300));
+}
+
+// Debounce utility untuk mengurangi API calls
+function debounce(func, delay) {
+    let timeoutId;
+    return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Render hasil search ke halaman
+function renderSearchResults(results) {
+    const container = document.querySelector('.block.md\\:hidden.space-y-3');
+    const tableContainer = document.querySelector('.hidden.md\\:block.overflow-x-auto');
+    
+    if (!container && !tableContainer) return;
+        
+        // Update counter
+        const visibleEl = document.getElementById('visible_count');
+        const totalEl = document.getElementById('total_count');
+        if (visibleEl) visibleEl.textContent = results.length.toLocaleString('id-ID');
+        if (totalEl) totalEl.textContent = results.length.toLocaleString('id-ID');
+            container.innerHTML = results.map((item, index) => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <div class="font-mono text-xs text-gray-500 mb-1">${htmlSpecialChars(item.kode_barang || '-')}</div>
+                            <h3 class="font-bold text-gray-800 mb-1">${htmlSpecialChars(item.nama_barang)}</h3>
+                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-bold">
+                                ${htmlSpecialChars(item.nama_kategori || '-')}
+                            </span>
+                        </div>
+                        <span class="${item.stok <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-xs font-bold">
+                            ${item.stok} ${htmlSpecialChars(item.satuan || 'pcs')}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
+                        ${userRole === 'admin' ? `
+                        <div>
+                            <div class="text-gray-500 text-xs">Harga Beli</div>
+                            <div class="font-semibold text-gray-800">${formatRupiah(item.harga_beli)}</div>
+                        </div>
+                        ` : ''}
+                        <div>
+                            <div class="text-gray-500 text-xs">Harga Jual</div>
+                            <div class="font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="/barang/edit/${item.id_barang}" class="flex-1 text-center bg-yellow-100 text-yellow-700 hover:bg-yellow-600 hover:text-white py-2 rounded transition text-sm font-medium">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </a>
+                        <button onclick="confirmDelete(${item.id_barang})" class="flex-1 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white py-2 rounded transition text-sm font-medium">
+                            <i class="fas fa-trash mr-1"></i>Hapus
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+    
+    // Desktop table view
+    if (tableContainer) {
+        if (results.length === 0) {
+            tableContainer.innerHTML = '<div class="text-center py-8 text-gray-400 italic">Tidak ada barang yang cocok dengan pencarian</div>';
+        } else {
+            const tableHTML = `
+                <table class="w-full border border-gray-300 rounded-lg">
+                    <thead class="bg-blue-100 border-b-2 border-blue-300">
+                        <tr>
+                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-12">No</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-20">Kode</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-40">Nama Barang</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
+                            ${userRole === 'admin' ? `<th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>` : ''}
+                            <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        ${results.map((item, index) => `
+                            <tr class="hover:bg-blue-50 transition duration-200">
+                                <td class="px-6 py-4 text-center text-sm font-medium text-gray-700">${index + 1}</td>
+                                <td class="px-6 py-4 font-mono text-sm text-gray-600">${htmlSpecialChars(item.kode_barang || '-')}</td>
+                                <td class="px-6 py-4 font-medium text-gray-800">${htmlSpecialChars(item.nama_barang)}</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
+                                        ${htmlSpecialChars(item.nama_kategori || '-')}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium">${htmlSpecialChars(item.satuan || 'pcs')}</td>
+                                ${userRole === 'admin' ? `<td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_beli)}</td>` : ''}
+                                <td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="${item.stok <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-xs font-bold">
+                                        ${item.stok}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="flex justify-center gap-3">
+                                        <a href="/barang/edit/${item.id_barang}" class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded transition">
+                                            <i class="fas fa-edit text-sm"></i>
+                                        </a>
+                                        <a href="/barang/delete/${item.id_barang}" 
+                                           onclick="return confirm('Yakin ingin menghapus barang ini?')" 
+                                           class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded transition">
+                                            <i class="fas fa-trash text-sm"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            tableContainer.innerHTML = tableHTML;
+        }
+    }
+    
+    // Update kontrol pagination - sembunyikan saat search
+    const paginationDiv = document.querySelector('.flex.justify-center.items-center.gap-2.mt-6');
+    if (paginationDiv) {
+        paginationDiv.style.display = 'none';
+    }
+    
+    // Tampilkan tombol clear search
+    const searchInfoContainer = document.getElementById('search_info_container');
+    if (searchInfoContainer) {
+        searchInfoContainer.classList.remove('hidden');
+    }
+}
+
+// Helper untuk escape HTML
+function htmlSpecialChars(str) {
+    if (!str) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return str.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Clear search dan reload halaman normal
+function clearSearch() {
+    const searchInput = document.getElementById('searchBarang');
+    if (searchInput) {
+        searchInput.value = '';
+        currentQuery = '';
+    }
+    
+    // Reload halaman untuk kembali ke normal view (pagination normal)
+    const url = new URL(window.location);
+    url.searchParams.delete('search'); // Jika ada param search, hapus
+    window.location.href = url.toString();
 }
 
 // Init summary & counts
