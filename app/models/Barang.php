@@ -24,7 +24,6 @@ class Barang {
     public function getAll() {
         $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
-                  WHERE b.stok > 0
                   ORDER BY b.created_at DESC, b.id_barang DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -41,7 +40,6 @@ class Barang {
     public function getAllWithPagination($offset, $limit) {
         $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
-                  WHERE b.stok > 0
                   ORDER BY b.created_at DESC, b.id_barang DESC
                   LIMIT :limit OFFSET :offset";
         $stmt = $this->conn->prepare($query);
@@ -58,7 +56,7 @@ class Barang {
     }
 
     public function countAll() {
-        $query = "SELECT COUNT(*) as total FROM " . $this->table . " WHERE stok > 0";
+        $query = "SELECT COUNT(*) as total FROM " . $this->table;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $row = $stmt->fetch();
@@ -70,8 +68,7 @@ class Barang {
                                         COALESCE(SUM(harga_beli * stok), 0) as total_harga_beli,
                                         COALESCE(SUM(harga_jual * stok), 0) as total_harga_jual,
                                         COALESCE(SUM(stok), 0) as total_stok
-                                    FROM " . $this->table . "
-                                    WHERE stok > 0";
+                                    FROM " . $this->table;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetch();
