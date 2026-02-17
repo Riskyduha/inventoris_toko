@@ -796,7 +796,7 @@ async function filterByKategori(kategoriId) {
     // Load barang
     try {
         const kategoriParam = kategoriId !== 'all' ? `&kategori=${kategoriId}` : '';
-        const url = `/api/search-barang?q=${kategoriParam}&page=1`;
+        const url = `/api/search-barang?q=&page=1${kategoriParam}`;
         console.log('Loading kategori:', url);
         const response = await fetch(url);
         const data = await response.json();
