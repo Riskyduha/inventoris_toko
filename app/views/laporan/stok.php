@@ -235,7 +235,7 @@
                 <?php else: ?>
                     <?php foreach ($stok as $index => $item): ?>
                         <tr class="hover:bg-gray-50" data-kategori-id="<?= $item['id_kategori'] ?>" data-beli="<?= (float)$item['harga_beli'] ?>" data-jual="<?= (float)$item['harga_jual'] ?>" data-stok="<?= (int)$item['stok'] ?>">
-                            <td class="px-4 py-3"><?= (($current_page - 1) * 10) + $index + 1 ?></td>
+                            <td class="px-4 py-3"><?= (($current_page - 1) * ($items_per_page ?? 25)) + $index + 1 ?></td>
                             <td class="px-4 py-3 font-mono text-sm text-gray-700"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
                             <td class="px-4 py-3 font-medium truncate max-w-xs" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
                             <td class="px-4 py-3 text-center text-gray-700 font-semibold">

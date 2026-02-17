@@ -61,7 +61,7 @@ class Laporan {
     }
 
     public function getLaporanStok() {
-        $query = "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.id_kategori = k.id_kategori ORDER BY b.stok ASC";
+        $query = "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.id_kategori = k.id_kategori ORDER BY b.nama_barang ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll();
@@ -95,7 +95,7 @@ class Laporan {
     }
 
     public function getLaporanStokRange($start, $end) {
-        $query = "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.id_kategori = k.id_kategori WHERE DATE(b.updated_at) BETWEEN :start AND :end ORDER BY b.stok ASC";
+        $query = "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.id_kategori = k.id_kategori WHERE DATE(b.updated_at) BETWEEN :start AND :end ORDER BY b.nama_barang ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':start', $start);
         $stmt->bindParam(':end', $end);
