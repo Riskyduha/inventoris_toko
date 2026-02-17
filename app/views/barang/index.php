@@ -650,7 +650,7 @@ function htmlSpecialChars(str) {
     return str.replace(/[&<>"']/g, m => map[m]);
 }
 
-// Clear search dan reload halaman normal
+// Clear search dan reload semua barang
 function clearSearch() {
     const searchInput = document.getElementById('searchBarang');
     if (searchInput) {
@@ -658,17 +658,36 @@ function clearSearch() {
         currentQuery = '';
     }
     
-    // Remove search pagination if exists
-    const searchPagination = document.getElementById('search_pagination');
-    if (searchPagination) {
-        searchPagination.remove();
-    }
-    
-    applyFilters();
+    // Load all barang again
+    loadAllBarang(1);
 }
 
-// Init summary & counts
+// Init summary & counts dan load all barang di search results
 applyFilters();
+
+// Load semua barang (page 1) di search results container on initial load
+document.addEventListener('DOMContentLoaded', function() {
+    // Delay sedikit untuk memastikan semua elemen sudah ready
+    setTimeout(function() {
+        loadAllBarang(1);
+    }, 100);
+});
+
+// Load all barang dengan pagination
+async function loadAllBarang(page = 1) {
+    try {
+        const url = `/api/search-barang?q=&page=${page}`;
+        console.log('Loading all barang:', url);
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log('All barang loaded:', data);
+        
+        currentQuery = ''; // Clear search query
+        renderSearchResults(data.results || [], data);
+    } catch (error) {
+        console.error('Error loading barang:', error);
+    }
+}
 </script>
 
 <?php 

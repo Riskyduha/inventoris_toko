@@ -9,6 +9,7 @@ class ApiController {
     }
 
     // Search barang by name with optional kategori filter and pagination
+    // If query is empty, returns all barang
     public function searchBarang() {
         header('Content-Type: application/json');
         
@@ -16,17 +17,6 @@ class ApiController {
         $kategori = $_GET['kategori'] ?? null;
         $page = max(1, (int)($_GET['page'] ?? 1));
         $itemsPerPage = 25;
-        
-        if (strlen($query) < 1) {
-            echo json_encode([
-                'results' => [],
-                'total' => 0,
-                'page' => 1,
-                'per_page' => $itemsPerPage,
-                'total_pages' => 0
-            ]);
-            return;
-        }
 
         // Parse kategori if provided (handle 'all' value)
         $kategoriId = null;
@@ -34,8 +24,15 @@ class ApiController {
             $kategoriId = (int)$kategori;
         }
 
-        // Get total count first
-        $allResults = $this->barang->searchBarang($query, $kategoriId);
+        // If query is empty, get all barang. Otherwise search by keyword
+        if (strlen($query) < 1) {
+            // Get all barang (not just search results)
+            $allResults = $this->barang->getAll($kategoriId);
+        } else {
+            // Search by keyword
+            $allResults = $this->barang->searchBarang($query, $kategoriId);
+        }
+        
         $totalResults = count($allResults);
         $totalPages = (int)ceil($totalResults / $itemsPerPage);
         
