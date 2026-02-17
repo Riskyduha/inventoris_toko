@@ -728,11 +728,6 @@ async function loadAllBarang(page = 1) {
     }
 }
 
-// Format rupiah helper function
-function formatRupiah(num) {
-    return 'Rp ' + (num || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
-
 // Filter barang by kategori
 async function filterByKategori(kategoriId) {
     // Update currentKategori variable
