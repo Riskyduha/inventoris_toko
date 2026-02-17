@@ -37,15 +37,15 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div class="border-2 border-blue-300 rounded-lg p-3 sm:p-4 bg-blue-50 text-center">
             <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Beli</p>
-            <p class="text-lg sm:text-2xl font-bold text-blue-700" id="sum_beli">Rp 0</p>
+            <p class="text-lg sm:text-2xl font-bold text-blue-700" id="sum_beli"><?= formatRupiah($totals['total_harga_beli'] ?? 0) ?></p>
         </div>
         <div class="border-2 border-green-300 rounded-lg p-3 sm:p-4 bg-green-50 text-center">
             <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual</p>
-            <p class="text-lg sm:text-2xl font-bold text-green-700" id="sum_jual">Rp 0</p>
+            <p class="text-lg sm:text-2xl font-bold text-green-700" id="sum_jual"><?= formatRupiah($totals['total_harga_jual'] ?? 0) ?></p>
         </div>
         <div class="border-2 border-purple-300 rounded-lg p-3 sm:p-4 bg-purple-50 text-center">
             <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok</p>
-            <p class="text-lg sm:text-2xl font-bold text-purple-700" id="sum_stok">0</p>
+            <p class="text-lg sm:text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
         </div>
     </div>
 
@@ -238,7 +238,6 @@ function applyFilters() {
     });
 
     updateRowNumbers();
-    updateSummary();
     updateVisibleCount();
 }
 
@@ -250,27 +249,6 @@ function updateRowNumbers() {
             noCell.textContent = ((currentPage - 1) * itemsPerPage) + index + 1;
         }
     });
-}
-
-function formatRupiah(num) {
-    return 'Rp ' + (num || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
-}
-
-function updateSummary() {
-    let sumBeli = 0;
-    let sumJual = 0;
-    let sumStok = 0;
-
-    document.querySelectorAll('tbody tr[data-item="barang-row"]').forEach(row => {
-        if (row.style.display === 'none') return;
-        sumBeli += parseFloat(row.getAttribute('data-beli')) || 0;
-        sumJual += parseFloat(row.getAttribute('data-jual')) || 0;
-        sumStok += parseFloat(row.getAttribute('data-stok')) || 0;
-    });
-
-    document.getElementById('sum_beli').textContent = formatRupiah(sumBeli);
-    document.getElementById('sum_jual').textContent = formatRupiah(sumJual);
-    document.getElementById('sum_stok').textContent = (sumStok || 0).toLocaleString('id-ID');
 }
 
 function updateVisibleCount() {

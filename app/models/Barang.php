@@ -65,6 +65,18 @@ class Barang {
         return (int)($row['total'] ?? 0);
     }
 
+    public function getTotals() {
+        $query = "SELECT \
+                    COALESCE(SUM(harga_beli), 0) as total_harga_beli, \
+                    COALESCE(SUM(harga_jual), 0) as total_harga_jual, \
+                    COALESCE(SUM(stok), 0) as total_stok \
+                  FROM " . $this->table . "
+                  WHERE stok > 0";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
     public function getById($id) {
         $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
