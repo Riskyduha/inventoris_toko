@@ -17,8 +17,25 @@ class PenjualanController {
     }
 
     public function index() {
-        $tanggal_awal = $_GET['tanggal_awal'] ?? '';
-        $tanggal_akhir = $_GET['tanggal_akhir'] ?? '';
+        $tanggal_awal_input = isset($_GET['tanggal_awal']) ? trim($_GET['tanggal_awal']) : '';
+        $tanggal_akhir_input = isset($_GET['tanggal_akhir']) ? trim($_GET['tanggal_akhir']) : '';
+        $hasCustomFilter = ($tanggal_awal_input !== '' || $tanggal_akhir_input !== '');
+
+        $tanggal_awal = $tanggal_awal_input;
+        $tanggal_akhir = $tanggal_akhir_input;
+
+        if ($tanggal_awal !== '' && $tanggal_akhir === '') {
+            $tanggal_akhir = $tanggal_awal;
+        } elseif ($tanggal_awal === '' && $tanggal_akhir !== '') {
+            $tanggal_awal = $tanggal_akhir;
+        }
+
+        if (!$hasCustomFilter) {
+            $today = date('Y-m-d');
+            $tanggal_awal = $today;
+            $tanggal_akhir = $today;
+        }
+
         $page = max(1, (int)($_GET['page'] ?? 1));
         $items_per_page = 10;
         $offset = ($page - 1) * $items_per_page;
@@ -34,6 +51,10 @@ class PenjualanController {
         $total_pages = ceil($total_penjualan / $items_per_page);
         $current_page = $page;
         
+        $filter_tanggal_awal = $tanggal_awal;
+        $filter_tanggal_akhir = $tanggal_akhir;
+        $is_default_penjualan_today = !$hasCustomFilter;
+
         require_once __DIR__ . '/../views/penjualan/index.php';
     }
 

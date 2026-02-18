@@ -5,6 +5,14 @@
     foreach ($penjualan as $p) {
         $grandTotal += (float)($p['total_harga'] ?? 0);
     }
+
+    $paginationQuery = '';
+    if (!empty($filter_tanggal_awal ?? '')) {
+        $paginationQuery .= '&tanggal_awal=' . rawurlencode($filter_tanggal_awal);
+    }
+    if (!empty($filter_tanggal_akhir ?? '')) {
+        $paginationQuery .= '&tanggal_akhir=' . rawurlencode($filter_tanggal_akhir);
+    }
 ?>
 
 <div class="bg-white rounded-lg shadow-md p-6">
@@ -24,9 +32,9 @@
                 <label class="font-semibold text-gray-700 text-sm flex items-center gap-2">
                     <i class="fas fa-calendar text-blue-600"></i>Filter Tanggal:
                 </label>
-                <input type="date" name="tanggal_awal" value="<?= htmlspecialchars($_GET['tanggal_awal'] ?? '') ?>" class="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="date" name="tanggal_awal" value="<?= htmlspecialchars($filter_tanggal_awal ?? '') ?>" class="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <span class="text-gray-600 font-medium">-</span>
-                <input type="date" name="tanggal_akhir" value="<?= htmlspecialchars($_GET['tanggal_akhir'] ?? '') ?>" class="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="date" name="tanggal_akhir" value="<?= htmlspecialchars($filter_tanggal_akhir ?? '') ?>" class="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition text-sm font-semibold">
                     <i class="fas fa-search mr-2"></i>Cari
                 </button>
@@ -124,11 +132,11 @@
     <?php if ($total_pages > 1): ?>
     <div class="flex justify-center items-center gap-2 mt-6">
         <?php if ($current_page > 1): ?>
-            <a href="/penjualan?page=1<?= !empty($_GET['tanggal_awal']) ? '&tanggal_awal=' . htmlspecialchars($_GET['tanggal_awal']) : '' ?><?= !empty($_GET['tanggal_akhir']) ? '&tanggal_akhir=' . htmlspecialchars($_GET['tanggal_akhir']) : '' ?>" 
+            <a href="/penjualan?page=1<?= htmlspecialchars($paginationQuery, ENT_QUOTES, 'UTF-8') ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Pertama
             </a>
-            <a href="/penjualan?page=<?= $current_page - 1 ?><?= !empty($_GET['tanggal_awal']) ? '&tanggal_awal=' . htmlspecialchars($_GET['tanggal_awal']) : '' ?><?= !empty($_GET['tanggal_akhir']) ? '&tanggal_akhir=' . htmlspecialchars($_GET['tanggal_akhir']) : '' ?>" 
+            <a href="/penjualan?page=<?= $current_page - 1 ?><?= htmlspecialchars($paginationQuery, ENT_QUOTES, 'UTF-8') ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Sebelumnya
             </a>
@@ -147,7 +155,7 @@
             <?php if ($i == $current_page): ?>
                 <span class="px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold"><?= $i ?></span>
             <?php else: ?>
-                <a href="/penjualan?page=<?= $i ?><?= !empty($_GET['tanggal_awal']) ? '&tanggal_awal=' . htmlspecialchars($_GET['tanggal_awal']) : '' ?><?= !empty($_GET['tanggal_akhir']) ? '&tanggal_akhir=' . htmlspecialchars($_GET['tanggal_akhir']) : '' ?>" 
+                <a href="/penjualan?page=<?= $i ?><?= htmlspecialchars($paginationQuery, ENT_QUOTES, 'UTF-8') ?>" 
                    class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                     <?= $i ?>
                 </a>
@@ -159,11 +167,11 @@
         <?php endif; ?>
 
         <?php if ($current_page < $total_pages): ?>
-            <a href="/penjualan?page=<?= $current_page + 1 ?><?= !empty($_GET['tanggal_awal']) ? '&tanggal_awal=' . htmlspecialchars($_GET['tanggal_awal']) : '' ?><?= !empty($_GET['tanggal_akhir']) ? '&tanggal_akhir=' . htmlspecialchars($_GET['tanggal_akhir']) : '' ?>" 
+            <a href="/penjualan?page=<?= $current_page + 1 ?><?= htmlspecialchars($paginationQuery, ENT_QUOTES, 'UTF-8') ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Berikutnya<i class="fas fa-chevron-right ml-1"></i>
             </a>
-            <a href="/penjualan?page=<?= $total_pages ?><?= !empty($_GET['tanggal_awal']) ? '&tanggal_awal=' . htmlspecialchars($_GET['tanggal_awal']) : '' ?><?= !empty($_GET['tanggal_akhir']) ? '&tanggal_akhir=' . htmlspecialchars($_GET['tanggal_akhir']) : '' ?>" 
+            <a href="/penjualan?page=<?= $total_pages ?><?= htmlspecialchars($paginationQuery, ENT_QUOTES, 'UTF-8') ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Terakhir<i class="fas fa-chevron-right ml-1"></i>
             </a>
