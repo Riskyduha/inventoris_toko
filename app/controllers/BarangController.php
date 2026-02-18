@@ -35,8 +35,19 @@ class BarangController {
 
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $kodeBarang = trim($_POST['kode_barang'] ?? '');
+            if ($kodeBarang === '') {
+                $_SESSION['error'] = 'Kode barang wajib diisi.';
+                redirect('/barang/create');
+            }
+
+            if ($this->model->existsByKode($kodeBarang)) {
+                $_SESSION['error'] = 'Kode barang sudah digunakan, silakan gunakan kode lain.';
+                redirect('/barang/create');
+            }
+
             $data = [
-                'kode_barang' => $_POST['kode_barang'],
+                'kode_barang' => $kodeBarang,
                 'nama_barang' => $_POST['nama_barang'],
                 'id_kategori' => $_POST['id_kategori'],
                 'satuan' => $_POST['satuan'] ?? 'pcs',
@@ -68,8 +79,19 @@ class BarangController {
 
     public function update($id) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $kodeBarang = trim($_POST['kode_barang'] ?? '');
+            if ($kodeBarang === '') {
+                $_SESSION['error'] = 'Kode barang wajib diisi.';
+                redirect('/barang/edit/' . $id);
+            }
+
+            if ($this->model->existsByKode($kodeBarang, $id)) {
+                $_SESSION['error'] = 'Kode barang sudah digunakan oleh barang lain.';
+                redirect('/barang/edit/' . $id);
+            }
+
             $data = [
-                'kode_barang' => $_POST['kode_barang'],
+                'kode_barang' => $kodeBarang,
                 'nama_barang' => $_POST['nama_barang'],
                 'id_kategori' => $_POST['id_kategori'],
                 'satuan' => $_POST['satuan'] ?? 'pcs',

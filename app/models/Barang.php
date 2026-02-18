@@ -126,6 +126,22 @@ class Barang {
         return $stmt->fetch();
     }
 
+    public function existsByKode($kodeBarang, $excludeId = null) {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table . " WHERE kode_barang = :kode_barang";
+        if (!empty($excludeId)) {
+            $query .= " AND id_barang <> :exclude_id";
+        }
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':kode_barang', $kodeBarang);
+        if (!empty($excludeId)) {
+            $stmt->bindParam(':exclude_id', $excludeId, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        $row = $stmt->fetch();
+        return ((int)($row['total'] ?? 0)) > 0;
+    }
+
     public function create($data) {
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
         $query = "INSERT INTO " . $this->table . " 
