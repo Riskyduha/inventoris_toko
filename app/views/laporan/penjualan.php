@@ -112,7 +112,7 @@
                             <td class="px-4 py-3 text-left font-semibold"><?= $item['jumlah'] ?></td>
                             <td class="px-4 py-3 text-center text-gray-600"><?= htmlspecialchars($item['satuan'] ?? '-') ?></td>
                             <td class="px-4 py-3 text-right"><?= formatRupiah($item['harga_satuan']) ?></td>
-                            <td class="px-4 py-3 text-right font-semibold text-blue-600"><?= formatRupiah($item['total_harga']) ?></td>
+                            <td class="px-4 py-3 text-left font-semibold text-blue-600"><?= formatRupiah($item['total_harga']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
