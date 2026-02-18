@@ -178,7 +178,7 @@
     </div>
 
     <div id="kategori_summary" class="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6 text-sm hidden">
-        <div class="border rounded-lg p-3 bg-purple-50/50">
+        <div class="border rounded-lg p-3 bg-purple-50/50 text-center">
             <p class="text-gray-600">Total Stok (Kategori: <span id="kategori_name">-</span>)</p>
             <p class="text-lg font-semibold text-purple-700" id="kategori_stok">0</p>
         </div>
@@ -200,15 +200,15 @@
     </div>
 
     <div id="kategori_summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 text-sm hidden">
-        <div class="border rounded-lg p-3 bg-blue-50/50">
+        <div class="border rounded-lg p-3 bg-blue-50/50 text-center">
             <p class="text-gray-600">Total Harga Beli (Kategori: <span id="kategori_name">-</span>)</p>
             <p class="text-lg font-semibold text-blue-700" id="kategori_beli">Rp 0</p>
         </div>
-        <div class="border rounded-lg p-3 bg-green-50/50">
+        <div class="border rounded-lg p-3 bg-green-50/50 text-center">
             <p class="text-gray-600">Total Harga Jual (Kategori)</p>
             <p class="text-lg font-semibold text-green-700" id="kategori_jual">Rp 0</p>
         </div>
-        <div class="border rounded-lg p-3 bg-purple-50/50">
+        <div class="border rounded-lg p-3 bg-purple-50/50 text-center">
             <p class="text-gray-600">Total Stok (Kategori)</p>
             <p class="text-lg font-semibold text-purple-700" id="kategori_stok">0</p>
         </div>
