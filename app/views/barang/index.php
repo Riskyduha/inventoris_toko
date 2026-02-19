@@ -112,7 +112,6 @@
             <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 mb-3">
                 <i class="fas fa-money-bill-wave"></i>
             </span>
-            <p class="text-xs font-semibold uppercase tracking-wide text-blue-500">Total Harga Beli</p>
             <p class="text-2xl font-bold text-blue-700" id="sum_beli"><?= formatRupiah($totals['total_harga_beli'] ?? 0) ?></p>
         </div>
         <div class="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-4 sm:p-5 text-center">
@@ -806,23 +805,23 @@ function renderSearchResults(results, apiResponse = {}) {
     
     // Generate pagination controls for search results if needed
     if (totalPages > 1) {
+        const trimmedQuery = (currentQuery || '').trim();
+        const escapedQuery = (currentQuery || '').replace(/'/g, "\\'");
+        const handlerPrefix = trimmedQuery.length > 0
+            ? `performSearch('${escapedQuery}', `
+            : 'loadAllBarang(';
+
         let paginationHtml = '<div class="flex justify-center items-center gap-2 mt-6" id="search_pagination">';
         
-        // First page button
         if (currentPage > 1) {
-            paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', 1)" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+            paginationHtml += `<button onclick="${handlerPrefix}1)" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Pertama
             </button>`;
-        }
-        
-        // Previous page button
-        if (currentPage > 1) {
-            paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', ${currentPage - 1})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+            paginationHtml += `<button onclick="${handlerPrefix}${currentPage - 1})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-up mr-1"></i>Sebelumnya
             </button>`;
         }
         
-        // Page numbers
         const startPage = Math.max(1, currentPage - 2);
         const endPage = Math.min(totalPages, currentPage + 2);
         
@@ -834,7 +833,7 @@ function renderSearchResults(results, apiResponse = {}) {
             if (i === currentPage) {
                 paginationHtml += `<button class="px-3 py-2 rounded bg-blue-600 text-white font-semibold text-sm">${i}</button>`;
             } else {
-                paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', ${i})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">${i}</button>`;
+                paginationHtml += `<button onclick="${handlerPrefix}${i})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">${i}</button>`;
             }
         }
         
@@ -842,28 +841,27 @@ function renderSearchResults(results, apiResponse = {}) {
             paginationHtml += '<span class="text-gray-500">...</span>';
         }
         
-        // Next page button
         if (currentPage < totalPages) {
-            paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', ${currentPage + 1})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+            paginationHtml += `<button onclick="${handlerPrefix}${currentPage + 1})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Selanjutnya <i class="fas fa-chevron-down ml-1"></i>
             </button>`;
-        }
-        
-        // Last page button
-        if (currentPage < totalPages) {
-            paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', ${totalPages})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+            paginationHtml += `<button onclick="${handlerPrefix}${totalPages})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Terakhir <i class="fas fa-chevron-right ml-1"></i>
             </button>`;
         }
         
         paginationHtml += '</div>';
         
-        // Insert pagination after search container or as sibling
         const existingPagination = document.getElementById('search_pagination');
         if (existingPagination) {
             existingPagination.remove();
         }
         searchContainer.insertAdjacentHTML('afterend', paginationHtml);
+    } else {
+        const existingPagination = document.getElementById('search_pagination');
+        if (existingPagination) {
+            existingPagination.remove();
+        }
     }
     
     // Search info badge already handled earlier
@@ -924,13 +922,14 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load all barang dengan pagination
 async function loadAllBarang(page = 1) {
     try {
-        const url = `/api/search-barang?q=&page=${page}`;
+        const kategoriParam = currentKategori && currentKategori !== 'all' ? `&kategori=${currentKategori}` : '';
+        const url = `/api/search-barang?q=&page=${page}${kategoriParam}`;
         console.log('Loading all barang:', url);
         const response = await fetch(url);
         const data = await response.json();
         console.log('All barang loaded:', data);
         
-        currentQuery = ''; // Clear search query
+        currentQuery = ''; // Clear search query to mark non-search mode
         renderSearchResults(data.results || [], data);
     } catch (error) {
         console.error('Error loading barang:', error);
