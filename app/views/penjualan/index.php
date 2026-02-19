@@ -164,12 +164,18 @@
                             </td>
                             <td class="px-6 py-4 text-right align-middle">
                                 <span class="inline-flex items-center justify-end gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-600">
-                                    <i class="fas fa-coins"></i><?= formatRupiah($item['total_harga']) ?>
+                                    <i class="fas fa-coins"></i>
+                                    <span class="not-italic">
+                                        <?= preg_replace('/^Rp\s*(\d+)/', '<span style="font-size:0.9em;display:inline;vertical-align:middle;">Rp</span> <span style="font-size:1.1em;display:inline;vertical-align:middle;">$1</span>', formatRupiah($item['total_harga'])) ?>
+                                    </span>
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <span class="inline-flex items-center justify-end gap-2 rounded-full px-3 py-1 text-sm font-semibold <?= $item['kembalian'] >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' ?>">
-                                    <i class="fas <?= $item['kembalian'] >= 0 ? 'fa-arrow-circle-up' : 'fa-arrow-circle-down' ?>"></i><?= formatRupiah($item['kembalian']) ?>
+                                    <i class="fas <?= $item['kembalian'] >= 0 ? 'fa-arrow-circle-up' : 'fa-arrow-circle-down' ?>"></i>
+                                    <span class="not-italic">
+                                        <?= preg_replace('/^Rp\s*(\d+)/', '<span style="font-size:0.9em;display:inline;vertical-align:middle;">Rp</span> <span style="font-size:1.1em;display:inline;vertical-align:middle;">$1</span>', formatRupiah($item['kembalian'])) ?>
+                                    </span>
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center">
