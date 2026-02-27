@@ -37,11 +37,11 @@ RUN echo "listen = 9000" >> /usr/local/etc/php-fpm.d/www.conf && \
 RUN touch /var/log/php-fpm.log && \
     chmod 755 /app/logs
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/ || exit 1
+# Health check (works for Railway and regular server deployments)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -fsS "http://127.0.0.1:${PORT:-80}/login" >/dev/null || exit 1
 
-# Expose port (Railway uses PORT environment variable)
+# Expose container HTTP port
 EXPOSE 80
 
 # Start Nginx + PHP-FPM

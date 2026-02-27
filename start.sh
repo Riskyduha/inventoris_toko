@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-# Get PORT from Railway environment or default to 80
+# Get PORT from env or default to 80
 PORT=${PORT:-80}
 
 echo "=================================================="
-echo "Starting Toko Inventori Server"
+echo "Starting Inventoris Toko Server"
 echo "=================================================="
 echo "Port: $PORT"
 echo "Date: $(date)"

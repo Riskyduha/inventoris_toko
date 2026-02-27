@@ -108,9 +108,19 @@ class Database {
             require_once __DIR__ . '/migrate.php';
             runMigration($this->conn);
 
-            // Seed initial data if needed
-            require_once __DIR__ . '/seed.php';
-            seedIfNeeded($this->conn);
+            // Seed initial data:
+            // - Development: run automatically
+            // - Production: run only when SEED_FORCE=true
+            $appEnv = strtolower((string)$this->getEnvValue('APP_ENV', 'development'));
+            $seedForce = strtolower((string)$this->getEnvValue('SEED_FORCE', 'false')) === 'true';
+            $shouldSeed = ($appEnv !== 'production') || $seedForce;
+
+            if ($shouldSeed) {
+                require_once __DIR__ . '/seed.php';
+                seedIfNeeded($this->conn);
+            } else {
+                error_log("Seed skipped (APP_ENV=production, SEED_FORCE=false)");
+            }
         } catch(PDOException $exception) {
             // Jangan tampilkan detail error di production
             if ($this->getEnvValue('APP_DEBUG') === 'true') {

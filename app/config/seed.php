@@ -2,9 +2,24 @@
 
 function seedIfNeeded(PDO $conn): void
 {
-    $force = (getenv('SEED_FORCE') === 'true');
-    
-    error_log("Seed check started (FORCE=" . ($force ? 'true' : 'false') . ")");
+    $getEnv = function(string $key, ?string $default = null): ?string {
+        $val = getenv($key);
+        if ($val !== false && $val !== '') {
+            return $val;
+        }
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return $_ENV[$key];
+        }
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            return $_SERVER[$key];
+        }
+        return $default;
+    };
+
+    $appEnv = strtolower((string)$getEnv('APP_ENV', 'development'));
+    $isProduction = ($appEnv === 'production');
+    $force = (strtolower((string)$getEnv('SEED_FORCE', 'false')) === 'true');
+    error_log("Seed check started (APP_ENV=$appEnv, FORCE=" . ($force ? 'true' : 'false') . ")");
 
     try {
         $stmt = $conn->query("SELECT COUNT(*) FROM users");
@@ -31,7 +46,12 @@ function seedIfNeeded(PDO $conn): void
             ]);
         }
 
-        // users (default: admin/admin123, kasir/kasir123)
+        // users
+        // Production: password wajib dari .env (no hardcoded default)
+        // Development: fallback default tetap tersedia agar local setup mudah
+        $adminPassword = (string)$getEnv('SEED_ADMIN_PASSWORD', $isProduction ? null : 'admin123');
+        $kasirPassword = (string)$getEnv('SEED_KASIR_PASSWORD', $isProduction ? null : 'kasir123');
+
         $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
         $stmt->execute(['admin']);
         $adminExists = (int)$stmt->fetchColumn() > 0;
@@ -39,41 +59,39 @@ function seedIfNeeded(PDO $conn): void
         $kasirExists = (int)$stmt->fetchColumn() > 0;
 
         if (!$adminExists) {
-            $stmtInsert = $conn->prepare("INSERT INTO users (username, password, role, nama) VALUES (?, ?, ?, ?)");
-            $stmtInsert->execute([
-                'admin',
-                password_hash('admin123', PASSWORD_DEFAULT),
-                'admin',
-                'Administrator'
-            ]);
-            error_log("Created admin user");
+            if ($adminPassword === '') {
+                error_log("Skipped admin seed: SEED_ADMIN_PASSWORD is empty");
+            } else {
+                $stmtInsert = $conn->prepare("INSERT INTO users (username, password, role, nama) VALUES (?, ?, ?, ?)");
+                $stmtInsert->execute([
+                    'admin',
+                    password_hash($adminPassword, PASSWORD_DEFAULT),
+                    'admin',
+                    'Administrator'
+                ]);
+                error_log("Created admin user");
+            }
         } else {
-            // Always update password to ensure it's correct (password_hash creates new hash each time)
-            $stmtUpdate = $conn->prepare("UPDATE users SET password = ? WHERE username = ?");
-            $stmtUpdate->execute([
-                password_hash('admin123', PASSWORD_DEFAULT),
-                'admin'
-            ]);
-            error_log("Updated admin password");
+            // Security: never overwrite existing password automatically
+            error_log("Admin user already exists, skip password reset");
         }
 
         if (!$kasirExists) {
-            $stmtInsert = $conn->prepare("INSERT INTO users (username, password, role, nama) VALUES (?, ?, ?, ?)");
-            $stmtInsert->execute([
-                'kasir',
-                password_hash('kasir123', PASSWORD_DEFAULT),
-                'kasir',
-                'Kasir Utama'
-            ]);
-            error_log("Created kasir user");
+            if ($kasirPassword === '') {
+                error_log("Skipped kasir seed: SEED_KASIR_PASSWORD is empty");
+            } else {
+                $stmtInsert = $conn->prepare("INSERT INTO users (username, password, role, nama) VALUES (?, ?, ?, ?)");
+                $stmtInsert->execute([
+                    'kasir',
+                    password_hash($kasirPassword, PASSWORD_DEFAULT),
+                    'kasir',
+                    'Kasir Utama'
+                ]);
+                error_log("Created kasir user");
+            }
         } else {
-            // Always update password to ensure it's correct
-            $stmtUpdate = $conn->prepare("UPDATE users SET password = ? WHERE username = ?");
-            $stmtUpdate->execute([
-                password_hash('kasir123', PASSWORD_DEFAULT),
-                'kasir'
-            ]);
-            error_log("Updated kasir password");
+            // Security: never overwrite existing password automatically
+            error_log("Kasir user already exists, skip password reset");
         }
 
         // kategori (insert if empty)
