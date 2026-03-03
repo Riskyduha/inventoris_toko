@@ -42,6 +42,9 @@ function runMigration(PDO $conn): void
             return;
         }
 
+        // Hapus komentar baris tunggal SQL agar statement CREATE TABLE tidak ikut ter-skip
+        $schema = preg_replace('/^\s*--.*$/m', '', $schema);
+
         // Parse dan execute statements
         $statements = array_filter(array_map('trim', preg_split('/;/', $schema)));
         error_log("→ Migration: Found " . count($statements) . " statements to execute");
@@ -51,7 +54,7 @@ function runMigration(PDO $conn): void
         $errors = [];
         
         foreach ($statements as $index => $statement) {
-            if (empty($statement) || preg_match('/^(CREATE DATABASE|\\\\c|--)/i', $statement)) {
+            if (empty($statement) || preg_match('/^(CREATE DATABASE|\\\\c)/i', $statement)) {
                 $skipped++;
                 continue;
             }
@@ -73,7 +76,6 @@ function runMigration(PDO $conn): void
                     $skipped++;
                     error_log("  ↻ Already exists (skipped)");
                 } else {
-                    $created++;  // Count as processed even if error
                     $errors[] = $error_msg;
                     error_log("  ⚠ Execution continued despite error: " . $error_msg);
                 }

@@ -62,6 +62,18 @@ jobs:
             docker network inspect web >/dev/null 2>&1 || docker network create web
             cd /root/risqiduha/inventoris_toko/
             docker compose up -d --build --remove-orphans
+            echo "Checking database tables (create if missing)..."
+            for attempt in 1 2 3 4 5; do
+              if docker compose exec -T inventoris_toko php -r "require '/app/app/config/database.php'; \$db = new Database(); \$conn = \$db->getConnection(); if (!\$conn) { fwrite(STDERR, 'Database connection failed' . PHP_EOL); exit(1); } echo 'Database migration check completed' . PHP_EOL;"; then
+                break
+              fi
+              if [ "$attempt" -eq 5 ]; then
+                echo "Database table check failed after 5 attempts"
+                exit 1
+              fi
+              echo "Database check not ready yet, retry in 5s... ($attempt/5)"
+              sleep 5
+            done
             docker image prune -f
             echo "Inventoris deployed"
           EOF
