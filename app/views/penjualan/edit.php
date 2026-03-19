@@ -5,7 +5,16 @@
         <i class="fas fa-edit text-yellow-600 mr-2"></i>Edit Penjualan
     </h2>
 
+    <?php $tanggalValue = !empty($penjualan['tanggal']) ? date('Y-m-d', strtotime($penjualan['tanggal'])) : date('Y-m-d'); ?>
     <form action="/penjualan/update/<?= $penjualan['id_penjualan'] ?>" method="POST" id="formPenjualan" onsubmit="return validateForm()">
+
+        <!-- Tanggal Penjualan -->
+        <div class="mb-6">
+            <label for="tanggal_penjualan" class="block text-gray-700 font-semibold mb-2">Tanggal Penjualan *</label>
+            <input type="date" id="tanggal_penjualan" name="tanggal" value="<?= $tanggalValue ?>"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            <p class="text-xs text-gray-500 mt-1">Atur manual tanggal transaksi agar sesuai pencatatan.</p>
+        </div>
 
         <!-- Panel Cari & Pilihan Barang -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -339,6 +348,12 @@ function hitungKembalian() {
 }
 
 function validateForm() {
+    const tanggalPenjualan = document.getElementById('tanggal_penjualan');
+    if (!tanggalPenjualan.value) {
+        alert('Tanggal penjualan wajib diisi!');
+        return false;
+    }
+
     const items = document.querySelectorAll('[data-item-index]');
     if (items.length === 0) {
         alert('Tambahkan minimal satu item!');
@@ -395,6 +410,18 @@ function toggleHutangFields() {
     }
 }
 
+function getTanggalNota() {
+    const input = document.getElementById('tanggal_penjualan');
+    const now = new Date();
+    let tanggalStr = ('0' + now.getDate()).slice(-2) + '/' + ('0' + (now.getMonth() + 1)).slice(-2) + '/' + now.getFullYear();
+    if (input && input.value && input.value.includes('-')) {
+        const [y, m, d] = input.value.split('-');
+        tanggalStr = d + '/' + m + '/' + y;
+    }
+    const waktuStr = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+    return { tanggal: tanggalStr, waktu: waktuStr };
+}
+
 function printNota() {
     const items = document.querySelectorAll('[data-item-index]');
     if (items.length === 0) {
@@ -425,9 +452,7 @@ function printNota() {
         html += '</div>';
     }
     html += '<hr></div>';
-    const now = new Date();
-    const tanggal = ('0' + now.getDate()).slice(-2) + '/' + ('0' + (now.getMonth() + 1)).slice(-2) + '/' + now.getFullYear();
-    const waktu = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+    const { tanggal, waktu } = getTanggalNota();
     html += '<div class="info"><div><strong>Tanggal:</strong> ' + tanggal;
     if ((cfg.tampilkan_jam ?? 1) == 1) {
         html += ' ' + waktu;

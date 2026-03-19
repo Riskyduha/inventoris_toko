@@ -106,12 +106,19 @@ class PenjualanController {
                 redirect('/penjualan/create');
             }
 
+            // Gunakan tanggal input manual, fallback ke hari ini
+            $tanggal_input = isset($_POST['tanggal']) ? trim($_POST['tanggal']) : '';
+            if ($tanggal_input === '') {
+                $tanggal_input = date('Y-m-d');
+            }
+
             $data = [
                 'items' => $items,
                 'uang_diberikan' => (float)($_POST['uang_diberikan'] ?? 0),
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
                 'keterangan' => $_POST['keterangan'] ?? '',
-                'id_user' => $_SESSION['user_id'] ?? null
+                'id_user' => $_SESSION['user_id'] ?? null,
+                'tanggal' => $tanggal_input
             ];
 
             // Handle hutang if exists
@@ -196,11 +203,18 @@ class PenjualanController {
                 redirect('/penjualan/edit/' . $id);
             }
 
+            // Gunakan tanggal input manual, fallback ke hari ini
+            $tanggal_input = isset($_POST['tanggal']) ? trim($_POST['tanggal']) : '';
+            if ($tanggal_input === '') {
+                $tanggal_input = date('Y-m-d');
+            }
+
             $data = [
                 'items' => $items,
                 'uang_diberikan' => (float)($_POST['uang_diberikan'] ?? 0),
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
-                'keterangan' => $_POST['keterangan'] ?? ''
+                'keterangan' => $_POST['keterangan'] ?? '',
+                'tanggal' => $tanggal_input
             ];
 
             // Handle hutang if exists

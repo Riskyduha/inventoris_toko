@@ -171,6 +171,10 @@ class Penjualan {
             $kembalian = $uang_diberikan - $total;
             $ada_hutang = $data['ada_hutang'] ?? 0;
 
+            // Gunakan tanggal manual jika tersedia, sisipkan waktu saat ini supaya tetap terbaca di laporan
+            $tanggalInput = $data['tanggal'] ?? date('Y-m-d');
+            $tanggal = date('Y-m-d H:i:s', strtotime($tanggalInput . ' ' . date('H:i:s')));
+
             // Jika ada hutang, gunakan nama penghutang sebagai nama pembeli
             $nama_pembeli = $data['nama_pembeli'] ?? '';
             if ($ada_hutang && isset($data['hutang']['nama_penghutang'])) {
@@ -179,10 +183,11 @@ class Penjualan {
 
             // Insert penjualan header
             $query = "INSERT INTO " . $this->table . " 
-                      (total_harga, uang_diberikan, kembalian, nama_pembeli, ada_hutang, keterangan, id_user) 
-                      VALUES (:total_harga, :uang_diberikan, :kembalian, :nama_pembeli, :ada_hutang, :keterangan, :id_user)";
+                      (tanggal, total_harga, uang_diberikan, kembalian, nama_pembeli, ada_hutang, keterangan, id_user) 
+                      VALUES (:tanggal, :total_harga, :uang_diberikan, :kembalian, :nama_pembeli, :ada_hutang, :keterangan, :id_user)";
             
             $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':tanggal', $tanggal);
             $stmt->bindParam(':total_harga', $total);
             $stmt->bindParam(':uang_diberikan', $uang_diberikan);
             $stmt->bindParam(':kembalian', $kembalian);
@@ -282,6 +287,10 @@ class Penjualan {
             $uang_diberikan = $data['uang_diberikan'] ?? 0;
             $kembalian = $uang_diberikan - $total;
 
+            // Gunakan tanggal manual jika tersedia, sisipkan waktu saat ini supaya tetap terbaca di laporan
+            $tanggalInput = $data['tanggal'] ?? date('Y-m-d');
+            $tanggal = date('Y-m-d H:i:s', strtotime($tanggalInput . ' ' . date('H:i:s')));
+
             // Jika ada hutang, gunakan nama penghutang sebagai nama pembeli
             $nama_pembeli = $data['nama_pembeli'] ?? '';
             if (isset($data['ada_hutang']) && $data['ada_hutang'] && isset($data['hutang']['nama_penghutang'])) {
@@ -299,6 +308,7 @@ class Penjualan {
                       SET total_harga = :total_harga,
                           uang_diberikan = :uang_diberikan,
                           kembalian = :kembalian,
+                          tanggal = :tanggal,
                           nama_pembeli = :nama_pembeli,
                           keterangan = :keterangan
                       WHERE id_penjualan = :id";
@@ -308,6 +318,7 @@ class Penjualan {
             $stmt->bindParam(':total_harga', $total);
             $stmt->bindParam(':uang_diberikan', $uang_diberikan);
             $stmt->bindParam(':kembalian', $kembalian);
+            $stmt->bindParam(':tanggal', $tanggal);
             $stmt->bindParam(':nama_pembeli', $nama_pembeli);
             $stmt->bindParam(':keterangan', $data['keterangan']);
             $stmt->execute();
