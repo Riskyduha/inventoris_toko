@@ -84,7 +84,7 @@
     </div>
 
     <!-- Buttons -->
-    <div class="flex gap-4 justify-center">
+    <div class="flex gap-4 justify-center flex-wrap">
         <a href="/penjualan/edit/<?= $penjualan['id_penjualan'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-8 py-3 rounded-lg transition font-semibold">
             <i class="fas fa-edit mr-2"></i>Edit
         </a>
@@ -93,11 +93,143 @@
            class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg transition font-semibold">
             <i class="fas fa-trash mr-2"></i>Hapus
         </a>
+        <button type="button" onclick="printNotaDetail()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg transition font-semibold">
+            <i class="fas fa-print mr-2"></i>Print Nota
+        </button>
         <a href="/penjualan" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg transition font-semibold">
             <i class="fas fa-arrow-left mr-2"></i>Kembali
         </a>
     </div>
 </div>
+
+<script>
+    const detailPenjualanData = <?= json_encode($penjualan) ?>;
+    const detailItems = <?= json_encode($details) ?>;
+    const notaConfig = Object.assign({
+        nama_toko: 'UD. BERSAUDARA',
+        alamat_toko: '',
+        nomor_telepon: '',
+        email_toko: '',
+        footer_nota: '',
+        lebar_kertas: 80,
+        tampilkan_jam: 1,
+        tampilkan_kode_barang: 1,
+        tampilkan_satuan: 1,
+        jumlah_diskon_terpisah: 0,
+        custom_header_text: '',
+        custom_footer_text: '',
+        tampilkan_nama_pembeli: 1,
+        tampilkan_info_hutang: 1,
+        font_nota: 'Arial'
+    }, <?= json_encode($notaConfig ?? []) ?>);
+
+    function printNotaDetail() {
+        const cfg = notaConfig || {};
+        const width = parseInt(cfg.lebar_kertas || 80, 10);
+        const fontNota = cfg.font_nota || 'Arial';
+        const escapeMap = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
+        const escapeHtml = (text) => text ? String(text).replace(/[&<>"']/g, (c) => escapeMap[c] || c) : '';
+        const formatRupiah = (value) => 'Rp ' + Math.floor(Number(value) || 0).toLocaleString('id-ID');
+
+        const tanggalRaw = detailPenjualanData.tanggal || new Date().toISOString();
+        const dateObj = new Date(tanggalRaw);
+        const tanggal = ('0' + dateObj.getDate()).slice(-2) + '/' + ('0' + (dateObj.getMonth() + 1)).slice(-2) + '/' + dateObj.getFullYear();
+        const waktu = ('0' + dateObj.getHours()).slice(-2) + ':' + ('0' + dateObj.getMinutes()).slice(-2);
+
+        let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Nota</title><style>@page{margin:1mm}body{font-family:"' + fontNota + '", monospace;width:' + width + 'mm;margin:0 auto;padding:2mm;font-size:13px}.header{text-align:center;margin-bottom:6mm}.header h2{margin:0;font-size:18px}.header p{margin:2px 0;font-size:12px;color:#444}.header .muted{color:#777;font-size:11px}.header .custom{margin-top:4px;color:#333;font-size:11px;line-height:1.3}hr{margin:4px 0;border:none;border-top:1px solid #000}.info{font-size:13px;margin-bottom:5mm;line-height:1.5}table{width:100%;font-size:13px;border-collapse:collapse;margin-bottom:6mm}table thead tr{border-bottom:1px solid #000}table th{text-align:left;padding:3px 0;font-weight:bold}table td{padding:3px 0}table th:nth-child(2),table td:nth-child(2),table th:nth-child(3),table td:nth-child(3),table th:nth-child(4),table td:nth-child(4){text-align:right}table tbody tr{border-bottom:1px dotted #ccc}table .muted{color:#555;font-size:11px}.summary{font-size:13px;margin-bottom:5mm;line-height:1.5}.summary-row{display:flex;justify-content:space-between}.total-row{border-top:1px solid #000;padding-top:3px;font-weight:bold}.footer{text-align:center;font-size:12px;color:#444;margin-top:6mm;line-height:1.4}@media print{body{margin:0 auto;padding:2mm}}</style></head><body>';
+        html += '<div class="header"><h2>' + escapeHtml(cfg.nama_toko || 'UD. BERSAUDARA') + '</h2>';
+        const alamat = escapeHtml(cfg.alamat_toko || '');
+        const telp = escapeHtml(cfg.nomor_telepon || '');
+        const email = escapeHtml(cfg.email_toko || '');
+        if (alamat) html += '<p class="muted">' + alamat + '</p>';
+        if (telp) html += '<p class="muted">Telp: ' + telp + '</p>';
+        if (email) html += '<p class="muted">Email: ' + email + '</p>';
+        const headerLines = (cfg.custom_header_text || '').split(/\n+/).map(l => l.trim()).filter(Boolean);
+        if (headerLines.length) {
+            html += '<div class="custom">';
+            for (let i = 0; i < headerLines.length; i++) {
+                html += '<div>' + escapeHtml(headerLines[i]) + '</div>';
+            }
+            html += '</div>';
+        }
+        html += '<hr></div>';
+        html += '<div class="info"><div><strong>Tanggal:</strong> ' + tanggal;
+        if ((cfg.tampilkan_jam ?? 1) == 1) {
+            html += ' ' + waktu;
+        }
+        html += '</div>';
+        const pembeliNama = detailPenjualanData.nama_pembeli || '';
+        if ((cfg.tampilkan_nama_pembeli ?? 1) == 1 && pembeliNama) {
+            html += '<div><strong>Pembeli:</strong> ' + escapeHtml(pembeliNama) + '</div>';
+        }
+        html += '</div><table><thead><tr><th>Item</th><th>Jumlah</th><th>Harga</th><th>Total</th></tr></thead><tbody>';
+
+        let totalHarga = 0, totalQty = 0, totalDiskon = 0, totalBruto = 0;
+        for (let i = 0; i < detailItems.length; i++) {
+            const item = detailItems[i];
+            const jumlah = Number(item.jumlah) || 0;
+            const harga = Number(item.harga_satuan) || 0;
+            const diskon = Number(item.diskon) || 0;
+            const nama = item.nama_barang || 'Item';
+            const kode = item.kode_barang || '';
+            const satuan = item.satuan || '';
+            const bruto = jumlah * harga;
+            const subtotal = bruto - diskon;
+            totalQty += jumlah;
+            totalHarga += subtotal;
+            totalDiskon += diskon;
+            totalBruto += bruto;
+            let itemCell = '<div>' + escapeHtml(nama.substring(0, 22)) + '</div>';
+            if ((cfg.tampilkan_kode_barang ?? 1) == 1 && kode) {
+                itemCell += '<div class="muted">Kode: ' + escapeHtml(kode) + '</div>';
+            }
+            if ((cfg.tampilkan_satuan ?? 1) == 1 && satuan) {
+                itemCell += '<div class="muted">Satuan: ' + escapeHtml(satuan) + '</div>';
+            }
+            html += '<tr><td>' + itemCell + '</td><td>' + jumlah + '</td><td>' + formatRupiah(harga) + '</td><td>' + formatRupiah(subtotal) + '</td></tr>';
+        }
+
+        const uangDiberikan = Number(detailPenjualanData.uang_diberikan) || 0;
+        const kembalian = uangDiberikan - totalHarga;
+        html += '</tbody></table><div class="summary">';
+        html += '<div class="summary-row"><span><strong>Total Item:</strong></span><span>' + totalQty + '</span></div>';
+        if ((cfg.jumlah_diskon_terpisah ?? 0) == 1) {
+            html += '<div class="summary-row"><span><strong>Subtotal:</strong></span><span>' + formatRupiah(totalBruto) + '</span></div>';
+            html += '<div class="summary-row"><span><strong>Diskon:</strong></span><span>' + formatRupiah(totalDiskon) + '</span></div>';
+        }
+        html += '<div class="summary-row"><span><strong>Total Harga:</strong></span><span>' + formatRupiah(totalHarga) + '</span></div>';
+        html += '<div class="summary-row"><span><strong>Uang Diberikan:</strong></span><span>' + formatRupiah(uangDiberikan) + '</span></div>';
+        html += '<div class="summary-row"><span><strong>Kembalian:</strong></span><span>' + formatRupiah(kembalian) + '</span></div>';
+
+        if ((detailPenjualanData.ada_hutang ?? 0) == 1 && (cfg.tampilkan_info_hutang ?? 1) == 1) {
+            if (detailPenjualanData.nama_pembeli) {
+                html += '<div class="summary-row"><span><strong>Nama Hutang:</strong></span><span>' + escapeHtml(detailPenjualanData.nama_pembeli) + '</span></div>';
+            }
+            // Jika ada field tambahan hutang, bisa ditambahkan di sini
+        }
+
+        if (cfg.custom_footer_text) {
+            html += '<div class="summary-row total-row" style="flex-direction:column;align-items:center;gap:4px;text-align:center;">';
+            html += '<div>' + escapeHtml(cfg.custom_footer_text) + '</div>';
+            html += '</div>';
+        }
+        html += '</div>'; // summary
+
+        if (cfg.footer_nota) {
+            html += '<div class="footer">' + escapeHtml(cfg.footer_nota) + '</div>';
+        }
+
+        html += '</body></html>';
+
+        const w = window.open('', '_blank');
+        if (!w) return alert('Popup diblokir, izinkan popup untuk mencetak nota.');
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+        w.focus();
+        w.print();
+    }
+</script>
 
 <?php 
 $content = ob_get_clean();

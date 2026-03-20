@@ -152,6 +152,7 @@ class PenjualanController {
             redirect('/penjualan');
         }
         $details = $this->model->getDetailById($id);
+        $notaConfig = $this->notaConfigModel->getConfig();
         require_once __DIR__ . '/../views/penjualan/detail.php';
     }
 
