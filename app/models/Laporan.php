@@ -179,12 +179,15 @@ class Laporan {
     }
 
     public function getDashboardStats() {
+        $today = date('Y-m-d');
+
         // Total Barang Terjual Hari Ini
         $queryBarangTerjual = "SELECT COALESCE(SUM(dp.jumlah), 0) as total 
                                FROM detail_penjualan dp
                                JOIN penjualan p ON dp.id_penjualan = p.id_penjualan
-                               WHERE DATE(p.tanggal) = CURRENT_DATE";
+                               WHERE DATE(p.tanggal) = :today";
         $stmtBarangTerjual = $this->conn->prepare($queryBarangTerjual);
+        $stmtBarangTerjual->bindParam(':today', $today);
         $stmtBarangTerjual->execute();
         $barangTerjualHariIni = $stmtBarangTerjual->fetch()['total'] ?? 0;
 
@@ -204,14 +207,16 @@ class Laporan {
         $nilaiPersediaan = $stmtNilaiPersediaan->fetch() ?: [];
 
         // Total Penjualan Hari Ini
-        $queryPenjualan = "SELECT SUM(total_harga) as total FROM penjualan WHERE DATE(tanggal) = CURRENT_DATE";
+        $queryPenjualan = "SELECT SUM(total_harga) as total FROM penjualan WHERE DATE(tanggal) = :today";
         $stmtPenjualan = $this->conn->prepare($queryPenjualan);
+        $stmtPenjualan->bindParam(':today', $today);
         $stmtPenjualan->execute();
         $totalPenjualanHariIni = $stmtPenjualan->fetch()['total'] ?? 0;
 
         // Total Pembelian Hari Ini
-        $queryPembelian = "SELECT SUM(total_harga) as total FROM pembelian WHERE DATE(tanggal) = CURRENT_DATE";
+        $queryPembelian = "SELECT SUM(total_harga) as total FROM pembelian WHERE DATE(tanggal) = :today";
         $stmtPembelian = $this->conn->prepare($queryPembelian);
+        $stmtPembelian->bindParam(':today', $today);
         $stmtPembelian->execute();
         $totalPembelianHariIni = $stmtPembelian->fetch()['total'] ?? 0;
 
@@ -226,13 +231,18 @@ class Laporan {
     }
 
     public function getPenjualanTrend($days = 7) {
+        $days = max(1, (int)$days);
+        $today = date('Y-m-d');
+        $startDate = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+
         $query = "SELECT DATE(tanggal) as tanggal, SUM(total_harga) as total
               FROM penjualan
-              WHERE tanggal >= (CURRENT_DATE - (:days * INTERVAL '1 day'))
+              WHERE DATE(tanggal) BETWEEN :start_date AND :today
               GROUP BY DATE(tanggal)
               ORDER BY DATE(tanggal) ASC";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':days', $days, PDO::PARAM_INT);
+        $stmt->bindParam(':start_date', $startDate);
+        $stmt->bindParam(':today', $today);
         $stmt->execute();
         return $stmt->fetchAll();
     }

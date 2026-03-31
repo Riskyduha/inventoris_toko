@@ -7,6 +7,42 @@ class Penjualan {
     private $table = 'penjualan';
     private $detail_table = 'detail_penjualan';
 
+    private function getAppTimezone(): DateTimeZone {
+        $timezone = getenv('TIMEZONE') ?: 'Asia/Jakarta';
+        try {
+            return new DateTimeZone($timezone);
+        } catch (Exception $e) {
+            return new DateTimeZone('Asia/Jakarta');
+        }
+    }
+
+    private function buildTransactionTimestamp(?string $tanggalInput): string {
+        $tz = $this->getAppTimezone();
+        $now = new DateTimeImmutable('now', $tz);
+        $input = trim((string)$tanggalInput);
+
+        if ($input === '') {
+            return $now->format('Y-m-d H:i:s');
+        }
+
+        $parsedDate = DateTimeImmutable::createFromFormat('Y-m-d', $input, $tz);
+        if ($parsedDate === false) {
+            return $now->format('Y-m-d H:i:s');
+        }
+
+        // Jika tanggal transaksi adalah hari ini, simpan timestamp real-time penuh.
+        if ($parsedDate->format('Y-m-d') === $now->format('Y-m-d')) {
+            return $now->format('Y-m-d H:i:s');
+        }
+
+        // Untuk backdate, gabungkan tanggal input dengan jam saat transaksi disimpan.
+        return $parsedDate->setTime(
+            (int)$now->format('H'),
+            (int)$now->format('i'),
+            (int)$now->format('s')
+        )->format('Y-m-d H:i:s');
+    }
+
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
@@ -184,9 +220,7 @@ class Penjualan {
             $kembalian = $uang_diberikan - $total;
             $ada_hutang = $data['ada_hutang'] ?? 0;
 
-            // Gunakan tanggal manual jika tersedia, sisipkan waktu saat ini supaya tetap terbaca di laporan
-            $tanggalInput = $data['tanggal'] ?? date('Y-m-d');
-            $tanggal = date('Y-m-d H:i:s', strtotime($tanggalInput . ' ' . date('H:i:s')));
+            $tanggal = $this->buildTransactionTimestamp($data['tanggal'] ?? null);
 
             // Jika ada hutang, gunakan nama penghutang sebagai nama pembeli
             $nama_pembeli = $data['nama_pembeli'] ?? '';
@@ -332,9 +366,7 @@ class Penjualan {
             $uang_diberikan = $data['uang_diberikan'] ?? 0;
             $kembalian = $uang_diberikan - $total;
 
-            // Gunakan tanggal manual jika tersedia, sisipkan waktu saat ini supaya tetap terbaca di laporan
-            $tanggalInput = $data['tanggal'] ?? date('Y-m-d');
-            $tanggal = date('Y-m-d H:i:s', strtotime($tanggalInput . ' ' . date('H:i:s')));
+            $tanggal = $this->buildTransactionTimestamp($data['tanggal'] ?? null);
 
             // Jika ada hutang, gunakan nama penghutang sebagai nama pembeli
             $nama_pembeli = $data['nama_pembeli'] ?? '';

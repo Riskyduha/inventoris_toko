@@ -8,6 +8,14 @@ class Database {
     private $port;
     private $conn;
 
+    private function getAppTimezone(): string {
+        $timezone = (string)$this->getEnvValue('TIMEZONE', 'Asia/Jakarta');
+        if (!preg_match('/^[A-Za-z0-9_+\/-]+$/', $timezone)) {
+            return 'Asia/Jakarta';
+        }
+        return $timezone;
+    }
+
     private function getEnvValue($key, $default = null) {
         $val = getenv($key);
         if ($val !== false && $val !== '') {
@@ -103,6 +111,7 @@ class Database {
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             $this->conn->exec("SET NAMES 'UTF8'");
+            $this->conn->exec("SET TIME ZONE '" . $this->getAppTimezone() . "'");
 
             // Run migration to create tables if needed
             require_once __DIR__ . '/migrate.php';

@@ -60,7 +60,7 @@ class Config {
     
     // Get timezone
     public static function getTimezone() {
-        $tz = getenv('TIMEZONE') ?: 'UTC';
+        $tz = getenv('TIMEZONE') ?: 'Asia/Jakarta';
         date_default_timezone_set($tz);
         return $tz;
     }
