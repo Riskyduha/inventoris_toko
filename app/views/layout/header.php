@@ -136,6 +136,7 @@
     } else {
         $displayRole = 'User';
     }
+    $canAccessTransaksi = ($currentRole !== 'inspeksi');
     ?>
     <nav class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white shadow-2xl sticky top-0 z-50">
         <div class="container mx-auto px-4">
@@ -166,6 +167,7 @@
                         <i class="fas fa-box"></i>
                         <span>Barang</span>
                     </a>
+                    <?php if ($canAccessTransaksi): ?>
                     <a href="/pembelian" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-shopping-cart"></i>
                         <span>Pembelian</span>
@@ -174,6 +176,7 @@
                         <i class="fas fa-cash-register"></i>
                         <span>Penjualan</span>
                     </a>
+                    <?php endif; ?>
                     
                     <?php if ($currentRole === 'user'): ?>
                         <a href="/laporan/penjualan" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
@@ -301,6 +304,7 @@
                     <i class="fas fa-box text-green-600 w-5"></i>
                     <span>Barang</span>
                 </a>
+                <?php if ($canAccessTransaksi): ?>
                 <a href="/pembelian" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-shopping-cart text-orange-600 w-5"></i>
                     <span>Pembelian</span>
@@ -309,6 +313,7 @@
                     <i class="fas fa-cash-register text-purple-600 w-5"></i>
                     <span>Penjualan</span>
                 </a>
+                <?php endif; ?>
                 
                 <!-- Laporan Section -->
                 <div class="border-t border-gray-200 pt-2 mt-2">

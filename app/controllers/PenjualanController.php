@@ -16,6 +16,14 @@ class PenjualanController {
         $this->notaConfigModel = new KonfigurasiNota();
     }
 
+    private function ensureTransactionAccess(): void {
+        $role = strtolower(trim((string)($_SESSION['role'] ?? '')));
+        if ($role === 'inspeksi') {
+            $_SESSION['error'] = 'Role inspeksi tidak diizinkan melakukan transaksi penjualan.';
+            redirect('/barang');
+        }
+    }
+
     public function index() {
         $tanggal_awal_input = isset($_GET['tanggal_awal']) ? trim($_GET['tanggal_awal']) : '';
         $tanggal_akhir_input = isset($_GET['tanggal_akhir']) ? trim($_GET['tanggal_akhir']) : '';
@@ -72,6 +80,7 @@ class PenjualanController {
     }
 
     public function create() {
+        $this->ensureTransactionAccess();
         $barang = $this->barangModel->getAll();
         $notaConfig = $this->notaConfigModel->getConfig();
         
@@ -85,6 +94,7 @@ class PenjualanController {
     }
 
     public function store() {
+        $this->ensureTransactionAccess();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Parse multiple items from form
             $items = [];
@@ -157,6 +167,7 @@ class PenjualanController {
     }
 
     public function edit($id) {
+        $this->ensureTransactionAccess();
         $penjualan = $this->model->getById($id);
         if (!$penjualan) {
             $_SESSION['error'] = 'Data penjualan tidak ditemukan';
@@ -183,6 +194,7 @@ class PenjualanController {
     }
 
     public function update($id) {
+        $this->ensureTransactionAccess();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Parse multiple items from form
             $items = [];
@@ -244,6 +256,7 @@ class PenjualanController {
     }
 
     public function delete($id) {
+        $this->ensureTransactionAccess();
         $result = $this->model->delete($id, $_SESSION['user_id'] ?? null);
         
         if ($result['success']) {

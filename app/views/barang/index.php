@@ -1,7 +1,7 @@
 <?php ob_start(); ?>
 <?php
 $role = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
-if ($role === 'kasir') {
+if ($role === 'kasir' || $role === 'inspeksi') {
     $role = 'user';
 }
 $isAdmin = ($role === 'admin');

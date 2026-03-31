@@ -4,6 +4,7 @@ $currentRole = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
 if ($currentRole === 'kasir') {
     $currentRole = 'user';
 }
+$isInspeksi = ($currentRole === 'inspeksi');
 ?>
 
 <?php if ($currentRole === 'user'): ?>
@@ -109,7 +110,16 @@ if ($currentRole === 'kasir') {
         <i class="fas fa-rocket text-teal-600 mr-2"></i>Menu
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <?php if ($currentRole === 'user'): ?>
+        <?php if ($isInspeksi): ?>
+        <a href="/barang" class="bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-boxes text-orange-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Kelola Daftar Barang</p>
+        </a>
+        <a href="/laporan/stok" class="bg-cyan-50 hover:bg-cyan-100 border-2 border-cyan-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-chart-line text-cyan-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Laporan Stok</p>
+        </a>
+        <?php elseif ($currentRole === 'user'): ?>
         <!-- Menu untuk User -->
         <a href="/penjualan/create" class="bg-teal-50 hover:bg-teal-100 border-2 border-teal-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-cash-register text-teal-600 text-3xl mb-2"></i>

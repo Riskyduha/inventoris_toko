@@ -13,12 +13,21 @@ class PembelianController {
         $this->barangModel = new Barang();
     }
 
+    private function ensureTransactionAccess(): void {
+        $role = strtolower(trim((string)($_SESSION['role'] ?? '')));
+        if ($role === 'inspeksi') {
+            $_SESSION['error'] = 'Role inspeksi tidak diizinkan melakukan transaksi pembelian.';
+            redirect('/barang');
+        }
+    }
+
     public function index() {
         $pembelian = $this->model->getAll();
         require_once __DIR__ . '/../views/pembelian/index.php';
     }
 
     public function create() {
+        $this->ensureTransactionAccess();
         $barang = $this->barangModel->getAll();
         $kategori = $this->barangModel->getAllKategori();
         $satuanList = $this->barangModel->getAllSatuan();
@@ -26,6 +35,7 @@ class PembelianController {
     }
 
     public function store() {
+        $this->ensureTransactionAccess();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Parse multiple items from form
             $items = [];
@@ -90,6 +100,7 @@ class PembelianController {
     }
 
     public function edit($id) {
+        $this->ensureTransactionAccess();
         $pembelian = $this->model->getById($id);
         if (!$pembelian) {
             $_SESSION['error'] = 'Data pembelian tidak ditemukan';
@@ -103,6 +114,7 @@ class PembelianController {
     }
 
     public function update($id) {
+        $this->ensureTransactionAccess();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $items = [];
             if (isset($_POST['items'])) {
@@ -144,6 +156,7 @@ class PembelianController {
     }
 
     public function delete($id) {
+        $this->ensureTransactionAccess();
         $result = $this->model->delete($id, $_SESSION['user_id'] ?? null);
         
         if ($result['success']) {
