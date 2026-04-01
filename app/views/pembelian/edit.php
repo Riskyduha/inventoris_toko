@@ -3,7 +3,7 @@
 <div class="bg-white rounded-lg shadow-md p-6">
     <h2 class="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2">
         <i class="fas fa-edit text-yellow-600"></i>
-        Edit Pembelian
+        Edit Barang Masuk
     </h2>
     <p class="text-gray-600 mb-6">Hanya menampilkan item yang sudah dibeli untuk diedit tanpa panel pencarian baru.</p>
 
@@ -19,7 +19,7 @@
         <!-- Daftar Item Pembelian -->
         <div class="mb-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-gray-700">Item Pembelian</h3>
+                <h3 class="text-xl font-semibold text-gray-700">Item Barang Masuk</h3>
                 <span id="selected_count" class="text-sm text-gray-500"></span>
             </div>
 
@@ -43,7 +43,7 @@
                     <p class="text-2xl font-bold text-blue-600" id="total_items"><?= $totalItemsAwal ?></p>
                 </div>
                 <div>
-                    <p class="text-gray-600 text-sm">Total Pembelian</p>
+                    <p class="text-gray-600 text-sm">Total Barang Masuk</p>
                     <p class="text-2xl font-bold text-green-600" id="total_display">Rp <?= number_format($totalHargaAwal, 0, ',', '.') ?></p>
                 </div>
             </div>
@@ -182,6 +182,6 @@ window.addEventListener('load', () => {
 
 <?php 
 $content = ob_get_clean();
-$title = 'Edit Pembelian - Sistem Inventori';
+$title = 'Edit Barang Masuk - Sistem Inventori';
 include __DIR__ . '/../layout/header.php';
 ?>

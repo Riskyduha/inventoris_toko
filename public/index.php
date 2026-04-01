@@ -55,5 +55,9 @@ if (!in_array($requestUri, $publicRoutes) && !isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Auto daily backup (non-blocking)
+require_once BASE_PATH . '/app/helpers/backup_scheduler.php';
+runDailyBackupIfDue();
+
 // Load routes
 require_once BASE_PATH . '/routes/web.php';

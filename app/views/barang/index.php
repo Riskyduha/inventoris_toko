@@ -45,17 +45,17 @@ $canEditStok = ($role === 'admin' || $role === 'user');
             <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-teal-100 text-teal-700">
                 <i class="fas fa-box"></i>
             </span>
-            <span>Daftar Barang</span>
+            <span>Daftar Stok Barang</span>
         </h2>
         <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <?php if ($isAdmin): ?>
-            <a href="/barang/export<?= !empty($selected_kategori) ? '?kategori=' . (int)$selected_kategori : '' ?>" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg border border-green-500 bg-white px-4 py-2.5 text-sm font-semibold text-green-600 transition hover:bg-green-50">
+            <a href="/barang/export" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg border border-green-500 bg-white px-4 py-2.5 text-sm font-semibold text-green-600 transition hover:bg-green-50">
                 <i class="fas fa-file-excel"></i>
                 <span>Download Excel</span>
             </a>
+            <?php if ($isAdmin): ?>
             <a href="/barang/create" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold transition">
                 <i class="fas fa-plus"></i>
-                <span>Tambah Barang</span>
+                <span>Tambah Stok Barang</span>
             </a>
             <?php endif; ?>
         </div>
@@ -1085,6 +1085,6 @@ async function filterByKategori(kategoriId) {
 
 <?php 
 $content = ob_get_clean();
-$title = 'Daftar Barang - Sistem Inventori';
+$title = 'Daftar Stok Barang - Sistem Inventori';
 include __DIR__ . '/../layout/header.php';
 ?>

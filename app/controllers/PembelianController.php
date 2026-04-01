@@ -47,7 +47,9 @@ class PembelianController {
                             'satuan' => trim($item['satuan'] ?? ''),
                             'jumlah' => (int)$item['jumlah'],
                             'harga_satuan' => (float)$item['harga_satuan'],
-                            'diskon' => (float)($item['diskon'] ?? 0)
+                            'diskon' => 0,
+                            'harga_jual' => isset($item['harga_jual']) && $item['harga_jual'] !== '' ? (float)$item['harga_jual'] : null,
+                            'tanggal_expired' => trim((string)($item['tanggal_expired'] ?? ''))
                         ];
                     }
                 }
@@ -58,14 +60,17 @@ class PembelianController {
                 redirect('/pembelian/create');
             }
 
-            // Perbarui satuan barang bila diubah saat edit pembelian
+            // Perbarui atribut barang agar tetap relevan dengan pembelian terbaru
             foreach ($items as $item) {
-                if ($item['satuan'] !== '') {
-                    $updated = $this->barangModel->updateSatuanBarang($item['id_barang'], $item['satuan']);
-                    if (!$updated) {
-                        $_SESSION['error'] = 'Gagal memperbarui satuan untuk salah satu barang';
-                        redirect('/pembelian/create');
-                    }
+                $updated = $this->barangModel->updateAtributDariPembelian(
+                    (int)$item['id_barang'],
+                    $item['satuan'],
+                    $item['harga_jual'],
+                    $item['tanggal_expired'] !== '' ? $item['tanggal_expired'] : null
+                );
+                if (!$updated) {
+                    $_SESSION['error'] = 'Gagal memperbarui atribut barang untuk salah satu item pembelian';
+                    redirect('/pembelian/create');
                 }
             }
 
@@ -122,9 +127,12 @@ class PembelianController {
                     if (!empty($item['id_barang'])) {
                         $items[] = [
                             'id_barang' => $item['id_barang'],
+                            'satuan' => trim($item['satuan'] ?? ''),
                             'jumlah' => (int)$item['jumlah'],
                             'harga_satuan' => (float)$item['harga_satuan'],
-                            'diskon' => (float)($item['diskon'] ?? 0)
+                            'diskon' => 0,
+                            'harga_jual' => isset($item['harga_jual']) && $item['harga_jual'] !== '' ? (float)$item['harga_jual'] : null,
+                            'tanggal_expired' => trim((string)($item['tanggal_expired'] ?? ''))
                         ];
                     }
                 }
@@ -133,6 +141,19 @@ class PembelianController {
             if (empty($items)) {
                 $_SESSION['error'] = 'Tambahkan minimal satu barang';
                 redirect('/pembelian/edit/' . $id);
+            }
+
+            foreach ($items as $item) {
+                $updated = $this->barangModel->updateAtributDariPembelian(
+                    (int)$item['id_barang'],
+                    $item['satuan'],
+                    $item['harga_jual'],
+                    $item['tanggal_expired'] !== '' ? $item['tanggal_expired'] : null
+                );
+                if (!$updated) {
+                    $_SESSION['error'] = 'Gagal memperbarui atribut barang untuk salah satu item pembelian';
+                    redirect('/pembelian/edit/' . $id);
+                }
             }
 
             $data = [
@@ -165,5 +186,45 @@ class PembelianController {
             $_SESSION['error'] = $result['message'];
         }
         redirect('/pembelian');
+    }
+
+    public function export() {
+        $rows = $this->model->getExportDetailAll();
+        $timestamp = date('Ymd_His');
+        $filename = "pembelian_detail_{$timestamp}.xls";
+
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        echo '<table border="1">';
+        echo '<tr>';
+        echo '<th>No</th>';
+        echo '<th>ID Pembelian</th>';
+        echo '<th>Tanggal</th>';
+        echo '<th>Supplier</th>';
+        echo '<th>Kode Barang</th>';
+        echo '<th>Nama Barang</th>';
+        echo '<th>Satuan</th>';
+        echo '<th>Jumlah</th>';
+        echo '<th>Harga Satuan</th>';
+        echo '<th>Subtotal Item</th>';
+        echo '</tr>';
+
+        foreach ($rows as $idx => $r) {
+            echo '<tr>';
+            echo '<td>' . ($idx + 1) . '</td>';
+            echo '<td>' . (int)($r['id_pembelian'] ?? 0) . '</td>';
+            echo '<td>' . htmlspecialchars(date('Y-m-d H:i', strtotime((string)($r['tanggal'] ?? ''))), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['nama_pembeli'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['kode_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['nama_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['satuan'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . (float)($r['jumlah'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['harga_satuan'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['subtotal'] ?? 0) . '</td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+        exit;
     }
 }

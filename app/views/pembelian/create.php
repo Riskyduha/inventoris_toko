@@ -7,9 +7,9 @@
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
                     <i class="fas fa-plus-circle"></i>
                 </span>
-                Tambah Pembelian Baru
+                Input Barang Masuk
             </h2>
-            <p class="text-sm text-slate-500 mt-2">Pilih barang, atur jumlah dan harga beli, lalu simpan transaksi.</p>
+            <p class="text-sm text-slate-500 mt-2">Pilih stok barang, atur jumlah, harga beli, harga jual, lalu simpan barang masuk.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-xs">
             <span class="px-3 py-1 rounded-full bg-teal-100 text-teal-700 font-semibold"><i class="fas fa-list-check mr-1"></i>1. Pilih Barang</span>
@@ -23,11 +23,11 @@
             <div class="lg:col-span-2 rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/60 to-white p-4">
                 <div class="mb-4">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                        <h3 class="text-lg font-bold text-slate-700">Daftar Barang Tersedia</h3>
+                        <h3 class="text-lg font-bold text-slate-700">Daftar Stok Barang Tersedia</h3>
                         <div class="flex items-center gap-2">
                             <span id="barang_count_info" class="text-xs px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600">0 barang</span>
                             <button type="button" class="app-btn-primary px-3 py-2 text-sm font-semibold" onclick="openAddBarangModal()">
-                                <i class="fas fa-plus mr-1"></i>Barang Baru
+                                <i class="fas fa-plus mr-1"></i>Stok Barang Baru
                             </button>
                         </div>
                     </div>
@@ -42,7 +42,7 @@
 
             <div class="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 h-fit lg:sticky lg:top-24">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-bold text-slate-700">Barang Dipilih</h3>
+                    <h3 class="text-lg font-bold text-slate-700">Stok Barang Dipilih</h3>
                     <span id="selected_count" class="text-xs bg-blue-600 text-white px-2.5 py-1 rounded-full font-semibold">0 item</span>
                 </div>
                 <div id="selected_container" class="space-y-2 max-h-[24rem] overflow-y-auto pr-1"></div>
@@ -82,7 +82,7 @@
 
         <div class="flex flex-col sm:flex-row gap-3">
             <button type="submit" class="app-btn-primary px-6 py-3 font-semibold inline-flex items-center justify-center gap-2">
-                <i class="fas fa-save"></i>Simpan Pembelian
+                <i class="fas fa-save"></i>Simpan Barang Masuk
             </button>
             <a href="/pembelian" class="app-btn-secondary px-6 py-3 font-semibold inline-flex items-center justify-center gap-2">
                 <i class="fas fa-arrow-left"></i>Kembali
@@ -93,13 +93,13 @@
 
 <div id="toast" class="hidden fixed top-4 right-4 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-lg"></div>
 
-<!-- Modal Tambah Barang Baru -->
+<!-- Modal Tambah Stok Barang Baru -->
 <div id="modal_add_barang" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4">
     <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 relative">
         <button class="absolute top-3 right-3 text-slate-500 hover:text-slate-700" onclick="closeAddBarangModal()">
             <i class="fas fa-times"></i>
         </button>
-        <h3 class="text-xl font-bold text-slate-800 mb-4">Tambah Barang Baru</h3>
+        <h3 class="text-xl font-bold text-slate-800 mb-4">Tambah Stok Barang Baru</h3>
         <form id="form_add_barang" onsubmit="submitAddBarang(event)">
             <div class="mb-3">
                 <label class="block text-sm font-semibold text-slate-700 mb-1">Kode Barang</label>
@@ -208,9 +208,9 @@ function renderBarangList(filterText = '') {
     if (filtered.length === 0) {
         listDiv.innerHTML = `
             <div class="col-span-full text-center border border-dashed border-slate-300 rounded-xl p-6 bg-white">
-                <p class="text-slate-500 mb-3">Barang tidak ditemukan</p>
+                <p class="text-slate-500 mb-3">Stok barang tidak ditemukan</p>
                 <button type="button" class="app-btn-primary px-4 py-2 text-sm" onclick="openAddBarangModal()">
-                    <i class="fas fa-plus mr-1"></i>Tambah Barang Baru
+                    <i class="fas fa-plus mr-1"></i>Tambah Stok Barang Baru
                 </button>
             </div>
         `;
@@ -225,8 +225,7 @@ function updateItemSubtotal(idx) {
     if (!row) return;
     const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
     const harga = parseFloat(row.querySelector('input[name*="[harga_satuan]"]').value) || 0;
-    const diskon = parseFloat(row.querySelector('input[name*="[diskon]"]').value) || 0;
-    const subtotal = (jumlah * harga) - diskon;
+    const subtotal = jumlah * harga;
     const subtotalEl = row.querySelector('.subtotal-item');
     if (subtotalEl) subtotalEl.textContent = formatRupiah(subtotal < 0 ? 0 : subtotal);
 }
@@ -276,8 +275,12 @@ function addItemFromBarang(barang) {
                     <input type="number" name="items[${idx}][harga_satuan]" value="${barang.harga_beli}" min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
                 </div>
                 <div>
-                    <label class="block text-slate-500 mb-1">Diskon</label>
-                    <input type="number" name="items[${idx}][diskon]" value="0" min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
+                    <label class="block text-slate-500 mb-1">Harga Jual</label>
+                    <input type="number" name="items[${idx}][harga_jual]" value="${barang.harga_jual || 0}" min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
+                </div>
+                <div>
+                    <label class="block text-slate-500 mb-1">Tanggal Expired (Opsional)</label>
+                    <input type="date" name="items[${idx}][tanggal_expired]" value="${barang.tanggal_expired ? String(barang.tanggal_expired).substring(0, 10) : ''}" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
                 </div>
             </div>
 
@@ -286,7 +289,6 @@ function addItemFromBarang(barang) {
             </div>
 
             <input type="hidden" name="items[${idx}][id_barang]" value="${barang.id_barang}">
-            <input type="hidden" name="items[${idx}][harga_jual]" value="${barang.harga_jual || 0}">
         </div>
     `;
 
@@ -294,7 +296,7 @@ function addItemFromBarang(barang) {
     noItemsMsg.style.display = 'none';
     itemIndex++;
     hitungTotal();
-    showToast('Barang ditambahkan');
+    showToast('Stok barang ditambahkan');
 }
 
 function adjustQty(idx, delta) {
@@ -330,9 +332,12 @@ function hitungTotal() {
     rows.forEach((row) => {
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
         const harga = parseFloat(row.querySelector('input[name*="[harga_satuan]"]').value) || 0;
-        const diskon = parseFloat(row.querySelector('input[name*="[diskon]"]').value) || 0;
+        const hargaJual = parseFloat(row.querySelector('input[name*="[harga_jual]"]').value) || 0;
         totalItems += jumlah;
-        totalHarga += (jumlah * harga) - diskon;
+        totalHarga += (jumlah * harga);
+        if (hargaJual < 0) {
+            row.querySelector('input[name*="[harga_jual]"]').value = '0';
+        }
     });
 
     document.getElementById('total_items').textContent = totalItems.toLocaleString('id-ID');
@@ -352,11 +357,12 @@ function validateForm() {
     items.forEach((row) => {
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
         const harga = parseFloat(row.querySelector('input[name*="[harga_satuan]"]').value) || 0;
-        if (jumlah < 1 || harga < 0) isValid = false;
+        const hargaJual = parseFloat(row.querySelector('input[name*="[harga_jual]"]').value) || 0;
+        if (jumlah < 1 || harga < 0 || hargaJual < 0) isValid = false;
     });
 
     if (!isValid) {
-        showToast('Periksa jumlah dan harga beli setiap item', 'error');
+        showToast('Periksa jumlah, harga beli, dan harga jual setiap item', 'error');
         return false;
     }
 
@@ -408,6 +414,6 @@ renderBarangList('');
 
 <?php
 $content = ob_get_clean();
-$title = 'Tambah Pembelian - Sistem Inventori';
+$title = 'Input Barang Masuk - Sistem Inventori';
 include __DIR__ . '/../layout/header.php';
 ?>

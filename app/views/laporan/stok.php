@@ -6,41 +6,41 @@ if ($user_role === 'kasir') {
 }
 ?>
 
-<div class="bg-white rounded-lg shadow-md p-6">
+<div class="app-card p-6 app-reveal">
     <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
         <i class="fas fa-boxes text-blue-600"></i>
-        <span>Laporan Stok Barang</span>
+        <span>Laporan Stok</span>
     </h2>
 
     <!-- Filter -->
-    <form method="GET" class="mb-6 bg-gray-50 p-4 rounded-lg">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <form method="GET" class="mb-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50/95 to-white/95 p-4 sm:p-5 sticky top-20 z-20 backdrop-blur shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Tanggal Mulai</label>
-                <input type="date" id="startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                <input type="date" id="startDate" name="start" value="<?= htmlspecialchars($start ?? '') ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
             </div>
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Tanggal Akhir</label>
-                <input type="date" id="endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                <input type="date" id="endDate" name="end" value="<?= htmlspecialchars($end ?? '') ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
             </div>
             <div class="flex items-end">
-                <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2" onclick="filterStok()">
+                <button type="submit" class="w-full app-btn-primary px-4 py-2.5 text-sm font-semibold flex items-center justify-center gap-2">
                     <i class="fas fa-search"></i>
                     <span>Filter</span>
                 </button>
             </div>
             <div class="flex items-end">
-                <button type="button" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2" onclick="downloadStokPDF()">
-                    <i class="fas fa-file-pdf"></i>
-                    <span>Download PDF</span>
-                </button>
-            </div>
-            <div class="flex items-end">
-                <button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2" onclick="downloadStokExcel()">
+                <button type="button" class="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 flex items-center justify-center gap-2" onclick="downloadStokExcel()">
                     <i class="fas fa-file-excel"></i>
                     <span>Download Excel</span>
                 </button>
             </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 mt-3">
+            <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="setQuickDateRange(1)">Hari Ini</button>
+            <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="setQuickDateRange(7)">7 Hari</button>
+            <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="setQuickDateRange(30)">30 Hari</button>
+            <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="clearQuickDateRange()">Reset</button>
         </div>
     </form>
 
@@ -65,20 +65,29 @@ if ($user_role === 'kasir') {
     }, [])) ?>;
     const currentKategori = <?= json_encode($selected_kategori !== null ? (string)$selected_kategori : 'all') ?>;
 
-    function filterStok() {
-        // Reset filter jika diperlukan, atau implementasi filter tanggal
-        // Untuk sekarang filter hanya menampilkan ulang halaman
-        window.location.href = '/laporan/stok';
+    function formatDateInput(dateObj) {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
     }
-    
-    function downloadStokPDF() {
-        const start = document.getElementById('startDate').value;
-        const end = document.getElementById('endDate').value;
-        let url = '/laporan/stok/export?format=pdf';
-        if (start) url += '&start=' + start;
-        if (end) url += '&end=' + end;
-        if (currentKategori !== 'all') url += '&kategori=' + encodeURIComponent(currentKategori);
-        window.location.href = url;
+
+    function setQuickDateRange(days) {
+        const startEl = document.getElementById('startDate');
+        const endEl = document.getElementById('endDate');
+        if (!startEl || !endEl) return;
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - (Number(days) - 1));
+        startEl.value = formatDateInput(start);
+        endEl.value = formatDateInput(end);
+    }
+
+    function clearQuickDateRange() {
+        const startEl = document.getElementById('startDate');
+        const endEl = document.getElementById('endDate');
+        if (startEl) startEl.value = '';
+        if (endEl) endEl.value = '';
     }
 
     function downloadStokExcel() {
@@ -164,9 +173,9 @@ if ($user_role === 'kasir') {
     <div class="mb-6 pb-4 border-b">
         <p class="text-sm font-semibold text-gray-700 mb-3">Filter Kategori:</p>
         <div class="flex flex-wrap gap-2">
-            <a href="/laporan/stok" class="px-4 py-2 rounded-lg font-semibold text-sm <?= empty($selected_kategori) ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?> filter-btn" data-filter="all">Semua</a>
+            <a href="/laporan/stok?start=<?= rawurlencode($start ?? '') ?>&end=<?= rawurlencode($end ?? '') ?>" class="px-4 py-2 rounded-lg font-semibold text-sm <?= empty($selected_kategori) ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?> filter-btn" data-filter="all">Semua</a>
             <?php foreach ($kategori as $kat): ?>
-            <a href="/laporan/stok?kategori=<?= $kat['id_kategori'] ?>" class="px-4 py-2 rounded-lg font-semibold text-sm <?= (!empty($selected_kategori) && (int)$selected_kategori === (int)$kat['id_kategori']) ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?> filter-btn" data-filter="<?= $kat['id_kategori'] ?>">
+            <a href="/laporan/stok?kategori=<?= $kat['id_kategori'] ?>&start=<?= rawurlencode($start ?? '') ?>&end=<?= rawurlencode($end ?? '') ?>" class="px-4 py-2 rounded-lg font-semibold text-sm <?= (!empty($selected_kategori) && (int)$selected_kategori === (int)$kat['id_kategori']) ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?> filter-btn" data-filter="<?= $kat['id_kategori'] ?>">
                 <?= htmlspecialchars($kat['nama_kategori']) ?>
             </a>
             <?php endforeach; ?>
@@ -309,11 +318,11 @@ if ($user_role === 'kasir') {
     <?php if ($total_pages > 1): ?>
     <div class="flex justify-center items-center gap-2 mt-6">
         <?php if ($current_page > 1): ?>
-            <a href="/laporan/stok?page=1<?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
+            <a href="/laporan/stok?page=1<?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>&start=<?= rawurlencode($start ?? '') ?>&end=<?= rawurlencode($end ?? '') ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Pertama
             </a>
-            <a href="/laporan/stok?page=<?= $current_page - 1 ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
+            <a href="/laporan/stok?page=<?= $current_page - 1 ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>&start=<?= rawurlencode($start ?? '') ?>&end=<?= rawurlencode($end ?? '') ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Sebelumnya
             </a>
@@ -332,7 +341,7 @@ if ($user_role === 'kasir') {
             <?php if ($i == $current_page): ?>
                 <span class="px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold"><?= $i ?></span>
             <?php else: ?>
-                <a href="/laporan/stok?page=<?= $i ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
+                <a href="/laporan/stok?page=<?= $i ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>&start=<?= rawurlencode($start ?? '') ?>&end=<?= rawurlencode($end ?? '') ?>" 
                    class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                     <?= $i ?>
                 </a>
@@ -344,11 +353,11 @@ if ($user_role === 'kasir') {
         <?php endif; ?>
 
         <?php if ($current_page < $total_pages): ?>
-            <a href="/laporan/stok?page=<?= $current_page + 1 ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
+            <a href="/laporan/stok?page=<?= $current_page + 1 ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>&start=<?= rawurlencode($start ?? '') ?>&end=<?= rawurlencode($end ?? '') ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Berikutnya<i class="fas fa-chevron-right ml-1"></i>
             </a>
-            <a href="/laporan/stok?page=<?= $total_pages ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
+            <a href="/laporan/stok?page=<?= $total_pages ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>&start=<?= rawurlencode($start ?? '') ?>&end=<?= rawurlencode($end ?? '') ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Terakhir<i class="fas fa-chevron-right ml-1"></i>
             </a>

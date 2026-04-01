@@ -1,11 +1,15 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/InventoryBatch.php';
+require_once __DIR__ . '/AuditTrail.php';
 
 class Penjualan {
     private $conn;
     private $table = 'penjualan';
     private $detail_table = 'detail_penjualan';
+    private $batchModel;
+    private $auditTrail;
 
     private function getAppTimezone(): DateTimeZone {
         $timezone = getenv('TIMEZONE') ?: 'Asia/Jakarta';
@@ -46,6 +50,8 @@ class Penjualan {
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
+        $this->batchModel = new InventoryBatch($this->conn);
+        $this->auditTrail = new AuditTrail($this->conn);
         $this->ensureTableStructure();
     }
 
@@ -101,7 +107,10 @@ class Penjualan {
               COUNT(dp.id_detail) as jumlah_item,
               COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
-              MAX(h.status) as hutang_status
+              MAX(h.status) as hutang_status,
+              MAX(h.jumlah_hutang) as jumlah_hutang,
+              MAX(h.jatuh_tempo) as jatuh_tempo,
+              MAX(CASE WHEN h.status = 'belum_bayar' THEN GREATEST((CURRENT_DATE - h.jatuh_tempo), 0) ELSE 0 END) as aging_hari
               FROM " . $this->table . " p
               LEFT JOIN " . $this->detail_table . " dp ON p.id_penjualan = dp.id_penjualan
               LEFT JOIN barang b ON dp.id_barang = b.id_barang
@@ -119,7 +128,10 @@ class Penjualan {
               COUNT(dp.id_detail) as jumlah_item,
               COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
-              MAX(h.status) as hutang_status
+              MAX(h.status) as hutang_status,
+              MAX(h.jumlah_hutang) as jumlah_hutang,
+              MAX(h.jatuh_tempo) as jatuh_tempo,
+              MAX(CASE WHEN h.status = 'belum_bayar' THEN GREATEST((CURRENT_DATE - h.jatuh_tempo), 0) ELSE 0 END) as aging_hari
               FROM " . $this->table . " p
               LEFT JOIN " . $this->detail_table . " dp ON p.id_penjualan = dp.id_penjualan
               LEFT JOIN barang b ON dp.id_barang = b.id_barang
@@ -140,7 +152,10 @@ class Penjualan {
               COUNT(dp.id_detail) as jumlah_item,
               COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
-              MAX(h.status) as hutang_status
+              MAX(h.status) as hutang_status,
+              MAX(h.jumlah_hutang) as jumlah_hutang,
+              MAX(h.jatuh_tempo) as jatuh_tempo,
+              MAX(CASE WHEN h.status = 'belum_bayar' THEN GREATEST((CURRENT_DATE - h.jatuh_tempo), 0) ELSE 0 END) as aging_hari
               FROM " . $this->table . " p
               LEFT JOIN " . $this->detail_table . " dp ON p.id_penjualan = dp.id_penjualan
               LEFT JOIN barang b ON dp.id_barang = b.id_barang
@@ -161,7 +176,10 @@ class Penjualan {
               COUNT(dp.id_detail) as jumlah_item,
               COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
-              MAX(h.status) as hutang_status
+              MAX(h.status) as hutang_status,
+              MAX(h.jumlah_hutang) as jumlah_hutang,
+              MAX(h.jatuh_tempo) as jatuh_tempo,
+              MAX(CASE WHEN h.status = 'belum_bayar' THEN GREATEST((CURRENT_DATE - h.jatuh_tempo), 0) ELSE 0 END) as aging_hari
               FROM " . $this->table . " p
               LEFT JOIN " . $this->detail_table . " dp ON p.id_penjualan = dp.id_penjualan
               LEFT JOIN barang b ON dp.id_barang = b.id_barang
@@ -197,6 +215,43 @@ class Penjualan {
                   ORDER BY dp.id_detail ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getExportDetailByDateRange($tanggal_awal, $tanggal_akhir) {
+        $query = "SELECT
+                    p.id_penjualan,
+                    p.tanggal,
+                    p.nama_pembeli,
+                    p.total_harga,
+                    p.kembalian,
+                    dp.id_detail,
+                    b.kode_barang,
+                    b.nama_barang,
+                    b.satuan,
+                    dp.jumlah,
+                    dp.harga_satuan,
+                    COALESCE(dp.diskon, 0) as diskon,
+                    COALESCE(dp.subtotal, 0) as subtotal,
+                    COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) as harga_beli_item,
+                    (((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)) as laba_item,
+                    COALESCE(h.status, 'lunas') as hutang_status,
+                    COALESCE(h.jumlah_hutang, 0) as jumlah_hutang,
+                    h.jatuh_tempo,
+                    CASE
+                        WHEN h.status = 'belum_bayar' AND h.jatuh_tempo IS NOT NULL THEN GREATEST((CURRENT_DATE - h.jatuh_tempo), 0)
+                        ELSE 0
+                    END as aging_hari
+                  FROM penjualan p
+                  JOIN detail_penjualan dp ON p.id_penjualan = dp.id_penjualan
+                  JOIN barang b ON dp.id_barang = b.id_barang
+                  LEFT JOIN hutang h ON p.id_penjualan = h.id_penjualan
+                  WHERE DATE(p.tanggal) >= :tanggal_awal AND DATE(p.tanggal) <= :tanggal_akhir
+                  ORDER BY p.tanggal DESC, p.id_penjualan DESC, dp.id_detail ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':tanggal_awal', $tanggal_awal);
+        $stmt->bindParam(':tanggal_akhir', $tanggal_akhir);
         $stmt->execute();
         return $stmt->fetchAll();
     }
@@ -283,6 +338,7 @@ class Penjualan {
             }
 
             // Insert detail items
+            $detailFinal = [];
             foreach ($data['items'] as $item) {
                 $jumlah = abs((int)$item['jumlah']);
                 $hargaSatuan = (float)$item['harga_satuan'];
@@ -303,6 +359,28 @@ class Penjualan {
                 $hargaBeliSaatTransaksi = $hargaBeliSnapshot[(int)$item['id_barang']] ?? 0;
                 $stmtDetail->bindParam(':harga_beli_saat_transaksi', $hargaBeliSaatTransaksi);
                 $stmtDetail->execute();
+                $idDetailPenjualan = (int)$this->conn->lastInsertId();
+
+                $consumed = $this->batchModel->consumeForSaleDetail(
+                    (int)$id_penjualan,
+                    $idDetailPenjualan,
+                    (int)$item['id_barang'],
+                    (float)$jumlah,
+                    (float)$hargaBeliSaatTransaksi
+                );
+                $unitModal = (float)($consumed['unit_modal'] ?? $hargaBeliSaatTransaksi);
+                $updateSnapshot = $this->conn->prepare("UPDATE detail_penjualan SET harga_beli_saat_transaksi = :harga_beli WHERE id_detail = :id_detail");
+                $updateSnapshot->bindValue(':harga_beli', $unitModal);
+                $updateSnapshot->bindValue(':id_detail', $idDetailPenjualan, PDO::PARAM_INT);
+                $updateSnapshot->execute();
+
+                $detailFinal[] = [
+                    'id_detail' => $idDetailPenjualan,
+                    'id_barang' => (int)$item['id_barang'],
+                    'jumlah' => $jumlah,
+                    'harga_jual' => $hargaSatuan,
+                    'harga_beli_snapshot' => $unitModal
+                ];
 
                 // Update stok barang (kurangi)
                 $queryStok = "UPDATE barang
@@ -319,6 +397,15 @@ class Penjualan {
             }
 
             $this->conn->commit();
+            $this->auditTrail->log([
+                'modul' => 'penjualan',
+                'aksi' => 'create',
+                'entitas' => 'penjualan',
+                'id_entitas' => (string)$id_penjualan,
+                'deskripsi' => 'Membuat transaksi penjualan baru',
+                'data_baru' => ['header' => $data, 'total_harga' => $total, 'detail' => $detailFinal],
+                'id_user' => $data['id_user'] ?? null
+            ]);
             return ['success' => true, 'message' => 'Penjualan berhasil', 'id' => $id_penjualan];
         } catch(Exception $e) {
             $this->conn->rollBack();
@@ -329,6 +416,8 @@ class Penjualan {
     public function update($id, $data) {
         try {
             $this->conn->beginTransaction();
+            $headerLama = $this->getById($id);
+            $this->batchModel->rollbackSale((int)$id);
 
             // Get old details
             $queryOld = "SELECT * FROM " . $this->detail_table . " WHERE id_penjualan = :id";
@@ -427,6 +516,7 @@ class Penjualan {
             $stmt->execute();
 
             // Insert new details
+            $detailFinal = [];
             foreach ($data['items'] as $item) {
                 $jumlah = abs((int)$item['jumlah']);
                 $hargaSatuan = (float)$item['harga_satuan'];
@@ -447,6 +537,28 @@ class Penjualan {
                 $hargaBeliSaatTransaksi = $hargaBeliSnapshot[(int)$item['id_barang']] ?? 0;
                 $stmtDetail->bindParam(':harga_beli_saat_transaksi', $hargaBeliSaatTransaksi);
                 $stmtDetail->execute();
+                $idDetailPenjualan = (int)$this->conn->lastInsertId();
+
+                $consumed = $this->batchModel->consumeForSaleDetail(
+                    (int)$id,
+                    $idDetailPenjualan,
+                    (int)$item['id_barang'],
+                    (float)$jumlah,
+                    (float)$hargaBeliSaatTransaksi
+                );
+                $unitModal = (float)($consumed['unit_modal'] ?? $hargaBeliSaatTransaksi);
+                $updateSnapshot = $this->conn->prepare("UPDATE detail_penjualan SET harga_beli_saat_transaksi = :harga_beli WHERE id_detail = :id_detail");
+                $updateSnapshot->bindValue(':harga_beli', $unitModal);
+                $updateSnapshot->bindValue(':id_detail', $idDetailPenjualan, PDO::PARAM_INT);
+                $updateSnapshot->execute();
+
+                $detailFinal[] = [
+                    'id_detail' => $idDetailPenjualan,
+                    'id_barang' => (int)$item['id_barang'],
+                    'jumlah' => $jumlah,
+                    'harga_jual' => $hargaSatuan,
+                    'harga_beli_snapshot' => $unitModal
+                ];
 
                 // Update stok barang (kurangi)
                 $queryStok = "UPDATE barang
@@ -504,6 +616,16 @@ class Penjualan {
             }
 
             $this->conn->commit();
+            $this->auditTrail->log([
+                'modul' => 'penjualan',
+                'aksi' => 'update',
+                'entitas' => 'penjualan',
+                'id_entitas' => (string)$id,
+                'deskripsi' => 'Mengubah transaksi penjualan',
+                'data_lama' => ['header' => $headerLama, 'detail' => $oldDetails],
+                'data_baru' => ['header' => $data, 'total_harga' => $total, 'detail' => $detailFinal],
+                'id_user' => $data['id_user'] ?? null
+            ]);
             return ['success' => true, 'message' => 'Penjualan berhasil diupdate'];
         } catch(Exception $e) {
             $this->conn->rollBack();
@@ -514,6 +636,7 @@ class Penjualan {
     public function delete($id, $updatedBy = null) {
         try {
             $this->conn->beginTransaction();
+            $headerLama = $this->getById($id);
 
             // Get details
             $queryDetails = "SELECT * FROM " . $this->detail_table . " WHERE id_penjualan = :id";
@@ -521,6 +644,8 @@ class Penjualan {
             $stmtDetails->bindParam(':id', $id);
             $stmtDetails->execute();
             $details = $stmtDetails->fetchAll();
+
+            $this->batchModel->rollbackSale((int)$id);
 
             // Restore all stock
             foreach ($details as $detail) {
@@ -554,6 +679,15 @@ class Penjualan {
             $stmt->execute();
 
             $this->conn->commit();
+            $this->auditTrail->log([
+                'modul' => 'penjualan',
+                'aksi' => 'delete',
+                'entitas' => 'penjualan',
+                'id_entitas' => (string)$id,
+                'deskripsi' => 'Menghapus transaksi penjualan',
+                'data_lama' => ['header' => $headerLama, 'detail' => $details],
+                'id_user' => $updatedBy
+            ]);
             return ['success' => true, 'message' => 'Penjualan berhasil dihapus'];
         } catch(Exception $e) {
             $this->conn->rollBack();

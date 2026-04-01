@@ -3,7 +3,7 @@
 <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
     <div class="flex justify-between items-center mb-8">
         <h2 class="text-3xl font-bold text-gray-800">
-            <i class="fas fa-shopping-cart text-blue-600 mr-2"></i>Detail Pembelian
+            <i class="fas fa-shopping-cart text-blue-600 mr-2"></i>Detail Barang Masuk
         </h2>
         <span class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-lg">#<?= $pembelian['id_pembelian'] ?></span>
     </div>
@@ -38,7 +38,7 @@
 
         <!-- Ringkasan Pembayaran -->
         <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-6">
-            <h3 class="text-xl font-bold text-blue-900 mb-6 pb-3 border-b-2 border-blue-400">Total Pembelian</h3>
+            <h3 class="text-xl font-bold text-blue-900 mb-6 pb-3 border-b-2 border-blue-400">Total Barang Masuk</h3>
             
             <div class="space-y-5">
                 <div class="flex justify-between items-center">
@@ -49,9 +49,9 @@
         </div>
     </div>
 
-    <!-- Tabel Item Pembelian -->
+    <!-- Tabel Item Barang Masuk -->
     <div class="overflow-x-auto mb-8">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Item Pembelian</h3>
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Item Barang Masuk</h3>
         <table class="w-full border border-gray-300 rounded-lg">
             <thead class="bg-blue-100 border-b-2 border-blue-300">
                 <tr>
@@ -104,6 +104,6 @@
 
 <?php 
 $content = ob_get_clean();
-$title = 'Detail Pembelian - Sistem Inventori';
+$title = 'Detail Barang Masuk - Sistem Inventori';
 include __DIR__ . '/../layout/header.php';
 ?>

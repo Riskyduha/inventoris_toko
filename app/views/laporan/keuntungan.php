@@ -1,51 +1,67 @@
 <?php ob_start(); ?>
 
-<div class="bg-white rounded-lg shadow-md p-6">
+<div class="app-card p-6 app-reveal">
     <h2 class="text-2xl font-bold text-gray-800 mb-6">
         <i class="fas fa-dollar-sign text-blue-600 mr-2"></i>Laporan Keuntungan
     </h2>
 
     <!-- Filter -->
-    <form method="GET" class="mb-6 bg-gray-50 p-4 rounded-lg">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <form method="GET" class="mb-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50/95 to-white/95 p-4 sm:p-5 sticky top-20 z-20 backdrop-blur shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Tanggal Mulai</label>
                 <input type="date" id="startDate" name="start" value="<?= $start ?>" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
             </div>
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Tanggal Akhir</label>
                 <input type="date" id="endDate" name="end" value="<?= $end ?>" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
             </div>
             <div class="flex items-end">
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                <button type="submit" class="w-full app-btn-primary px-4 py-2.5 text-sm font-semibold">
                     <i class="fas fa-search mr-2"></i>Filter
                 </button>
             </div>
             <div class="flex items-end">
-                <button type="button" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2" onclick="downloadKeuntunganPDF()">
-                    <i class="fas fa-file-pdf"></i>
-                    <span>Download PDF</span>
-                </button>
-            </div>
-            <div class="flex items-end">
-                <button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2" onclick="downloadKeuntunganExcel()">
+                <button type="button" class="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 flex items-center justify-center gap-2" onclick="downloadKeuntunganExcel()">
                     <i class="fas fa-file-excel"></i>
                     <span>Download Excel</span>
                 </button>
             </div>
         </div>
+        <div class="flex flex-wrap items-center gap-2 mt-3">
+            <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="setQuickDateRange(1)">Hari Ini</button>
+            <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="setQuickDateRange(7)">7 Hari</button>
+            <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="setQuickDateRange(30)">30 Hari</button>
+            <button type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" onclick="clearQuickDateRange()">Reset</button>
+        </div>
     </form>
 
     <script>
-    function downloadKeuntunganPDF() {
-        const start = document.getElementById('startDate').value;
-        const end = document.getElementById('endDate').value;
-        let url = '/laporan/keuntungan/export?format=pdf';
-        if (start) url += '&start=' + start;
-        if (end) url += '&end=' + end;
-        window.location.href = url;
+    function formatDateInput(dateObj) {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+    }
+
+    function setQuickDateRange(days) {
+        const startEl = document.getElementById('startDate');
+        const endEl = document.getElementById('endDate');
+        if (!startEl || !endEl) return;
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - (Number(days) - 1));
+        startEl.value = formatDateInput(start);
+        endEl.value = formatDateInput(end);
+    }
+
+    function clearQuickDateRange() {
+        const startEl = document.getElementById('startDate');
+        const endEl = document.getElementById('endDate');
+        if (startEl) startEl.value = '';
+        if (endEl) endEl.value = '';
     }
 
     function downloadKeuntunganExcel() {

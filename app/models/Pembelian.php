@@ -1,15 +1,21 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/InventoryBatch.php';
+require_once __DIR__ . '/AuditTrail.php';
 
 class Pembelian {
     private $conn;
     private $table = 'pembelian';
     private $detail_table = 'detail_pembelian';
+    private $batchModel;
+    private $auditTrail;
 
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
+        $this->batchModel = new InventoryBatch($this->conn);
+        $this->auditTrail = new AuditTrail($this->conn);
     }
 
     public function getAll() {
@@ -46,6 +52,30 @@ class Pembelian {
         return $stmt->fetchAll();
     }
 
+    public function getExportDetailAll() {
+        $query = "SELECT
+                    p.id_pembelian,
+                    p.tanggal,
+                    p.nama_pembeli,
+                    p.total_harga,
+                    p.kembalian,
+                    dp.id_detail,
+                    b.kode_barang,
+                    b.nama_barang,
+                    b.satuan,
+                    dp.jumlah,
+                    dp.harga_satuan,
+                    COALESCE(dp.diskon, 0) as diskon,
+                    COALESCE(dp.subtotal, 0) as subtotal
+                  FROM pembelian p
+                  JOIN detail_pembelian dp ON p.id_pembelian = dp.id_pembelian
+                  JOIN barang b ON dp.id_barang = b.id_barang
+                  ORDER BY p.tanggal DESC, p.id_pembelian DESC, dp.id_detail ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function create($data) {
         try {
             $this->conn->beginTransaction();
@@ -53,7 +83,7 @@ class Pembelian {
             // Calculate total from items
             $total = 0;
             foreach ($data['items'] as $item) {
-                $subtotal = ($item['harga_satuan'] * $item['jumlah']) - $item['diskon'];
+                $subtotal = $item['harga_satuan'] * $item['jumlah'];
                 $total += $subtotal;
             }
 
@@ -77,7 +107,7 @@ class Pembelian {
 
             // Insert detail items
             foreach ($data['items'] as $item) {
-                $subtotal = ($item['harga_satuan'] * $item['jumlah']) - $item['diskon'];
+                $subtotal = $item['harga_satuan'] * $item['jumlah'];
                 
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
                                (id_pembelian, id_barang, jumlah, harga_satuan, diskon, subtotal)
@@ -88,9 +118,20 @@ class Pembelian {
                 $stmtDetail->bindParam(':id_barang', $item['id_barang']);
                 $stmtDetail->bindParam(':jumlah', $item['jumlah']);
                 $stmtDetail->bindParam(':harga_satuan', $item['harga_satuan']);
-                $stmtDetail->bindParam(':diskon', $item['diskon']);
+                $diskon = 0;
+                $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
                 $stmtDetail->execute();
+                $idDetailPembelian = (int)$this->conn->lastInsertId();
+
+                $this->batchModel->createBatchFromPurchaseDetail(
+                    (int)$id_pembelian,
+                    $idDetailPembelian,
+                    (int)$item['id_barang'],
+                    (float)$item['jumlah'],
+                    (float)$item['harga_satuan'],
+                    null
+                );
 
                 // Update stok barang (tambah)
                 $queryStok = "UPDATE barang
@@ -107,6 +148,15 @@ class Pembelian {
             }
 
             $this->conn->commit();
+            $this->auditTrail->log([
+                'modul' => 'pembelian',
+                'aksi' => 'create',
+                'entitas' => 'pembelian',
+                'id_entitas' => (string)$id_pembelian,
+                'deskripsi' => 'Membuat transaksi pembelian baru',
+                'data_baru' => ['header' => $data, 'total_harga' => $total],
+                'id_user' => $data['id_user'] ?? null
+            ]);
             return ['success' => true, 'message' => 'Pembelian berhasil', 'id' => $id_pembelian];
         } catch(Exception $e) {
             $this->conn->rollBack();
@@ -117,6 +167,7 @@ class Pembelian {
     public function update($id, $data) {
         try {
             $this->conn->beginTransaction();
+            $headerLama = $this->getById($id);
 
             // Get old details
             $queryOld = "SELECT * FROM " . $this->detail_table . " WHERE id_pembelian = :id";
@@ -140,10 +191,15 @@ class Pembelian {
                 $stmtRestore->execute();
             }
 
+            if (!$this->batchModel->canModifyPurchase((int)$id)) {
+                $this->conn->rollBack();
+                return ['success' => false, 'message' => 'Pembelian tidak bisa diubah karena batch modal sudah dipakai di transaksi penjualan.'];
+            }
+
             // Calculate new total
             $total = 0;
             foreach ($data['items'] as $item) {
-                $subtotal = ($item['harga_satuan'] * $item['jumlah']) - $item['diskon'];
+                $subtotal = $item['harga_satuan'] * $item['jumlah'];
                 $total += $subtotal;
             }
 
@@ -175,8 +231,9 @@ class Pembelian {
             $stmt->execute();
 
             // Insert new details
+            $detailBaru = [];
             foreach ($data['items'] as $item) {
-                $subtotal = ($item['harga_satuan'] * $item['jumlah']) - $item['diskon'];
+                $subtotal = $item['harga_satuan'] * $item['jumlah'];
                 
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
                                (id_pembelian, id_barang, jumlah, harga_satuan, diskon, subtotal)
@@ -187,9 +244,17 @@ class Pembelian {
                 $stmtDetail->bindParam(':id_barang', $item['id_barang']);
                 $stmtDetail->bindParam(':jumlah', $item['jumlah']);
                 $stmtDetail->bindParam(':harga_satuan', $item['harga_satuan']);
-                $stmtDetail->bindParam(':diskon', $item['diskon']);
+                $diskon = 0;
+                $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
                 $stmtDetail->execute();
+                $idDetailPembelian = (int)$this->conn->lastInsertId();
+                $detailBaru[] = [
+                    'id_detail' => $idDetailPembelian,
+                    'id_barang' => (int)$item['id_barang'],
+                    'jumlah' => (float)$item['jumlah'],
+                    'harga_satuan' => (float)$item['harga_satuan']
+                ];
 
                 // Update stok barang (tambah)
                 $queryStok = "UPDATE barang
@@ -205,7 +270,19 @@ class Pembelian {
                 $stmtStok->execute();
             }
 
+            $this->batchModel->replacePurchaseBatches((int)$id, $detailBaru, null);
+
             $this->conn->commit();
+            $this->auditTrail->log([
+                'modul' => 'pembelian',
+                'aksi' => 'update',
+                'entitas' => 'pembelian',
+                'id_entitas' => (string)$id,
+                'deskripsi' => 'Mengubah transaksi pembelian',
+                'data_lama' => ['header' => $headerLama, 'detail' => $oldDetails],
+                'data_baru' => ['header' => $data, 'total_harga' => $total],
+                'id_user' => $data['id_user'] ?? null
+            ]);
             return ['success' => true, 'message' => 'Pembelian berhasil diupdate'];
         } catch(Exception $e) {
             $this->conn->rollBack();
@@ -230,6 +307,7 @@ class Pembelian {
     public function delete($id, $updatedBy = null) {
         try {
             $this->conn->beginTransaction();
+            $headerLama = $this->getById($id);
 
             // Get details
             $queryDetails = "SELECT * FROM " . $this->detail_table . " WHERE id_pembelian = :id";
@@ -237,6 +315,11 @@ class Pembelian {
             $stmtDetails->bindParam(':id', $id);
             $stmtDetails->execute();
             $details = $stmtDetails->fetchAll();
+
+            if (!$this->batchModel->canModifyPurchase((int)$id)) {
+                $this->conn->rollBack();
+                return ['success' => false, 'message' => 'Pembelian tidak bisa dihapus karena batch modal sudah dipakai di transaksi penjualan.'];
+            }
 
             // Restore all stock (reverse the addition)
             foreach ($details as $detail) {
@@ -266,6 +349,15 @@ class Pembelian {
             $stmt->execute();
 
             $this->conn->commit();
+            $this->auditTrail->log([
+                'modul' => 'pembelian',
+                'aksi' => 'delete',
+                'entitas' => 'pembelian',
+                'id_entitas' => (string)$id,
+                'deskripsi' => 'Menghapus transaksi pembelian',
+                'data_lama' => ['header' => $headerLama, 'detail' => $details],
+                'id_user' => $updatedBy
+            ]);
             return ['success' => true, 'message' => 'Pembelian berhasil dihapus'];
         } catch(Exception $e) {
             $this->conn->rollBack();

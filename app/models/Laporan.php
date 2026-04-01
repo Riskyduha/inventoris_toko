@@ -9,6 +9,7 @@ class Laporan {
         $database = new Database();
         $this->conn = $database->getConnection();
         $this->ensureProfitSnapshotColumn();
+        $this->ensureInventoryAlertColumns();
     }
 
     private function ensureProfitSnapshotColumn(): void {
@@ -21,6 +22,15 @@ class Laporan {
                                  AND (dp.harga_beli_saat_transaksi IS NULL OR dp.harga_beli_saat_transaksi = 0)");
         } catch (Exception $e) {
             error_log('ensureProfitSnapshotColumn error: ' . $e->getMessage());
+        }
+    }
+
+    private function ensureInventoryAlertColumns(): void {
+        try {
+            $this->conn->exec("ALTER TABLE barang ADD COLUMN IF NOT EXISTS stok_minimum INTEGER DEFAULT 0");
+            $this->conn->exec("ALTER TABLE barang ADD COLUMN IF NOT EXISTS tanggal_expired DATE NULL");
+        } catch (Exception $e) {
+            error_log('ensureInventoryAlertColumns error: ' . $e->getMessage());
         }
     }
 
@@ -125,7 +135,7 @@ class Laporan {
                                         b.nama_barang,
                                         b.satuan,
                                         dp.jumlah,
-                                        b.harga_beli,
+                                        COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) as harga_beli,
                                         dp.harga_satuan as harga_jual,
                                         (dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) as keuntungan_per_unit,
                                         ((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah - dp.diskon) as keuntungan_total,
@@ -192,15 +202,18 @@ class Laporan {
         return $result['total'] ?? 0;
     }
 
-    public function getDashboardStats() {
+    public function getDashboardStats(int $days = 1) {
+        $days = max(1, $days);
         $today = date('Y-m-d');
+        $startDate = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
 
         // Total Barang Terjual Hari Ini
         $queryBarangTerjual = "SELECT COALESCE(SUM(dp.jumlah), 0) as total 
                                FROM detail_penjualan dp
                                JOIN penjualan p ON dp.id_penjualan = p.id_penjualan
-                               WHERE DATE(p.tanggal) = :today";
+                               WHERE DATE(p.tanggal) BETWEEN :start_date AND :today";
         $stmtBarangTerjual = $this->conn->prepare($queryBarangTerjual);
+        $stmtBarangTerjual->bindParam(':start_date', $startDate);
         $stmtBarangTerjual->bindParam(':today', $today);
         $stmtBarangTerjual->execute();
         $barangTerjualHariIni = $stmtBarangTerjual->fetch()['total'] ?? 0;
@@ -221,15 +234,17 @@ class Laporan {
         $nilaiPersediaan = $stmtNilaiPersediaan->fetch() ?: [];
 
         // Total Penjualan Hari Ini
-        $queryPenjualan = "SELECT SUM(total_harga) as total FROM penjualan WHERE DATE(tanggal) = :today";
+        $queryPenjualan = "SELECT SUM(total_harga) as total FROM penjualan WHERE DATE(tanggal) BETWEEN :start_date AND :today";
         $stmtPenjualan = $this->conn->prepare($queryPenjualan);
+        $stmtPenjualan->bindParam(':start_date', $startDate);
         $stmtPenjualan->bindParam(':today', $today);
         $stmtPenjualan->execute();
         $totalPenjualanHariIni = $stmtPenjualan->fetch()['total'] ?? 0;
 
         // Total Pembelian Hari Ini
-        $queryPembelian = "SELECT SUM(total_harga) as total FROM pembelian WHERE DATE(tanggal) = :today";
+        $queryPembelian = "SELECT SUM(total_harga) as total FROM pembelian WHERE DATE(tanggal) BETWEEN :start_date AND :today";
         $stmtPembelian = $this->conn->prepare($queryPembelian);
+        $stmtPembelian->bindParam(':start_date', $startDate);
         $stmtPembelian->bindParam(':today', $today);
         $stmtPembelian->execute();
         $totalPembelianHariIni = $stmtPembelian->fetch()['total'] ?? 0;
@@ -239,8 +254,9 @@ class Laporan {
                             FROM detail_penjualan dp
                             JOIN penjualan p ON dp.id_penjualan = p.id_penjualan
                             JOIN barang b ON dp.id_barang = b.id_barang
-                            WHERE DATE(p.tanggal) = :today";
+                            WHERE DATE(p.tanggal) BETWEEN :start_date AND :today";
         $stmtLabaBersih = $this->conn->prepare($queryLabaBersih);
+        $stmtLabaBersih->bindParam(':start_date', $startDate);
         $stmtLabaBersih->bindParam(':today', $today);
         $stmtLabaBersih->execute();
         $labaBersihHariIni = $stmtLabaBersih->fetch()['total'] ?? 0;
@@ -254,6 +270,71 @@ class Laporan {
             'pembelian_hari_ini' => $totalPembelianHariIni,
             'laba_bersih_hari_ini' => $labaBersihHariIni
         ];
+    }
+
+    public function getPriorityInventoryAlerts(): array {
+        $high = [];
+        $medium = [];
+
+        $queryHigh = "SELECT id_barang, nama_barang, stok, satuan, stok_minimum, tanggal_expired,
+                             CASE
+                                 WHEN tanggal_expired IS NOT NULL AND tanggal_expired <= CURRENT_DATE + INTERVAL '7 day' THEN 'expired_critical'
+                                 WHEN stok <= COALESCE(NULLIF(stok_minimum, 0), 3) THEN 'stok_kritis'
+                                 ELSE 'lainnya'
+                             END AS reason
+                      FROM barang
+                      WHERE (tanggal_expired IS NOT NULL AND tanggal_expired <= CURRENT_DATE + INTERVAL '7 day')
+                         OR stok <= COALESCE(NULLIF(stok_minimum, 0), 3)
+                      ORDER BY tanggal_expired ASC NULLS LAST, stok ASC
+                      LIMIT 8";
+        $stmtHigh = $this->conn->prepare($queryHigh);
+        $stmtHigh->execute();
+        $high = $stmtHigh->fetchAll();
+
+        $queryMedium = "SELECT id_barang, nama_barang, stok, satuan, stok_minimum, tanggal_expired,
+                               CASE
+                                   WHEN tanggal_expired IS NOT NULL AND tanggal_expired <= CURRENT_DATE + INTERVAL '30 day' THEN 'expired_warning'
+                                   WHEN stok <= GREATEST(COALESCE(NULLIF(stok_minimum, 0), 5), 5) THEN 'stok_menipis'
+                                   ELSE 'lainnya'
+                               END AS reason
+                        FROM barang
+                        WHERE ((tanggal_expired IS NOT NULL AND tanggal_expired > CURRENT_DATE + INTERVAL '7 day' AND tanggal_expired <= CURRENT_DATE + INTERVAL '30 day')
+                           OR (stok > COALESCE(NULLIF(stok_minimum, 0), 3) AND stok <= GREATEST(COALESCE(NULLIF(stok_minimum, 0), 5), 5)))
+                        ORDER BY tanggal_expired ASC NULLS LAST, stok ASC
+                        LIMIT 8";
+        $stmtMedium = $this->conn->prepare($queryMedium);
+        $stmtMedium->execute();
+        $medium = $stmtMedium->fetchAll();
+
+        return [
+            'high' => $high,
+            'medium' => $medium
+        ];
+    }
+
+    public function getBarangAkanExpired(int $months = 3, int $limit = 50): array {
+        $months = max(1, $months);
+        $limit = max(1, $limit);
+        $today = date('Y-m-d');
+
+        $query = "SELECT id_barang,
+                         nama_barang,
+                         stok,
+                         satuan,
+                         tanggal_expired,
+                         (tanggal_expired - :today::date) AS sisa_hari
+                  FROM barang
+                  WHERE tanggal_expired IS NOT NULL
+                    AND tanggal_expired <= (:today::date + (:months || ' month')::interval)
+                  ORDER BY tanggal_expired ASC, nama_barang ASC
+                  LIMIT :limit";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':today', $today);
+        $stmt->bindValue(':months', (string)$months, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll() ?: [];
     }
 
     public function getPenjualanTrend($days = 7) {

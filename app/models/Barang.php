@@ -1,15 +1,19 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/AuditTrail.php';
 
 class Barang {
     private $conn;
     private $table = 'barang';
+    private $auditTrail;
 
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
+        $this->auditTrail = new AuditTrail($this->conn);
         $this->ensureStockAuditStructure();
+        $this->ensureExpiryColumn();
     }
 
     private function ensureStockAuditStructure() {
@@ -43,6 +47,14 @@ class Barang {
             }
         } catch (Exception $e) {
             error_log('ensureStockAuditStructure error: ' . $e->getMessage());
+        }
+    }
+
+    private function ensureExpiryColumn() {
+        try {
+            $this->conn->exec("ALTER TABLE barang ADD COLUMN IF NOT EXISTS tanggal_expired DATE NULL");
+        } catch (Exception $e) {
+            error_log('ensureExpiryColumn error: ' . $e->getMessage());
         }
     }
 
@@ -186,8 +198,8 @@ class Barang {
     public function create($data) {
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
         $query = "INSERT INTO " . $this->table . " 
-                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, stok_updated_by) 
-                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :stok_updated_by)";
+                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, tanggal_expired, stok_updated_by) 
+                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :tanggal_expired, :stok_updated_by)";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':kode_barang', $kodeBarang);
@@ -197,17 +209,32 @@ class Barang {
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
+        $tanggalExpired = !empty($data['tanggal_expired']) ? $data['tanggal_expired'] : null;
+        $stmt->bindValue(':tanggal_expired', $tanggalExpired, $tanggalExpired === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
         $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         
-        return $stmt->execute();
+        $success = $stmt->execute();
+        if ($success) {
+            $idBaru = (int)$this->conn->lastInsertId();
+            $this->auditTrail->log([
+                'modul' => 'barang',
+                'aksi' => 'create',
+                'entitas' => 'barang',
+                'id_entitas' => (string)$idBaru,
+                'deskripsi' => 'Menambahkan barang baru',
+                'data_baru' => $data,
+                'id_user' => $data['stok_updated_by'] ?? null
+            ]);
+        }
+        return $success;
     }
 
     public function createAndReturn($data) {
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
         $query = "INSERT INTO " . $this->table . " 
-                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, stok_updated_by) 
-                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :stok_updated_by)";
+                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, tanggal_expired, stok_updated_by) 
+                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :tanggal_expired, :stok_updated_by)";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':kode_barang', $kodeBarang);
@@ -217,6 +244,8 @@ class Barang {
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
+        $tanggalExpired = !empty($data['tanggal_expired']) ? $data['tanggal_expired'] : null;
+        $stmt->bindValue(':tanggal_expired', $tanggalExpired, $tanggalExpired === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
         $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
 
@@ -230,6 +259,7 @@ class Barang {
     }
 
     public function update($id, $data) {
+        $lama = $this->getById($id);
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
         $query = "UPDATE " . $this->table . " 
                   SET kode_barang = :kode_barang,
@@ -239,6 +269,7 @@ class Barang {
                       harga_beli = :harga_beli, 
                       harga_jual = :harga_jual, 
                       stok = :stok,
+                      tanggal_expired = :tanggal_expired,
                       stok_updated_by = :stok_updated_by,
                       updated_at = NOW()
                   WHERE id_barang = :id";
@@ -252,10 +283,25 @@ class Barang {
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
+        $tanggalExpired = !empty($data['tanggal_expired']) ? $data['tanggal_expired'] : null;
+        $stmt->bindValue(':tanggal_expired', $tanggalExpired, $tanggalExpired === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
         $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         
-        return $stmt->execute();
+        $success = $stmt->execute();
+        if ($success) {
+            $this->auditTrail->log([
+                'modul' => 'barang',
+                'aksi' => 'update',
+                'entitas' => 'barang',
+                'id_entitas' => (string)$id,
+                'deskripsi' => 'Mengubah data barang',
+                'data_lama' => $lama,
+                'data_baru' => $data,
+                'id_user' => $data['stok_updated_by'] ?? null
+            ]);
+        }
+        return $success;
     }
 
     public function updateSatuanBarang($id, $satuan) {
@@ -266,14 +312,44 @@ class Barang {
         return $stmt->execute();
     }
 
-    public function delete($id) {
-        $query = "DELETE FROM " . $this->table . " WHERE id_barang = :id";
+    public function updateAtributDariPembelian($id, $satuan, $hargaJual, $tanggalExpired = null) {
+        $query = "UPDATE " . $this->table . "
+                  SET satuan = COALESCE(NULLIF(:satuan, ''), satuan),
+                      harga_jual = COALESCE(:harga_jual, harga_jual),
+                      tanggal_expired = COALESCE(:tanggal_expired, tanggal_expired),
+                      updated_at = NOW()
+                  WHERE id_barang = :id";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->bindParam(':satuan', $satuan);
+        $hargaJualValue = $hargaJual !== null && $hargaJual !== '' ? (float)$hargaJual : null;
+        $stmt->bindValue(':harga_jual', $hargaJualValue, $hargaJualValue === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $expiredValue = !empty($tanggalExpired) ? $tanggalExpired : null;
+        $stmt->bindValue(':tanggal_expired', $expiredValue, $expiredValue === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         return $stmt->execute();
     }
 
+    public function delete($id) {
+        $lama = $this->getById($id);
+        $query = "DELETE FROM " . $this->table . " WHERE id_barang = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id);
+        $success = $stmt->execute();
+        if ($success) {
+            $this->auditTrail->log([
+                'modul' => 'barang',
+                'aksi' => 'delete',
+                'entitas' => 'barang',
+                'id_entitas' => (string)$id,
+                'deskripsi' => 'Menghapus barang',
+                'data_lama' => $lama
+            ]);
+        }
+        return $success;
+    }
+
     public function updateStok($id, $jumlah, $updatedBy = null) {
+        $lama = $this->getById($id);
         $query = "UPDATE " . $this->table . " 
                   SET stok = stok + :jumlah,
                       stok_updated_by = :stok_updated_by,
@@ -286,7 +362,21 @@ class Barang {
         $updatedByValue = $updatedBy !== null && $updatedBy !== '' ? (int)$updatedBy : null;
         $stmt->bindValue(':stok_updated_by', $updatedByValue, $updatedByValue === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         
-        return $stmt->execute();
+        $success = $stmt->execute();
+        if ($success) {
+            $baru = $this->getById($id);
+            $this->auditTrail->log([
+                'modul' => 'stok',
+                'aksi' => 'adjust',
+                'entitas' => 'barang',
+                'id_entitas' => (string)$id,
+                'deskripsi' => 'Penyesuaian stok manual',
+                'data_lama' => ['stok' => $lama['stok'] ?? null],
+                'data_baru' => ['stok' => $baru['stok'] ?? null, 'delta' => $jumlah],
+                'id_user' => $updatedBy
+            ]);
+        }
+        return $success;
     }
 
     public function getStokRendah($batas = 10) {

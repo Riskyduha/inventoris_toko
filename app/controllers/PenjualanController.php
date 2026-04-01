@@ -269,4 +269,71 @@ class PenjualanController {
         }
         redirect('/penjualan');
     }
+
+    public function export() {
+        // Sesuai kebutuhan: export hanya Excel detail
+        $tanggalAwal = trim((string)($_GET['tanggal_awal'] ?? date('Y-m-d')));
+        $tanggalAkhir = trim((string)($_GET['tanggal_akhir'] ?? $tanggalAwal));
+
+        if ($tanggalAwal === '' || $tanggalAkhir === '') {
+            $tanggalAwal = date('Y-m-d');
+            $tanggalAkhir = date('Y-m-d');
+        }
+
+        $rows = $this->model->getExportDetailByDateRange($tanggalAwal, $tanggalAkhir);
+        $timestamp = date('Ymd_His');
+        $filenameBase = "penjualan_{$tanggalAwal}_{$tanggalAkhir}_{$timestamp}";
+        $filename = $filenameBase . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        echo '<table border="1">';
+        echo '<tr>';
+        echo '<th>No</th>';
+        echo '<th>ID Penjualan</th>';
+        echo '<th>Tanggal</th>';
+        echo '<th>Pembeli</th>';
+        echo '<th>Kode Barang</th>';
+        echo '<th>Nama Barang</th>';
+        echo '<th>Satuan</th>';
+        echo '<th>Jumlah</th>';
+        echo '<th>Harga Satuan</th>';
+        echo '<th>Diskon Item</th>';
+        echo '<th>Subtotal Item</th>';
+        echo '<th>Harga Beli Item</th>';
+        echo '<th>Laba Item</th>';
+        echo '<th>Total Transaksi</th>';
+        echo '<th>Kembalian</th>';
+        echo '<th>Status Hutang</th>';
+        echo '<th>Jumlah Hutang</th>';
+        echo '<th>Jatuh Tempo</th>';
+        echo '<th>Aging (Hari)</th>';
+        echo '</tr>';
+
+        foreach ($rows as $idx => $r) {
+            echo '<tr>';
+            echo '<td>' . ($idx + 1) . '</td>';
+            echo '<td>' . (int)($r['id_penjualan'] ?? 0) . '</td>';
+            echo '<td>' . htmlspecialchars(date('Y-m-d H:i', strtotime((string)($r['tanggal'] ?? ''))), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['nama_pembeli'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['kode_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['nama_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['satuan'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . (float)($r['jumlah'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['harga_satuan'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['diskon'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['subtotal'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['harga_beli_item'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['laba_item'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['total_harga'] ?? 0) . '</td>';
+            echo '<td>' . (float)($r['kembalian'] ?? 0) . '</td>';
+            echo '<td>' . htmlspecialchars((string)($r['hutang_status'] ?? 'lunas'), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . (float)($r['jumlah_hutang'] ?? 0) . '</td>';
+            echo '<td>' . (!empty($r['jatuh_tempo']) ? htmlspecialchars(date('Y-m-d', strtotime((string)$r['jatuh_tempo'])), ENT_QUOTES, 'UTF-8') : '-') . '</td>';
+            echo '<td>' . (int)($r['aging_hari'] ?? 0) . '</td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+        exit;
+    }
 }

@@ -125,13 +125,16 @@
 </head>
 <body class="h-full flex flex-col">
     <?php
-    $currentRole = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
+    $rawRole = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
+    $currentRole = $rawRole;
     if ($currentRole === 'kasir') {
         $currentRole = 'user';
     }
-    if ($currentRole === 'admin') {
+    if ($rawRole === 'admin') {
         $displayRole = 'Admin';
-    } elseif ($currentRole === 'inspeksi') {
+    } elseif ($rawRole === 'kasir') {
+        $displayRole = 'Kasir';
+    } elseif ($rawRole === 'inspeksi') {
         $displayRole = 'Inspeksi';
     } else {
         $displayRole = 'User';
@@ -165,12 +168,12 @@
                     </a>
                     <a href="/barang" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-box"></i>
-                        <span>Barang</span>
+                        <span>Stok</span>
                     </a>
                     <?php if ($canAccessTransaksi): ?>
                     <a href="/pembelian" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-shopping-cart"></i>
-                        <span>Pembelian</span>
+                        <span>Barang Masuk</span>
                     </a>
                     <a href="/penjualan" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-cash-register"></i>
@@ -183,7 +186,7 @@
                             <i class="fas fa-chart-line"></i>
                             <span>Laporan</span>
                         </a>
-                    <?php else: ?>
+                    <?php elseif ($currentRole !== 'inspeksi'): ?>
                         <!-- Dropdown Laporan -->
                         <div class="relative" onclick="toggleDropdown(event, this)">
                             <button type="button" class="nav-item px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2">
@@ -197,24 +200,24 @@
                                 </div>
                                 <a href="/laporan/pembelian" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-shopping-cart text-blue-600 w-4"></i>
-                                    <span>Laporan Pembelian</span>
+                                    <span>Barang Masuk</span>
                                 </a>
                                 <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-cash-register text-green-600 w-4"></i>
-                                    <span>Laporan Penjualan</span>
+                                    <span>Penjualan</span>
                                 </a>
                                 <a href="/laporan/stok" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-boxes text-orange-600 w-4"></i>
-                                    <span>Laporan Stok Barang</span>
+                                    <span>Stok</span>
                                 </a>
                                 <a href="/laporan/keuntungan" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-chart-pie text-purple-600 w-4"></i>
-                                    <span>Laporan Keuntungan</span>
+                                    <span>Laba</span>
                                 </a>
                                 <div class="border-t border-gray-200"></div>
                                 <a href="/hutang" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-file-invoice-dollar text-red-600 w-4"></i>
-                                    <span>Laporan Hutang</span>
+                                    <span>Hutang</span>
                                 </a>
                             </div>
                         </div>
@@ -244,11 +247,35 @@
                                     <i class="fas fa-receipt text-purple-600 w-4"></i>
                                     <span>Format Nota</span>
                                 </a>
+                                <a href="/backup" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
+                                    <i class="fas fa-database text-emerald-600 w-4"></i>
+                                    <span>Backup & Restore</span>
+                                </a>
                             </div>
                         </div>
                     <?php endif; ?>
                 </div>
                 
+                <!-- Operational Notification -->
+                <div class="relative" onclick="toggleDropdown(event, this)">
+                    <button type="button" class="relative inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white hover:bg-opacity-10 transition" aria-label="Notifikasi Operasional">
+                        <i class="fas fa-bell text-sm"></i>
+                        <span id="operationalNotifBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold">0</span>
+                    </button>
+                    <div class="absolute hidden bg-white text-gray-800 shadow-xl rounded-lg mt-2 w-80 dropdown-menu-content border border-gray-200 overflow-hidden" style="right: 0;">
+                        <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                            <p class="font-semibold text-gray-800 text-sm">Notifikasi Operasional</p>
+                            <span id="operationalNotifUpdatedAt" class="text-[11px] text-gray-500">Memuat...</span>
+                        </div>
+                        <div id="operationalNotifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                            <div class="px-4 py-3 text-sm text-gray-500">Memuat notifikasi...</div>
+                        </div>
+                        <a href="/laporan" class="block px-4 py-2.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 border-t border-gray-100">
+                            Buka Dashboard
+                        </a>
+                    </div>
+                </div>
+
                 <!-- User Menu -->
                 <div class="relative" onclick="toggleDropdown(event, this)">
                     <button type="button" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition">
@@ -302,12 +329,12 @@
                 </a>
                 <a href="/barang" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-box text-green-600 w-5"></i>
-                    <span>Barang</span>
+                    <span>Stok</span>
                 </a>
                 <?php if ($canAccessTransaksi): ?>
                 <a href="/pembelian" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-shopping-cart text-orange-600 w-5"></i>
-                    <span>Pembelian</span>
+                    <span>Barang Masuk</span>
                 </a>
                 <a href="/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-cash-register text-purple-600 w-5"></i>
@@ -315,37 +342,39 @@
                 </a>
                 <?php endif; ?>
                 
-                <!-- Laporan Section -->
-                <div class="border-t border-gray-200 pt-2 mt-2">
-                    <p class="text-xs font-semibold text-gray-500 uppercase px-4 mb-2">Laporan</p>
-                    <?php if ($currentRole === 'user'): ?>
-                        <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                            <i class="fas fa-chart-line text-green-600 w-5"></i>
-                            <span>Laporan Penjualan</span>
-                        </a>
-                    <?php else: ?>
-                        <a href="/laporan/pembelian" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                            <i class="fas fa-shopping-cart text-blue-600 w-5"></i>
-                            <span>Laporan Pembelian</span>
-                        </a>
-                        <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                            <i class="fas fa-cash-register text-green-600 w-5"></i>
-                            <span>Laporan Penjualan</span>
-                        </a>
-                        <a href="/laporan/stok" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                            <i class="fas fa-boxes text-orange-600 w-5"></i>
-                            <span>Laporan Stok Barang</span>
-                        </a>
-                        <a href="/laporan/keuntungan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                            <i class="fas fa-chart-pie text-purple-600 w-5"></i>
-                            <span>Laporan Keuntungan</span>
-                        </a>
-                        <a href="/hutang" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                            <i class="fas fa-file-invoice-dollar text-red-600 w-5"></i>
-                            <span>Laporan Hutang</span>
-                        </a>
-                    <?php endif; ?>
-                </div>
+                <?php if ($currentRole !== 'inspeksi'): ?>
+                    <!-- Laporan Section -->
+                    <div class="border-t border-gray-200 pt-2 mt-2">
+                        <p class="text-xs font-semibold text-gray-500 uppercase px-4 mb-2">Laporan</p>
+                        <?php if ($currentRole === 'user'): ?>
+                            <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                                <i class="fas fa-chart-line text-green-600 w-5"></i>
+                                <span>Laporan Penjualan</span>
+                            </a>
+                        <?php else: ?>
+                            <a href="/laporan/pembelian" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                                <i class="fas fa-shopping-cart text-blue-600 w-5"></i>
+                                <span>Barang Masuk</span>
+                            </a>
+                            <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                                <i class="fas fa-cash-register text-green-600 w-5"></i>
+                                <span>Penjualan</span>
+                            </a>
+                            <a href="/laporan/stok" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                                <i class="fas fa-boxes text-orange-600 w-5"></i>
+                                <span>Stok</span>
+                            </a>
+                            <a href="/laporan/keuntungan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                                <i class="fas fa-chart-pie text-purple-600 w-5"></i>
+                                <span>Laba</span>
+                            </a>
+                            <a href="/hutang" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                                <i class="fas fa-file-invoice-dollar text-red-600 w-5"></i>
+                                <span>Hutang</span>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
                 
                 <!-- Settings Section -->
                 <?php if ($currentRole === 'admin'): ?>
@@ -362,6 +391,10 @@
                         <a href="/setting/nota" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-receipt text-purple-600 w-5"></i>
                             <span>Format Nota</span>
+                        </a>
+                        <a href="/backup" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                            <i class="fas fa-database text-emerald-600 w-5"></i>
+                            <span>Backup & Restore</span>
                         </a>
                     </div>
                 <?php endif; ?>
@@ -407,6 +440,16 @@
             </div>
         </div>
     </footer>
+
+    <div id="globalLoadingOverlay" class="hidden fixed inset-0 z-[90] bg-slate-900/30 backdrop-blur-[1px]">
+        <div class="absolute inset-0 flex items-center justify-center">
+            <div class="rounded-xl bg-white border border-slate-200 px-4 py-3 shadow-lg text-sm font-semibold text-slate-700 inline-flex items-center gap-2">
+                <i class="fas fa-spinner fa-spin text-teal-600"></i>
+                Memuat halaman...
+            </div>
+        </div>
+    </div>
+    <div id="operationalRealtimeToast" class="hidden fixed top-16 right-4 z-[95] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-lg border border-amber-200 bg-amber-50 text-amber-700"></div>
 
     <script>
         function applyInteractiveEnhancements() {
@@ -470,6 +513,107 @@
             });
         }
 
+        function enhanceNavigationLoading() {
+            document.querySelectorAll('a[href^="/"]:not([download])').forEach((link) => {
+                if (link.dataset.navLoadingBound === 'true') {
+                    return;
+                }
+                const href = link.getAttribute('href') || '';
+                if (href.includes('/logout') || href.includes('/backup/download') || href.includes('/export')) {
+                    return;
+                }
+                link.dataset.navLoadingBound = 'true';
+                link.addEventListener('click', () => {
+                    const overlay = document.getElementById('globalLoadingOverlay');
+                    if (overlay) {
+                        overlay.classList.remove('hidden');
+                    }
+                });
+            });
+        }
+
+        let operationalNotifSignature = null;
+        let operationalNotifInitialized = false;
+
+        function showOperationalToast(message) {
+            const toast = document.getElementById('operationalRealtimeToast');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3200);
+        }
+
+        function renderOperationalNotifications(payload) {
+            const list = document.getElementById('operationalNotifList');
+            const badge = document.getElementById('operationalNotifBadge');
+            const updatedAt = document.getElementById('operationalNotifUpdatedAt');
+            if (!list || !badge || !updatedAt) return;
+
+            const summary = payload.summary || {};
+            const totalAlert = Number(summary.total_alert || 0);
+            const items = Array.isArray(payload.items) ? payload.items : [];
+            const currentSignature = payload.signature || '';
+
+            if (!operationalNotifInitialized) {
+                operationalNotifInitialized = true;
+                operationalNotifSignature = currentSignature;
+            } else if (currentSignature && operationalNotifSignature !== currentSignature) {
+                operationalNotifSignature = currentSignature;
+                if (Number(summary.total_critical || 0) > 0) {
+                    showOperationalToast('Update notifikasi operasional baru terdeteksi.');
+                }
+            }
+
+            if (totalAlert > 0) {
+                badge.textContent = String(totalAlert > 99 ? '99+' : totalAlert);
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            updatedAt.textContent = payload.generated_at ? 'Update ' + payload.generated_at : 'Terbaru';
+
+            if (items.length === 0) {
+                list.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">Tidak ada notifikasi operasional.</div>';
+                return;
+            }
+
+            list.innerHTML = items.map((item) => {
+                const level = item.level || 'medium';
+                const levelClass = level === 'high'
+                    ? 'bg-red-50 text-red-700 border-red-100'
+                    : 'bg-amber-50 text-amber-700 border-amber-100';
+                const title = String(item.title || 'Notifikasi');
+                const message = String(item.message || '');
+                const link = String(item.link || '/laporan');
+                return `
+                    <a href="${link}" class="block px-4 py-3 hover:bg-slate-50 transition">
+                        <div class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${levelClass}">
+                            ${level === 'high' ? 'TINGGI' : 'SEDANG'}
+                        </div>
+                        <p class="text-sm font-semibold text-slate-800 mt-1">${title}</p>
+                        <p class="text-xs text-slate-600 mt-0.5">${message}</p>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        async function refreshOperationalNotifications() {
+            try {
+                const res = await fetch('/api/operational-alerts', {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data || data.success !== true) return;
+                renderOperationalNotifications(data);
+            } catch (e) {
+                // silent fail
+            }
+        }
+
         // Mobile menu toggle
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
@@ -528,10 +672,14 @@
 
         applyInteractiveEnhancements();
         enhancePostForms();
+        enhanceNavigationLoading();
+        refreshOperationalNotifications();
+        setInterval(refreshOperationalNotifications, 60000);
 
         const interactiveObserver = new MutationObserver(() => {
             applyInteractiveEnhancements();
             enhancePostForms();
+            enhanceNavigationLoading();
         });
         interactiveObserver.observe(document.body, { childList: true, subtree: true });
     </script>

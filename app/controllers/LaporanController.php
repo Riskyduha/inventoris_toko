@@ -11,18 +11,25 @@ class LaporanController {
     }
 
     public function index() {
-        // Default: laporan bulan ini
-        $start = date('Y-m-01');
-        $end = date('Y-m-t');
-
-        if (isset($_GET['start']) && isset($_GET['end'])) {
-            $start = $_GET['start'];
-            $end = $_GET['end'];
+        $quickPeriod = isset($_GET['periode']) ? trim((string)$_GET['periode']) : '1';
+        $allowedPeriods = ['1', '7', '30'];
+        if (!in_array($quickPeriod, $allowedPeriods, true)) {
+            $quickPeriod = '1';
         }
+        $periodDays = (int)$quickPeriod;
+        $chartDaysParam = isset($_GET['chart_days']) ? trim((string)$_GET['chart_days']) : '';
+        $allowedChartDays = ['7', '14', '30', '60', '90', '180'];
+        if ($chartDaysParam === '' || !in_array($chartDaysParam, $allowedChartDays, true)) {
+            $chartDaysParam = $periodDays >= 30 ? '30' : '7';
+        }
+        $chartDays = (int)$chartDaysParam;
 
-        $stats = $this->model->getDashboardStats();
-        $trend = $this->model->getPenjualanTrend(7);
+        $stats = $this->model->getDashboardStats($periodDays);
+        $trend = $this->model->getPenjualanTrend($chartDays);
         $barangMenipis = $this->model->getBarangStokMenipis(10);
+        $barangAkanExpired = $this->model->getBarangAkanExpired(3, 100);
+        $priorityAlerts = $this->model->getPriorityInventoryAlerts();
+        $dashboard_last_updated = date('d M Y H:i');
         require_once __DIR__ . '/../views/laporan/index.php';
     }
 
@@ -302,36 +309,29 @@ class LaporanController {
 
     private function exportPenjualanExcel($penjualan, $total, $start, $end) {
         $timestamp = date('Ymd_His');
-        $filename = 'Laporan_Penjualan_' . $timestamp . '.csv';
-
-        header('Content-Type: text/csv; charset=utf-8');
+        $filename = 'Laporan_Penjualan_' . $timestamp . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        echo "\xEF\xBB\xBF";
-
-        fputcsv($output, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Jual', 'Total']);
-
+        echo '<table border="1"><tr>'
+            . '<th>No</th><th>Pengguna</th><th>Kode Barang</th><th>Nama Barang</th><th>Tanggal</th><th>Jam</th><th>Jumlah</th><th>Satuan</th><th>Harga Jual</th><th>Total</th>'
+            . '</tr>';
         foreach ($penjualan as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
-            fputcsv($output, [
-                $index + 1,
-                $item['username'] ?? '-',
-                $item['kode_barang'] ?? '-',
-                $item['nama_barang'] ?? '',
-                $tanggal,
-                $jam,
-                $item['jumlah'] ?? 0,
-                $item['satuan'] ?? '',
-                $item['harga_satuan'] ?? 0,
-                $item['total_harga'] ?? 0,
-            ]);
+            echo '<tr>'
+                . '<td>' . ($index + 1) . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['username'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['kode_barang'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['nama_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . $tanggal . '</td>'
+                . '<td>' . $jam . '</td>'
+                . '<td>' . (float)($item['jumlah'] ?? 0) . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['satuan'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . (float)($item['harga_satuan'] ?? 0) . '</td>'
+                . '<td>' . (float)($item['total_harga'] ?? 0) . '</td>'
+                . '</tr>';
         }
-
-        fclose($output);
+        echo '</table>';
         exit;
     }
 
@@ -339,10 +339,16 @@ class LaporanController {
         $page = max(1, (int)($_GET['page'] ?? 1));
         $kategori_param = $_GET['kategori'] ?? 'all';
         $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
+        $start = isset($_GET['start']) ? trim((string)$_GET['start']) : '';
+        $end = isset($_GET['end']) ? trim((string)$_GET['end']) : '';
         $items_per_page = 25;
         $offset = ($page - 1) * $items_per_page;
-        
-        $all_stok = $this->model->getLaporanStok();
+
+        if ($start !== '' && $end !== '') {
+            $all_stok = $this->model->getLaporanStokRange($start, $end);
+        } else {
+            $all_stok = $this->model->getLaporanStok();
+        }
         if (!empty($selected_kategori)) {
             $all_stok = array_values(array_filter($all_stok, function ($item) use ($selected_kategori) {
                 return (int)($item['id_kategori'] ?? 0) === $selected_kategori;
@@ -670,35 +676,28 @@ class LaporanController {
 
     private function exportPembelianExcel($pembelian, $total, $start, $end) {
         $timestamp = date('Ymd_His');
-        $filename = 'Laporan_Pembelian_' . $timestamp . '.csv';
-
-        header('Content-Type: text/csv; charset=utf-8');
+        $filename = 'Laporan_Pembelian_' . $timestamp . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        echo "\xEF\xBB\xBF";
-
-        fputcsv($output, ['No', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Satuan', 'Total']);
-
+        echo '<table border="1"><tr>'
+            . '<th>No</th><th>Kode Barang</th><th>Nama Barang</th><th>Tanggal</th><th>Jam</th><th>Jumlah</th><th>Satuan</th><th>Harga Satuan</th><th>Total</th>'
+            . '</tr>';
         foreach ($pembelian as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
-            fputcsv($output, [
-                $index + 1,
-                $item['kode_barang'] ?? '-',
-                $item['nama_barang'] ?? '',
-                $tanggal,
-                $jam,
-                $item['jumlah'] ?? 0,
-                $item['satuan'] ?? '',
-                $item['harga_satuan'] ?? 0,
-                $item['total_harga'] ?? ($item['subtotal'] ?? 0),
-            ]);
+            echo '<tr>'
+                . '<td>' . ($index + 1) . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['kode_barang'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['nama_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . $tanggal . '</td>'
+                . '<td>' . $jam . '</td>'
+                . '<td>' . (float)($item['jumlah'] ?? 0) . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['satuan'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . (float)($item['harga_satuan'] ?? 0) . '</td>'
+                . '<td>' . (float)($item['total_harga'] ?? ($item['subtotal'] ?? 0)) . '</td>'
+                . '</tr>';
         }
-
-        fclose($output);
+        echo '</table>';
         exit;
     }
 
@@ -949,38 +948,31 @@ class LaporanController {
 
     private function exportKeuntunganExcel($keuntungan, $totalKeuntungan, $start, $end) {
         $timestamp = date('Ymd_His');
-        $filename = 'Laporan_Keuntungan_' . $timestamp . '.csv';
-
-        header('Content-Type: text/csv; charset=utf-8');
+        $filename = 'Laporan_Keuntungan_' . $timestamp . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        echo "\xEF\xBB\xBF";
-
-        fputcsv($output, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Beli', 'Harga Jual', 'Keuntungan/Unit', 'Total Keuntungan']);
-
+        echo '<table border="1"><tr>'
+            . '<th>No</th><th>Pengguna</th><th>Kode Barang</th><th>Nama Barang</th><th>Tanggal</th><th>Jam</th><th>Jumlah</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Keuntungan/Unit</th><th>Total Keuntungan</th>'
+            . '</tr>';
         foreach ($keuntungan as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
-            fputcsv($output, [
-                $index + 1,
-                $item['username'] ?? '-',
-                $item['kode_barang'] ?? '-',
-                $item['nama_barang'] ?? '',
-                $tanggal,
-                $jam,
-                $item['jumlah'] ?? 0,
-                $item['satuan'] ?? '',
-                $item['harga_beli'] ?? 0,
-                $item['harga_jual'] ?? 0,
-                $item['keuntungan_per_unit'] ?? 0,
-                $item['keuntungan_total'] ?? 0,
-            ]);
+            echo '<tr>'
+                . '<td>' . ($index + 1) . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['username'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['kode_barang'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['nama_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . $tanggal . '</td>'
+                . '<td>' . $jam . '</td>'
+                . '<td>' . (float)($item['jumlah'] ?? 0) . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['satuan'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . (float)($item['harga_beli'] ?? 0) . '</td>'
+                . '<td>' . (float)($item['harga_jual'] ?? 0) . '</td>'
+                . '<td>' . (float)($item['keuntungan_per_unit'] ?? 0) . '</td>'
+                . '<td>' . (float)($item['keuntungan_total'] ?? 0) . '</td>'
+                . '</tr>';
         }
-
-        fclose($output);
+        echo '</table>';
         exit;
     }
 
@@ -1362,20 +1354,22 @@ class LaporanController {
 
     private function exportStokExcel($stok) {
         $timestamp = date('Ymd_His');
-        $filename = 'Laporan_Stok_' . $timestamp . '.csv';
-        
-        // Generate proper CSV format
-        header('Content-Type: text/csv; charset=utf-8');
+        $filename = 'Laporan_Stok_' . $timestamp . '.xls';
+        $role = strtolower(trim((string)($_SESSION['role'] ?? '')));
+        if ($role === 'kasir') {
+            $role = 'user';
+        }
+        $showHarga = ($role === 'admin');
+
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-        
-        // UTF-8 BOM
-        $output = fopen('php://output', 'w');
-        echo "\xEF\xBB\xBF";
-        
-        // Header row
-        fputcsv($output, ['No', 'Kategori', 'Kode', 'Nama Barang', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Tanggal Update', 'Status']);
+        echo '<table border="1"><tr>'
+            . '<th>No</th><th>Kode Barang</th><th>Nama Barang</th><th>Satuan</th>';
+        if ($showHarga) {
+            echo '<th>Harga Beli</th><th>Harga Jual</th>';
+        }
+        echo '<th>Stok</th><th>Update Terakhir</th><th>Status</th>'
+            . '</tr>';
 
         if (!empty($stok)) {
             usort($stok, function ($a, $b) {
@@ -1406,21 +1400,20 @@ class LaporanController {
 
             $updateDate = !empty($item['updated_at']) ? date('d-m-Y', strtotime($item['updated_at'])) : '-';
 
-            fputcsv($output, [
-                $index + 1,
-                $item['nama_kategori'] ?? 'Tanpa Kategori',
-                $item['kode_barang'] ?? '-',
-                $item['nama_barang'],
-                $item['satuan'],
-                $hargaBeli,
-                $hargaJual,
-                $stokQty,
-                $updateDate,
-                $status
-            ]);
+            echo '<tr>'
+                . '<td>' . ($index + 1) . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['kode_barang'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['nama_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['satuan'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            if ($showHarga) {
+                echo '<td>' . $hargaBeli . '</td><td>' . $hargaJual . '</td>';
+            }
+            echo '<td>' . $stokQty . '</td>'
+                . '<td>' . htmlspecialchars((string)$updateDate, ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . $status . '</td>'
+                . '</tr>';
         }
-
-        fclose($output);
+        echo '</table>';
         exit;
     }
 }

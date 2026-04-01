@@ -54,6 +54,7 @@ class BarangController {
                 'harga_beli' => $_POST['harga_beli'],
                 'harga_jual' => $_POST['harga_jual'],
                 'stok' => $_POST['stok'],
+                'tanggal_expired' => trim((string)($_POST['tanggal_expired'] ?? '')),
                 'stok_updated_by' => $_SESSION['user_id'] ?? null
             ];
 
@@ -99,6 +100,7 @@ class BarangController {
                 'harga_beli' => $_POST['harga_beli'],
                 'harga_jual' => $_POST['harga_jual'],
                 'stok' => $_POST['stok'],
+                'tanggal_expired' => trim((string)($_POST['tanggal_expired'] ?? '')),
                 'stok_updated_by' => $_SESSION['user_id'] ?? null
             ];
 
@@ -122,20 +124,8 @@ class BarangController {
     }
 
     public function exportExcel() {
-        $kategori_param = $_GET['kategori'] ?? 'all';
-        $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
-        $barang = $this->model->getAll($selected_kategori);
-        if (!empty($barang)) {
-            usort($barang, function ($a, $b) {
-                $katA = $a['nama_kategori'] ?? '';
-                $katB = $b['nama_kategori'] ?? '';
-                $cmpKat = strcmp($katA, $katB);
-                if ($cmpKat !== 0) {
-                    return $cmpKat;
-                }
-                return strcmp($a['nama_barang'] ?? '', $b['nama_barang'] ?? '');
-            });
-        }
+        // Export seluruh stok barang, tidak dibatasi filter kategori
+        $barang = $this->model->getAll(null);
         if (!empty($barang)) {
             usort($barang, function ($a, $b) {
                 $katA = $a['nama_kategori'] ?? '';
@@ -148,34 +138,40 @@ class BarangController {
             });
         }
 
-        $filename = 'daftar-barang-' . date('Y-m-d') . '.csv';
+        $filename = 'stok-barang-' . date('Y-m-d') . '.xls';
 
-        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Pragma: no-cache');
         header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        // UTF-8 BOM for Excel
-        fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-        fputcsv($output, ['No', 'Kode Barang', 'Nama Barang', 'Kategori', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok']);
+        echo '<table border="1">';
+        echo '<tr>';
+        echo '<th>No</th>';
+        echo '<th>Kode Barang</th>';
+        echo '<th>Nama Barang</th>';
+        echo '<th>Kategori</th>';
+        echo '<th>Satuan</th>';
+        echo '<th>Harga Beli</th>';
+        echo '<th>Harga Jual</th>';
+        echo '<th>Stok</th>';
+        echo '<th>Tanggal Expired</th>';
+        echo '</tr>';
 
         $no = 1;
         foreach ($barang as $item) {
-            fputcsv($output, [
-                $no++,
-                $item['kode_barang'] ?? '',
-                $item['nama_barang'] ?? '',
-                $item['nama_kategori'] ?? '',
-                $item['satuan'] ?? '',
-                $item['harga_beli'] ?? 0,
-                $item['harga_jual'] ?? 0,
-                $item['stok'] ?? 0,
-            ]);
+            echo '<tr>';
+            echo '<td>' . $no++ . '</td>';
+            echo '<td>' . htmlspecialchars((string)($item['kode_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($item['nama_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($item['nama_kategori'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars((string)($item['satuan'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . (float)($item['harga_beli'] ?? 0) . '</td>';
+            echo '<td>' . (float)($item['harga_jual'] ?? 0) . '</td>';
+            echo '<td>' . (float)($item['stok'] ?? 0) . '</td>';
+            echo '<td>' . (!empty($item['tanggal_expired']) ? htmlspecialchars(date('Y-m-d', strtotime((string)$item['tanggal_expired'])), ENT_QUOTES, 'UTF-8') : '-') . '</td>';
+            echo '</tr>';
         }
-
-        fclose($output);
+        echo '</table>';
         exit;
     }
 }

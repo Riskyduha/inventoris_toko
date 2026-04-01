@@ -1,13 +1,18 @@
 <?php ob_start(); ?>
 
 <div class="app-card p-6 app-reveal">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <h2 class="text-2xl app-section-title">
-            <i class="fas fa-shopping-cart text-teal-600 mr-2"></i>Daftar Pembelian
+            <i class="fas fa-shopping-cart text-teal-600 mr-2"></i>Daftar Barang Masuk
         </h2>
-        <a href="/pembelian/create" class="app-btn-primary px-4 py-2 font-semibold">
-            <i class="fas fa-plus mr-2"></i>Tambah Pembelian
-        </a>
+        <div class="flex flex-wrap gap-2">
+            <a href="/pembelian/export?format=excel" class="inline-flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-100 transition">
+                <i class="fas fa-file-excel"></i>Unduh Excel Detail
+            </a>
+            <a href="/pembelian/create" class="app-btn-primary px-4 py-2 font-semibold">
+                <i class="fas fa-plus mr-2"></i>Input Barang Masuk
+            </a>
+        </div>
     </div>
 
     <div class="overflow-x-auto">
@@ -25,7 +30,7 @@
             <tbody class="divide-y divide-gray-200">
                 <?php if (empty($pembelian)): ?>
                     <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data pembelian</td>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data barang masuk</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($pembelian as $index => $item): ?>
@@ -78,6 +83,6 @@
 
 <?php 
 $content = ob_get_clean();
-$title = 'Daftar Pembelian - Sistem Inventori';
+$title = 'Daftar Barang Masuk - Sistem Inventori';
 include __DIR__ . '/../layout/header.php';
 ?>

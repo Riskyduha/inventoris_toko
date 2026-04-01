@@ -48,29 +48,48 @@
                 </div>
             </div>
             <form method="GET" action="/penjualan" class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                <div class="md:col-span-5">
+                <div class="md:col-span-4">
                     <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">Tanggal Mulai</label>
                     <div class="relative">
                         <i class="fas fa-calendar-day text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
                         <input type="date" name="tanggal_awal" value="<?= htmlspecialchars($filter_tanggal_awal ?? '') ?>" class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-700 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100">
                     </div>
                 </div>
-                <div class="md:col-span-5">
+                <div class="md:col-span-4">
                     <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">Tanggal Akhir</label>
                     <div class="relative">
                         <i class="fas fa-calendar-check text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
                         <input type="date" name="tanggal_akhir" value="<?= htmlspecialchars($filter_tanggal_akhir ?? '') ?>" class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-700 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100">
                     </div>
                 </div>
-                <div class="md:col-span-2 flex flex-col sm:flex-row gap-2 items-stretch md:items-end">
-                    <button type="submit" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold shadow">
-                        <i class="fas fa-search"></i>
-                        <span>Cari!</span>
-                    </button>
-                    <a href="/penjualan" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-100">
-                        <i class="fas fa-redo"></i>
-                        <span>Reset</span>
-                    </a>
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">Aksi</label>
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-2">
+                        <button type="submit" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold shadow">
+                            <i class="fas fa-search"></i>
+                            <span>Terapkan Filter</span>
+                        </button>
+                        <a href="/penjualan" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-100">
+                            <i class="fas fa-rotate-left"></i>
+                            <span>Reset</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="md:col-span-12">
+                    <div class="rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700">Ekspor Data Penjualan</p>
+                                <p class="text-xs text-slate-500">Unduh data sesuai filter tanggal yang sedang aktif.</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <a href="/penjualan/export?format=excel&tanggal_awal=<?= rawurlencode($filter_tanggal_awal ?? '') ?>&tanggal_akhir=<?= rawurlencode($filter_tanggal_akhir ?? '') ?>" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-700 transition hover:bg-teal-100 hover:border-teal-300">
+                                    <i class="fas fa-file-excel"></i>
+                                    <span>Unduh Excel Detail</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -130,7 +149,7 @@
                     <th class="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600 w-12">No</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 w-32">Tanggal</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 w-44">Pembeli</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 w-56">Item (Jumlah)</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 w-56">Jumlah</th>
                     <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600 w-32">Total</th>
                     <?php if ($showProfitAdmin): ?>
                     <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600 w-32">Laba Bersih</th>
@@ -160,7 +179,7 @@
                             </td>
                             <td class="px-6 py-4 text-sm">
                                 <span class="inline-flex items-center justify-center gap-2 rounded-full bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-700">
-                                    <span><?= number_format((int)($item['jumlah_item'] ?? 0), 0, ',', '.') ?> item</span>
+                                    <span><?= number_format((int)($item['jumlah_item'] ?? 0), 0, ',', '.') ?></span>
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right align-middle whitespace-nowrap">
@@ -196,9 +215,21 @@
                                         <i class="fas fa-check-circle"></i>Lunas
                                     </span>
                                 <?php elseif ($item['hutang_status'] == 'belum_bayar'): ?>
-                                    <a href="/hutang?filter=belum_bayar" class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                                    <a href="/hutang?filter=belum_bayar" class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition mb-1">
                                         <i class="fas fa-exclamation-circle"></i>Belum Bayar
                                     </a>
+                                    <?php $agingHari = (int)($item['aging_hari'] ?? 0); ?>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700">
+                                            <i class="fas fa-hourglass-half"></i><?= $agingHari > 0 ? $agingHari . ' hari lewat tempo' : 'Belum jatuh tempo' ?>
+                                        </span>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-700">
+                                            <i class="fas fa-calendar-day"></i><?= !empty($item['jatuh_tempo']) ? date('d/m/Y', strtotime($item['jatuh_tempo'])) : '-' ?>
+                                        </span>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">
+                                            <i class="fas fa-wallet"></i><?= formatRupiah((float)($item['jumlah_hutang'] ?? 0)) ?>
+                                        </span>
+                                    </div>
                                 <?php elseif ($item['hutang_status'] == 'lunas'): ?>
                                     <a href="/hutang?filter=lunas" class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
                                         <i class="fas fa-check-double"></i>Lunas

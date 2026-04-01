@@ -1,5 +1,7 @@
 <?php
 
+require_once BASE_PATH . '/app/helpers/permissions.php';
+
 // Simple routing system
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
@@ -28,6 +30,7 @@ $routes = [
     // API routes
     '/api/search-barang' => ['controller' => 'ApiController', 'method' => 'searchBarang'],
     '/api/barang/store' => ['controller' => 'ApiController', 'method' => 'createBarang'],
+    '/api/operational-alerts' => ['controller' => 'ApiController', 'method' => 'operationalAlerts'],
     
     // Dashboard
     '/' => ['controller' => 'LaporanController', 'method' => 'index'],
@@ -42,11 +45,13 @@ $routes = [
     '/pembelian' => ['controller' => 'PembelianController', 'method' => 'index'],
     '/pembelian/create' => ['controller' => 'PembelianController', 'method' => 'create'],
     '/pembelian/store' => ['controller' => 'PembelianController', 'method' => 'store'],
+    '/pembelian/export' => ['controller' => 'PembelianController', 'method' => 'export'],
     
     // Penjualan routes
     '/penjualan' => ['controller' => 'PenjualanController', 'method' => 'index'],
     '/penjualan/create' => ['controller' => 'PenjualanController', 'method' => 'create'],
     '/penjualan/store' => ['controller' => 'PenjualanController', 'method' => 'store'],
+    '/penjualan/export' => ['controller' => 'PenjualanController', 'method' => 'export'],
     
     // Hutang routes
     '/hutang' => ['controller' => 'HutangController', 'method' => 'index'],
@@ -71,6 +76,12 @@ $routes = [
     '/setting/satuan/update' => ['controller' => 'SettingController', 'method' => 'updateSatuan'],
     '/setting/satuan/delete' => ['controller' => 'SettingController', 'method' => 'deleteSatuan'],
     '/setting/nota' => ['controller' => 'SettingController', 'method' => 'nota'],
+
+    // Backup routes
+    '/backup' => ['controller' => 'BackupController', 'method' => 'index'],
+    '/backup/create' => ['controller' => 'BackupController', 'method' => 'create'],
+    '/backup/download' => ['controller' => 'BackupController', 'method' => 'download'],
+    '/backup/restore' => ['controller' => 'BackupController', 'method' => 'restore'],
 ];
 
 // Check for dynamic routes (edit, update, delete, detail)
@@ -123,6 +134,14 @@ if (preg_match('#^/user/edit/(\d+)$#', $requestUri, $matches)) {
 $controllerName = $route['controller'];
 $methodName = $route['method'];
 $params = $route['params'] ?? [];
+
+$requiredPermission = PermissionGate::resolvePermission($controllerName, $methodName);
+$currentRole = $_SESSION['role'] ?? 'kasir';
+if (!PermissionGate::allows($currentRole, $requiredPermission)) {
+    $_SESSION['error'] = 'Anda tidak memiliki izin untuk mengakses fitur ini.';
+    header('Location: /');
+    exit;
+}
 
 require_once BASE_PATH . '/app/controllers/' . $controllerName . '.php';
 

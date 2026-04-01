@@ -31,121 +31,145 @@ class UserController {
         
         ob_start();
         ?>
-        <div class="max-w-7xl mx-auto px-4">
-            <!-- Header Section -->
-            <div class="mb-8">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <?php
+        $totalUsers = count($users);
+        $totalAdmin = count(array_filter($users, fn($u) => $u['role'] === 'admin'));
+        $totalKasir = count(array_filter($users, fn($u) => $u['role'] === 'kasir'));
+        $totalInspeksi = count(array_filter($users, fn($u) => $u['role'] === 'inspeksi'));
+        ?>
+        <div class="max-w-7xl mx-auto px-4 space-y-6 app-reveal">
+            <div class="app-card p-5 sm:p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
-                        <h1 class="text-4xl font-bold text-gray-800 flex items-center gap-3">
-                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-3">
-                                <i class="fas fa-users text-white text-xl"></i>
-                            </div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Akses Pengguna</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+                            <i class="fas fa-users text-blue-600"></i>
                             Manajemen Pengguna
                         </h1>
-                        <p class="text-gray-600 mt-2">Kelola daftar pengguna dan izin akses</p>
+                        <p class="text-slate-600 mt-2">Kelola akun, role, dan keamanan akses sistem.</p>
                     </div>
-                    <a href="/user/create" class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition transform hover:scale-105 shadow-lg">
-                        <i class="fas fa-plus-circle"></i>Tambah Pengguna
+                    <a href="/user/create" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition">
+                        <i class="fas fa-plus-circle"></i>
+                        Tambah Pengguna
                     </a>
                 </div>
             </div>
 
-            <!-- Alert Messages -->
             <?php if (isset($_SESSION['success'])): ?>
-                <div class="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg p-4 flex items-start gap-3 shadow-md">
-                    <i class="fas fa-check-circle text-green-600 text-xl mt-1 flex-shrink-0"></i>
-                    <div>
-                        <p class="font-semibold text-green-800"><?= $_SESSION['success']; unset($_SESSION['success']); ?></p>
-                    </div>
+                <div class="app-card border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i><?= $_SESSION['success']; unset($_SESSION['success']); ?>
                 </div>
             <?php endif; ?>
 
             <?php if (isset($_SESSION['error'])): ?>
-                <div class="mb-6 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-md">
-                    <i class="fas fa-exclamation-circle text-red-600 text-xl mt-1 flex-shrink-0"></i>
-                    <div>
-                        <p class="font-semibold text-red-800"><?= $_SESSION['error']; unset($_SESSION['error']); ?></p>
-                    </div>
+                <div class="app-card border border-red-200 bg-red-50 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+                    <i class="fas fa-exclamation-circle"></i><?= $_SESSION['error']; unset($_SESSION['error']); ?>
                 </div>
             <?php endif; ?>
 
-            <!-- Table Container -->
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div class="app-card p-4 border border-blue-200 bg-blue-50">
+                    <p class="text-xs uppercase tracking-wide font-semibold text-blue-700">Total Pengguna</p>
+                    <p class="text-2xl font-bold text-blue-800 mt-1"><?= $totalUsers ?></p>
+                </div>
+                <div class="app-card p-4 border border-red-200 bg-red-50">
+                    <p class="text-xs uppercase tracking-wide font-semibold text-red-700">Admin</p>
+                    <p class="text-2xl font-bold text-red-800 mt-1"><?= $totalAdmin ?></p>
+                </div>
+                <div class="app-card p-4 border border-emerald-200 bg-emerald-50">
+                    <p class="text-xs uppercase tracking-wide font-semibold text-emerald-700">Kasir</p>
+                    <p class="text-2xl font-bold text-emerald-800 mt-1"><?= $totalKasir ?></p>
+                </div>
+                <div class="app-card p-4 border border-amber-200 bg-amber-50">
+                    <p class="text-xs uppercase tracking-wide font-semibold text-amber-700">Inspeksi</p>
+                    <p class="text-2xl font-bold text-amber-800 mt-1"><?= $totalInspeksi ?></p>
+                </div>
+            </div>
+
+            <div class="app-card border border-slate-200 overflow-hidden">
+                <div class="p-4 sm:p-5 border-b border-slate-200 bg-slate-50">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div class="relative w-full md:max-w-xs">
+                            <i class="fas fa-search text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 text-sm"></i>
+                            <input id="searchUserInput" type="text" placeholder="Cari username / nama..." class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <select id="roleFilterUser" class="w-full md:w-52 px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="all">Semua Role</option>
+                            <option value="admin">Admin</option>
+                            <option value="kasir">Kasir</option>
+                            <option value="inspeksi">Inspeksi</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="w-full min-w-[760px]">
                         <thead>
                             <tr class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                                <th class="px-6 py-4 text-left font-semibold text-sm">No</th>
-                                <th class="px-6 py-4 text-left font-semibold text-sm">Username</th>
-                                <th class="px-6 py-4 text-left font-semibold text-sm">Nama Lengkap</th>
-                                <th class="px-6 py-4 text-left font-semibold text-sm">Role</th>
-                                <th class="px-6 py-4 text-center font-semibold text-sm">Aksi</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">No</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Akun</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Nama Lengkap</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Role</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody id="userTableBody" class="divide-y divide-slate-200 bg-white">
                             <?php if (empty($users)): ?>
-                                <tr>
+                                <tr id="emptyStaticRow">
                                     <td colspan="5" class="px-6 py-12 text-center">
-                                        <div class="flex flex-col items-center gap-3">
-                                            <i class="fas fa-inbox text-gray-300 text-5xl"></i>
-                                            <p class="text-gray-500 text-lg">Belum ada pengguna</p>
-                                            <p class="text-gray-400 text-sm">Klik tombol "Tambah Pengguna" untuk menambahkan pengguna baru</p>
-                                        </div>
+                                        <i class="fas fa-user-slash text-4xl text-slate-300 mb-2"></i>
+                                        <p class="font-semibold text-slate-600">Belum ada pengguna</p>
+                                        <p class="text-sm text-slate-500 mt-1">Klik tombol <strong>Tambah Pengguna</strong> untuk mulai menambahkan akun.</p>
                                     </td>
                                 </tr>
                             <?php else: ?>
-                                <?php foreach ($users as $index => $user): 
+                                <?php foreach ($users as $index => $user):
                                     $isAdmin = $user['role'] === 'admin';
                                     $isSelf = $user['id_user'] === $_SESSION['user_id'];
                                 ?>
-                                    <tr class="hover:bg-blue-50 transition duration-200 group">
-                                        <td class="px-6 py-4">
-                                            <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full font-semibold text-sm">
-                                                <?= $index + 1 ?>
-                                            </span>
+                                    <tr class="hover:bg-slate-50 transition user-row"
+                                        data-role="<?= htmlspecialchars($user['role']) ?>"
+                                        data-search="<?= htmlspecialchars(strtolower(trim(($user['username'] ?? '') . ' ' . ($user['nama'] ?? '')))) ?>">
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-semibold text-xs"><?= $index + 1 ?></span>
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-4 py-3">
                                             <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-full bg-gradient-to-br <?= $isAdmin ? 'from-red-400 to-red-600' : 'from-blue-400 to-blue-600' ?> flex items-center justify-center flex-shrink-0">
-                                                    <i class="fas <?= $isAdmin ? 'fa-shield-alt' : 'fa-user' ?> text-white"></i>
-                                                </div>
+                                                <span class="inline-flex items-center justify-center w-9 h-9 rounded-full <?= $isAdmin ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700' ?>">
+                                                    <i class="fas <?= $isAdmin ? 'fa-shield-alt' : 'fa-user' ?>"></i>
+                                                </span>
                                                 <div>
-                                                    <p class="font-semibold text-gray-800"><?= htmlspecialchars($user['username']) ?></p>
+                                                    <p class="font-semibold text-slate-800"><?= htmlspecialchars($user['username']) ?></p>
                                                     <?php if ($isSelf): ?>
-                                                        <span class="inline-block bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded font-semibold mt-1">
-                                                            <i class="fas fa-user-check"></i> Akun Anda
+                                                        <span class="inline-flex items-center gap-1 mt-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                            <i class="fas fa-user-check"></i>Akun Anda
                                                         </span>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-700"><?= htmlspecialchars($user['nama']) ?></td>
-                                        <td class="px-6 py-4">
-                                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold <?= $isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800' ?>">
-                                                <i class="fas <?= $isAdmin ? 'fa-crown' : 'fa-user-tie' ?>"></i>
+                                        <td class="px-4 py-3 text-slate-700"><?= htmlspecialchars($user['nama']) ?></td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold <?= $isAdmin ? 'bg-red-100 text-red-700' : ($user['role'] === 'kasir' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700') ?>">
+                                                <i class="fas <?= $isAdmin ? 'fa-crown' : ($user['role'] === 'kasir' ? 'fa-cash-register' : 'fa-clipboard-check') ?>"></i>
                                                 <?= ucfirst($user['role']) ?>
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-4 py-3">
                                             <div class="flex justify-center gap-2">
-                                                <!-- Edit Button -->
-                                                <a href="/user/edit/<?= $user['id_user'] ?>" class="inline-flex items-center justify-center w-9 h-9 bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition duration-200 group/btn" title="Edit Pengguna">
-                                                    <i class="fas fa-edit text-sm"></i>
+                                                <a href="/user/edit/<?= $user['id_user'] ?>" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition" title="Edit Pengguna">
+                                                    <i class="fas fa-edit"></i>Edit
                                                 </a>
-                                                
-                                                <!-- Reset Password Button -->
-                                                <a href="/user/reset-password/<?= $user['id_user'] ?>" class="inline-flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 hover:bg-orange-600 hover:text-white rounded-lg transition duration-200 group/btn" title="Reset Password">
-                                                    <i class="fas fa-key text-sm"></i>
+                                                <a href="/user/reset-password/<?= $user['id_user'] ?>" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 transition" title="Reset Password">
+                                                    <i class="fas fa-key"></i>Reset
                                                 </a>
-                                                
-                                                <!-- Delete Button -->
                                                 <?php if (!$isSelf): ?>
-                                                    <a href="/user/delete/<?= $user['id_user'] ?>" class="inline-flex items-center justify-center w-9 h-9 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition duration-200 group/btn" title="Hapus Pengguna" onclick="return confirm('Yakin ingin menghapus pengguna <?= htmlspecialchars($user['nama']) ?>?')">
-                                                        <i class="fas fa-trash-alt text-sm"></i>
+                                                    <a href="/user/delete/<?= $user['id_user'] ?>" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 transition" title="Hapus Pengguna" onclick="return confirm('Yakin ingin menghapus pengguna <?= htmlspecialchars($user['nama']) ?>?')">
+                                                        <i class="fas fa-trash-alt"></i>Hapus
                                                     </a>
                                                 <?php else: ?>
-                                                    <span class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed" title="Anda tidak bisa menghapus akun sendiri">
-                                                        <i class="fas fa-lock text-sm"></i>
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-400 bg-slate-100 cursor-not-allowed" title="Akun sendiri tidak bisa dihapus">
+                                                        <i class="fas fa-lock"></i>Terkunci
                                                     </span>
                                                 <?php endif; ?>
                                             </div>
@@ -153,17 +177,47 @@ class UserController {
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
+                            <tr id="emptyFilterRow" class="hidden">
+                                <td colspan="5" class="px-6 py-12 text-center">
+                                    <i class="fas fa-search text-3xl text-slate-300 mb-2"></i>
+                                    <p class="font-semibold text-slate-600">Pengguna tidak ditemukan</p>
+                                    <p class="text-sm text-slate-500 mt-1">Ubah kata kunci pencarian atau filter role.</p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Footer Info -->
-            <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600">
-                <p>Total pengguna: <span class="font-semibold text-gray-800"><?= count($users) ?></span></p>
-                <p class="text-gray-500">Admin: <span class="font-semibold text-gray-700"><?= count(array_filter($users, fn($u) => $u['role'] === 'admin')) ?></span> | Kasir: <span class="font-semibold text-gray-700"><?= count(array_filter($users, fn($u) => $u['role'] === 'kasir')) ?></span> | Inspeksi: <span class="font-semibold text-gray-700"><?= count(array_filter($users, fn($u) => $u['role'] === 'inspeksi')) ?></span></p>
-            </div>
+            <p class="text-sm text-slate-500">Total pengguna saat ini: <span class="font-semibold text-slate-700"><?= $totalUsers ?></span></p>
         </div>
+
+        <script>
+        (function () {
+            const searchInput = document.getElementById('searchUserInput');
+            const roleFilter = document.getElementById('roleFilterUser');
+            const rows = Array.from(document.querySelectorAll('.user-row'));
+            const emptyFilterRow = document.getElementById('emptyFilterRow');
+            if (!searchInput || !roleFilter || rows.length === 0 || !emptyFilterRow) return;
+
+            function applyFilter() {
+                const term = (searchInput.value || '').toLowerCase().trim();
+                const role = roleFilter.value;
+                let visible = 0;
+                rows.forEach((row) => {
+                    const matchesRole = role === 'all' || row.dataset.role === role;
+                    const matchesTerm = !term || (row.dataset.search || '').includes(term);
+                    const isShow = matchesRole && matchesTerm;
+                    row.classList.toggle('hidden', !isShow);
+                    if (isShow) visible += 1;
+                });
+                emptyFilterRow.classList.toggle('hidden', visible > 0);
+            }
+
+            searchInput.addEventListener('input', applyFilter);
+            roleFilter.addEventListener('change', applyFilter);
+        })();
+        </script>
         <?php
         $content = ob_get_clean();
         $title = 'Manajemen Pengguna - Sistem Inventori';
