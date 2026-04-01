@@ -1,11 +1,15 @@
 <?php ob_start(); ?>
 
 <?php
+$currentRole = strtolower(trim((string)($_SESSION['role'] ?? '')));
+$isAdmin = ($currentRole === 'admin');
 $totalItem = 0;
 $totalDiskon = 0;
+$totalLaba = 0;
 foreach ($details as $d) {
     $totalItem += (float)($d['jumlah'] ?? 0);
     $totalDiskon += (float)($d['diskon'] ?? 0);
+    $totalLaba += (float)($d['laba_item'] ?? 0);
 }
 ?>
 
@@ -78,6 +82,14 @@ foreach ($details as $d) {
                         <?= $totalDiskon > 0 ? formatRupiah($totalDiskon) : '-' ?>
                     </span>
                 </div>
+                <?php if ($isAdmin): ?>
+                <div class="rounded-xl bg-white border border-emerald-200 p-3 flex items-center justify-between">
+                    <span class="text-slate-500">Laba Bersih Transaksi</span>
+                    <span class="text-lg font-extrabold <?= $totalLaba >= 0 ? 'text-emerald-700' : 'text-red-700' ?>">
+                        <?= formatRupiah($totalLaba) ?>
+                    </span>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -95,9 +107,15 @@ foreach ($details as $d) {
                         <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 w-12">No</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Barang</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 w-28">Jumlah</th>
+                        <?php if ($isAdmin): ?>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 w-36">Harga Beli</th>
+                        <?php endif; ?>
                         <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 w-36">Harga</th>
                         <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 w-32">Diskon</th>
                         <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 w-40">Subtotal</th>
+                        <?php if ($isAdmin): ?>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 w-40">Laba/Item</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -109,11 +127,19 @@ foreach ($details as $d) {
                             <p class="text-xs text-slate-500 font-mono mt-1"><?= htmlspecialchars($detail['kode_barang'] ?? '-') ?></p>
                         </td>
                         <td class="px-4 py-3 text-center text-sm font-semibold text-slate-700"><?= number_format($detail['jumlah'], 0, ',', '.') ?> <?= htmlspecialchars($detail['satuan']) ?></td>
+                        <?php if ($isAdmin): ?>
+                        <td class="px-4 py-3 text-right text-sm font-semibold text-slate-700"><?= formatRupiah($detail['harga_beli_item'] ?? 0) ?></td>
+                        <?php endif; ?>
                         <td class="px-4 py-3 text-right text-sm font-semibold text-slate-700"><?= formatRupiah($detail['harga_satuan']) ?></td>
                         <td class="px-4 py-3 text-right text-sm font-semibold <?= ($detail['diskon'] ?? 0) > 0 ? 'text-orange-600' : 'text-slate-400' ?>">
                             <?= ($detail['diskon'] ?? 0) > 0 ? formatRupiah($detail['diskon']) : '-' ?>
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-bold text-emerald-700"><?= formatRupiah($detail['subtotal']) ?></td>
+                        <?php if ($isAdmin): ?>
+                        <td class="px-4 py-3 text-right text-sm font-bold <?= ($detail['laba_item'] ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-700' ?>">
+                            <?= formatRupiah($detail['laba_item'] ?? 0) ?>
+                        </td>
+                        <?php endif; ?>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -149,6 +175,16 @@ foreach ($details as $d) {
                         <p class="text-emerald-700 mb-1">Subtotal</p>
                         <p class="font-bold text-emerald-700"><?= formatRupiah($detail['subtotal']) ?></p>
                     </div>
+                    <?php if ($isAdmin): ?>
+                    <div class="rounded-lg bg-cyan-50 border border-cyan-200 p-2">
+                        <p class="text-cyan-700 mb-1">Harga Beli</p>
+                        <p class="font-semibold text-cyan-700"><?= formatRupiah($detail['harga_beli_item'] ?? 0) ?></p>
+                    </div>
+                    <div class="rounded-lg <?= ($detail['laba_item'] ?? 0) >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200' ?> border p-2">
+                        <p class="<?= ($detail['laba_item'] ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-700' ?> mb-1">Laba/Item</p>
+                        <p class="font-bold <?= ($detail['laba_item'] ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-700' ?>"><?= formatRupiah($detail['laba_item'] ?? 0) ?></p>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endforeach; ?>

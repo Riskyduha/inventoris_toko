@@ -8,6 +8,20 @@ class Laporan {
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
+        $this->ensureProfitSnapshotColumn();
+    }
+
+    private function ensureProfitSnapshotColumn(): void {
+        try {
+            $this->conn->exec("ALTER TABLE detail_penjualan ADD COLUMN IF NOT EXISTS harga_beli_saat_transaksi NUMERIC(12,2) DEFAULT 0");
+            $this->conn->exec("UPDATE detail_penjualan dp
+                               SET harga_beli_saat_transaksi = COALESCE(b.harga_beli, 0)
+                               FROM barang b
+                               WHERE dp.id_barang = b.id_barang
+                                 AND (dp.harga_beli_saat_transaksi IS NULL OR dp.harga_beli_saat_transaksi = 0)");
+        } catch (Exception $e) {
+            error_log('ensureProfitSnapshotColumn error: ' . $e->getMessage());
+        }
     }
 
     public function getLaporanPembelian($start, $end) {
@@ -113,8 +127,8 @@ class Laporan {
                                         dp.jumlah,
                                         b.harga_beli,
                                         dp.harga_satuan as harga_jual,
-                                        (dp.harga_satuan - b.harga_beli) as keuntungan_per_unit,
-                                        ((dp.harga_satuan - b.harga_beli) * dp.jumlah - dp.diskon) as keuntungan_total,
+                                        (dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) as keuntungan_per_unit,
+                                        ((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah - dp.diskon) as keuntungan_total,
                                         p.tanggal
                                     FROM penjualan p
                                     JOIN detail_penjualan dp ON p.id_penjualan = dp.id_penjualan
@@ -165,7 +179,7 @@ class Laporan {
 
         public function getTotalKeuntungan($start, $end) {
                 $query = "SELECT 
-                                        SUM((dp.harga_satuan - b.harga_beli) * dp.jumlah - dp.diskon) as total
+                                        SUM((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah - dp.diskon) as total
                                     FROM penjualan p
                                     JOIN detail_penjualan dp ON p.id_penjualan = dp.id_penjualan
                                     JOIN barang b ON dp.id_barang = b.id_barang
@@ -221,7 +235,7 @@ class Laporan {
         $totalPembelianHariIni = $stmtPembelian->fetch()['total'] ?? 0;
 
         // Laba Bersih Hari Ini
-        $queryLabaBersih = "SELECT COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as total
+        $queryLabaBersih = "SELECT COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as total
                             FROM detail_penjualan dp
                             JOIN penjualan p ON dp.id_penjualan = p.id_penjualan
                             JOIN barang b ON dp.id_barang = b.id_barang

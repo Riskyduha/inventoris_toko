@@ -90,68 +90,85 @@ $isInspeksi = ($currentRole === 'inspeksi');
     </div>
 </div>
 <?php else: ?>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 app-reveal">
-    <!-- Card Total Harga Beli -->
-    <div class="bg-gradient-to-br from-teal-700 to-teal-600 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
+<div class="mb-8 app-reveal">
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 mb-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-                <p class="text-teal-100 text-sm font-semibold">Total Harga Beli</p>
-                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['total_harga_beli']) ?></p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Ringkasan Dashboard Admin</p>
+                <h2 class="text-xl font-bold text-slate-800">Monitor penjualan dan laba hari ini</h2>
             </div>
-            <div class="bg-teal-500 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-receipt text-3xl"></i>
-            </div>
+            <span class="inline-flex items-center gap-2 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 px-3 py-1.5">
+                <i class="fas fa-circle text-[8px]"></i>
+                Terupdate real-time
+            </span>
         </div>
     </div>
 
-    <!-- Card Total Harga Jual -->
-    <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-green-100 text-sm font-semibold">Total Harga Jual</p>
-                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['total_harga_jual']) ?></p>
-            </div>
-            <div class="bg-green-500 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-tags text-3xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card Total Stok -->
-    <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-purple-100 text-sm font-semibold">Total Stok</p>
-                <p class="text-3xl font-bold mt-2"><?= $stats['total_stok'] ?></p>
-            </div>
-            <div class="bg-purple-500 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-cubes text-3xl"></i>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div class="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Penjualan Hari Ini</p>
+                    <p class="text-2xl font-black text-amber-800 mt-2"><?= formatRupiah($stats['penjualan_hari_ini']) ?></p>
+                    <p class="text-xs text-slate-500 mt-2">Omzet transaksi tanggal hari ini</p>
+                </div>
+                <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                    <i class="fas fa-money-bill-wave"></i>
+                </span>
             </div>
         </div>
-    </div>
 
-    <!-- Card Penjualan Hari Ini -->
-    <div class="bg-gradient-to-br from-amber-600 to-amber-700 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-amber-100 text-sm font-semibold">Penjualan Hari Ini</p>
-                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['penjualan_hari_ini']) ?></p>
-            </div>
-            <div class="bg-amber-500 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-money-bill-wave text-3xl"></i>
+        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Laba Bersih Hari Ini</p>
+                    <p class="text-2xl font-black mt-2 <?= ($stats['laba_bersih_hari_ini'] ?? 0) >= 0 ? 'text-emerald-800' : 'text-red-700' ?>">
+                        <?= formatRupiah($stats['laba_bersih_hari_ini'] ?? 0) ?>
+                    </p>
+                    <p class="text-xs text-slate-500 mt-2">Setelah hitung modal dan diskon item</p>
+                </div>
+                <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                    <i class="fas fa-chart-line"></i>
+                </span>
             </div>
         </div>
-    </div>
 
-    <!-- Card Laba Bersih Hari Ini -->
-    <div class="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-emerald-100 text-sm font-semibold">Laba Bersih Hari Ini</p>
-                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['laba_bersih_hari_ini'] ?? 0) ?></p>
+        <div class="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Total Stok</p>
+                    <p class="text-2xl font-black text-sky-800 mt-2"><?= number_format($stats['total_stok'], 0, ',', '.') ?></p>
+                    <p class="text-xs text-slate-500 mt-2">Total unit barang tersedia</p>
+                </div>
+                <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                    <i class="fas fa-cubes"></i>
+                </span>
             </div>
-            <div class="bg-emerald-500 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-chart-line text-3xl"></i>
+        </div>
+
+        <div class="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Total Harga Beli</p>
+                    <p class="text-2xl font-black text-teal-800 mt-2"><?= formatRupiah($stats['total_harga_beli']) ?></p>
+                    <p class="text-xs text-slate-500 mt-2">Nilai modal dari stok aktif</p>
+                </div>
+                <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+                    <i class="fas fa-receipt"></i>
+                </span>
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-5 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-green-700">Total Harga Jual</p>
+                    <p class="text-2xl font-black text-green-800 mt-2"><?= formatRupiah($stats['total_harga_jual']) ?></p>
+                    <p class="text-xs text-slate-500 mt-2">Potensi nilai jual stok aktif</p>
+                </div>
+                <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-700">
+                    <i class="fas fa-tags"></i>
+                </span>
             </div>
         </div>
     </div>

@@ -59,25 +59,39 @@ class Penjualan {
             
             if ($stmt->rowCount() === 0) {
                 // Add column if it doesn't exist
-                $this->conn->exec("ALTER TABLE penjualan ADD COLUMN ada_hutang TINYINT DEFAULT 0");
+                $this->conn->exec("ALTER TABLE penjualan ADD COLUMN ada_hutang SMALLINT DEFAULT 0");
             }
-            
-            // Ensure hutang table exists
+        } catch (Exception $e) {
+            error_log('ensureTableStructure (ada_hutang) error: ' . $e->getMessage());
+        }
+
+        try {
+            // Ensure hutang table exists (PostgreSQL)
             $createSql = "CREATE TABLE IF NOT EXISTS hutang (
-                id_hutang INT AUTO_INCREMENT PRIMARY KEY,
-                id_penjualan INT NOT NULL,
+                id_hutang SERIAL PRIMARY KEY,
+                id_penjualan INT NOT NULL REFERENCES penjualan(id_penjualan) ON DELETE CASCADE,
                 nama_penghutang VARCHAR(100) NOT NULL,
-                jumlah_hutang DECIMAL(12,2) NOT NULL,
+                jumlah_hutang NUMERIC(12,2) NOT NULL,
                 jatuh_tempo DATE NOT NULL,
-                status ENUM('belum_lunas', 'lunas') DEFAULT 'belum_lunas',
+                status VARCHAR(20) DEFAULT 'belum_bayar' CHECK (status IN ('belum_bayar', 'lunas')),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (id_penjualan) REFERENCES penjualan(id_penjualan) ON DELETE CASCADE
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )";
             $this->conn->exec($createSql);
         } catch (Exception $e) {
-            // Silently continue if there's an issue
-            error_log('ensureTableStructure error: ' . $e->getMessage());
+            error_log('ensureTableStructure (hutang) error: ' . $e->getMessage());
+        }
+
+        try {
+            // Simpan snapshot harga beli saat transaksi agar perhitungan laba tidak berubah
+            $this->conn->exec("ALTER TABLE detail_penjualan ADD COLUMN IF NOT EXISTS harga_beli_saat_transaksi NUMERIC(12,2) DEFAULT 0");
+            $this->conn->exec("UPDATE detail_penjualan dp
+                               SET harga_beli_saat_transaksi = COALESCE(b.harga_beli, 0)
+                               FROM barang b
+                               WHERE dp.id_barang = b.id_barang
+                                 AND (dp.harga_beli_saat_transaksi IS NULL OR dp.harga_beli_saat_transaksi = 0)");
+        } catch (Exception $e) {
+            error_log('ensureTableStructure (snapshot harga beli) error: ' . $e->getMessage());
         }
     }
 
@@ -85,7 +99,7 @@ class Penjualan {
         $query = "SELECT p.*, 
               string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
               COUNT(dp.id_detail) as jumlah_item,
-              COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
+              COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
               MAX(h.status) as hutang_status
               FROM " . $this->table . " p
@@ -103,7 +117,7 @@ class Penjualan {
         $query = "SELECT p.*, 
               string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
               COUNT(dp.id_detail) as jumlah_item,
-              COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
+              COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
               MAX(h.status) as hutang_status
               FROM " . $this->table . " p
@@ -124,7 +138,7 @@ class Penjualan {
         $query = "SELECT p.*, 
               string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
               COUNT(dp.id_detail) as jumlah_item,
-              COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
+              COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
               MAX(h.status) as hutang_status
               FROM " . $this->table . " p
@@ -145,7 +159,7 @@ class Penjualan {
         $query = "SELECT p.*, 
               string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
               COUNT(dp.id_detail) as jumlah_item,
-              COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
+              COALESCE(SUM(((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
               MAX(h.status) as hutang_status
               FROM " . $this->table . " p
@@ -174,7 +188,9 @@ class Penjualan {
     }
 
     public function getDetailById($id) {
-        $query = "SELECT dp.*, b.nama_barang, b.kode_barang, b.satuan 
+        $query = "SELECT dp.*, b.nama_barang, b.kode_barang, b.satuan,
+                         COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) as harga_beli_item,
+                         (((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)) as laba_item
                   FROM " . $this->detail_table . " dp
                   JOIN barang b ON dp.id_barang = b.id_barang
                   WHERE dp.id_penjualan = :id
@@ -191,6 +207,7 @@ class Penjualan {
 
             // Validate all items and check stock
             $total = 0;
+            $hargaBeliSnapshot = [];
             foreach ($data['items'] as $item) {
                 $jumlah = (int)($item['jumlah'] ?? 0);
                 $hargaSatuan = (float)($item['harga_satuan'] ?? 0);
@@ -201,7 +218,7 @@ class Penjualan {
                     return ['success' => false, 'message' => 'Data item penjualan tidak valid'];
                 }
 
-                $queryCheck = "SELECT stok FROM barang WHERE id_barang = :id_barang";
+                $queryCheck = "SELECT stok, harga_beli FROM barang WHERE id_barang = :id_barang";
                 $stmtCheck = $this->conn->prepare($queryCheck);
                 $stmtCheck->bindParam(':id_barang', $item['id_barang']);
                 $stmtCheck->execute();
@@ -218,6 +235,7 @@ class Penjualan {
                     return ['success' => false, 'message' => 'Subtotal item tidak boleh negatif'];
                 }
                 $total += $subtotal;
+                $hargaBeliSnapshot[(int)$item['id_barang']] = (float)($barang['harga_beli'] ?? 0);
             }
 
             $uang_diberikan = $data['uang_diberikan'] ?? 0;
@@ -272,8 +290,8 @@ class Penjualan {
                 $subtotal = ($hargaSatuan * $jumlah) - $diskon;
                 
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
-                               (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal)
-                               VALUES (:id_penjualan, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal)";
+                               (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal, harga_beli_saat_transaksi)
+                               VALUES (:id_penjualan, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal, :harga_beli_saat_transaksi)";
                 
                 $stmtDetail = $this->conn->prepare($queryDetail);
                 $stmtDetail->bindParam(':id_penjualan', $id_penjualan);
@@ -282,6 +300,8 @@ class Penjualan {
                 $stmtDetail->bindParam(':harga_satuan', $hargaSatuan);
                 $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
+                $hargaBeliSaatTransaksi = $hargaBeliSnapshot[(int)$item['id_barang']] ?? 0;
+                $stmtDetail->bindParam(':harga_beli_saat_transaksi', $hargaBeliSaatTransaksi);
                 $stmtDetail->execute();
 
                 // Update stok barang (kurangi)
@@ -338,6 +358,7 @@ class Penjualan {
 
             // Validate new items and check stock
             $total = 0;
+            $hargaBeliSnapshot = [];
             foreach ($data['items'] as $item) {
                 $jumlah = (int)($item['jumlah'] ?? 0);
                 $hargaSatuan = (float)($item['harga_satuan'] ?? 0);
@@ -348,7 +369,7 @@ class Penjualan {
                     return ['success' => false, 'message' => 'Data item penjualan tidak valid'];
                 }
 
-                $queryCheck = "SELECT stok FROM barang WHERE id_barang = :id_barang";
+                $queryCheck = "SELECT stok, harga_beli FROM barang WHERE id_barang = :id_barang";
                 $stmtCheck = $this->conn->prepare($queryCheck);
                 $stmtCheck->bindParam(':id_barang', $item['id_barang']);
                 $stmtCheck->execute();
@@ -365,6 +386,7 @@ class Penjualan {
                     return ['success' => false, 'message' => 'Subtotal item tidak boleh negatif'];
                 }
                 $total += $subtotal;
+                $hargaBeliSnapshot[(int)$item['id_barang']] = (float)($barang['harga_beli'] ?? 0);
             }
 
             $uang_diberikan = $data['uang_diberikan'] ?? 0;
@@ -412,8 +434,8 @@ class Penjualan {
                 $subtotal = ($hargaSatuan * $jumlah) - $diskon;
                 
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
-                               (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal)
-                               VALUES (:id_penjualan, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal)";
+                               (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal, harga_beli_saat_transaksi)
+                               VALUES (:id_penjualan, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal, :harga_beli_saat_transaksi)";
                 
                 $stmtDetail = $this->conn->prepare($queryDetail);
                 $stmtDetail->bindParam(':id_penjualan', $id);
@@ -422,6 +444,8 @@ class Penjualan {
                 $stmtDetail->bindParam(':harga_satuan', $hargaSatuan);
                 $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
+                $hargaBeliSaatTransaksi = $hargaBeliSnapshot[(int)$item['id_barang']] ?? 0;
+                $stmtDetail->bindParam(':harga_beli_saat_transaksi', $hargaBeliSaatTransaksi);
                 $stmtDetail->execute();
 
                 // Update stok barang (kurangi)
