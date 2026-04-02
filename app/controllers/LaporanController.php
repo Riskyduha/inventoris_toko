@@ -25,6 +25,7 @@ class LaporanController {
         $chartDays = (int)$chartDaysParam;
 
         $stats = $this->model->getDashboardStats($periodDays);
+        $statsToday = $this->model->getDashboardStats(1);
         $trend = $this->model->getPenjualanTrend($chartDays);
         $barangMenipis = $this->model->getBarangStokMenipis(10);
         $barangAkanExpired = $this->model->getBarangAkanExpired(3, 100);

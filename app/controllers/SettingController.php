@@ -159,4 +159,40 @@ class SettingController {
 
         require_once __DIR__ . '/../views/setting/nota.php';
     }
+
+    public function rolePermissions() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $roles = PermissionGate::getConfigurableRoles();
+            $submitted = $_POST['permissions'] ?? [];
+            $allSaved = true;
+
+            foreach ($roles as $role) {
+                $permissions = [];
+                if (isset($submitted[$role]) && is_array($submitted[$role])) {
+                    $permissions = array_values(array_filter(array_map('strval', $submitted[$role])));
+                }
+                $saved = PermissionGate::saveRolePermissions($role, $permissions);
+                if (!$saved) {
+                    $allSaved = false;
+                }
+            }
+
+            if ($allSaved) {
+                $_SESSION['success'] = 'Hak akses role berhasil diperbarui.';
+            } else {
+                $_SESSION['error'] = 'Sebagian hak akses gagal diperbarui.';
+            }
+
+            redirect('/setting/role-permissions');
+        }
+
+        $roles = PermissionGate::getConfigurableRoles();
+        $catalog = PermissionGate::getPermissionCatalog();
+        $currentPermissions = [];
+        foreach ($roles as $role) {
+            $currentPermissions[$role] = PermissionGate::getRolePermissions($role);
+        }
+
+        require_once __DIR__ . '/../views/setting/role-permissions.php';
+    }
 }

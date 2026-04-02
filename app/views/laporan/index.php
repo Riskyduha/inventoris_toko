@@ -4,9 +4,17 @@ $currentRole = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
 if ($currentRole === 'kasir') {
     $currentRole = 'user';
 }
+$isKasirView = ($currentRole === 'user');
 $isInspeksi = ($currentRole === 'inspeksi');
 $selectedPeriode = (string)($quickPeriod ?? '1');
 $periodeLabel = $selectedPeriode === '7' ? '7 Hari Terakhir' : ($selectedPeriode === '30' ? '30 Hari Terakhir' : 'Hari Ini');
+$normalizedRole = class_exists('PermissionGate')
+    ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+    : (strtolower(trim((string)($_SESSION['role'] ?? 'kasir'))) === 'user' ? 'kasir' : strtolower(trim((string)($_SESSION['role'] ?? 'kasir'))));
+$canViewLaporanStokMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.stok.view') : !$isInspeksi;
+$canViewLaporanPenjualanMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.penjualan.view') : true;
+$canViewLaporanPembelianMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.pembelian.view') : !$isInspeksi;
+$canViewLaporanAnyMenu = $canViewLaporanStokMenu || $canViewLaporanPenjualanMenu || $canViewLaporanPembelianMenu;
 $selectedChartDays = (string)($chartDaysParam ?? ($chartDays ?? 7));
 $trendDays = (int)($chartDays ?? 7);
 $allowedChartOptions = ['7', '14', '30', '60', '90', '180'];
@@ -42,7 +50,9 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Filter Dashboard</p>
-            <p class="text-sm text-slate-600">Periode cepat untuk ringkasan penjualan dan laba</p>
+            <p class="text-sm text-slate-600">
+                Periode cepat untuk ringkasan penjualan dan <?= $isKasirView ? 'stok' : 'laba' ?>
+            </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
             <a href="/laporan?periode=1&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '1' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">Hari Ini</a>
@@ -56,13 +66,13 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
 </div>
 
 <?php if ($currentRole === 'user'): ?>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 app-reveal">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 app-reveal">
     <!-- Card Penjualan Hari Ini -->
     <div class="bg-gradient-to-br from-teal-700 to-teal-600 rounded-lg shadow-lg p-6 text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-teal-100 text-sm font-semibold">Omzet Penjualan (<?= htmlspecialchars($periodeLabel) ?>)</p>
-                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['penjualan_hari_ini']) ?></p>
+                <p class="text-teal-100 text-sm font-semibold">Omzet Penjualan Hari Ini</p>
+                <p class="text-2xl font-bold mt-2"><?= formatRupiah($statsToday['penjualan_hari_ini'] ?? 0) ?></p>
             </div>
             <div class="bg-teal-500 bg-opacity-30 rounded-full p-4">
                 <i class="fas fa-money-bill-wave text-3xl"></i>
@@ -70,28 +80,15 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
         </div>
     </div>
 
-    <!-- Card Laba Bersih -->
+    <!-- Card Jumlah Barang Laku -->
     <div class="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg shadow-lg p-6 text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-emerald-100 text-sm font-semibold">Laba Bersih (<?= htmlspecialchars($periodeLabel) ?>)</p>
-                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['laba_bersih_hari_ini'] ?? 0) ?></p>
+                <p class="text-emerald-100 text-sm font-semibold">Jumlah Barang Laku Hari Ini</p>
+                <p class="text-3xl font-bold mt-2"><?= number_format((float)($statsToday['barang_terjual_hari_ini'] ?? 0), 0, ',', '.') ?> <span class="text-base font-semibold text-emerald-100">item</span></p>
             </div>
             <div class="bg-emerald-400 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-chart-line text-3xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card Total Stok -->
-    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-green-100 text-sm font-semibold">Total Stok Barang</p>
-                <p class="text-3xl font-bold mt-2"><?= $stats['total_stok'] ?></p>
-            </div>
-            <div class="bg-green-400 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-cubes text-3xl"></i>
+                <i class="fas fa-box-open text-3xl"></i>
             </div>
         </div>
     </div>
@@ -260,6 +257,12 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
             <i class="fas fa-boxes text-orange-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Kelola Stok Barang</p>
         </a>
+        <?php if ($canViewLaporanAnyMenu): ?>
+        <a href="<?= $canViewLaporanStokMenu ? '/laporan/stok' : ($canViewLaporanPenjualanMenu ? '/laporan/penjualan' : '/laporan/pembelian') ?>" class="bg-cyan-50 hover:bg-cyan-100 border-2 border-cyan-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-chart-line text-cyan-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Laporan</p>
+        </a>
+        <?php endif; ?>
         <?php elseif ($currentRole === 'user'): ?>
         <!-- Menu untuk User -->
         <a href="/penjualan/create" class="bg-teal-50 hover:bg-teal-100 border-2 border-teal-200 rounded-lg p-4 text-center transition">

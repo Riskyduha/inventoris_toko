@@ -77,6 +77,7 @@ $routes = [
     '/setting/satuan/update' => ['controller' => 'SettingController', 'method' => 'updateSatuan'],
     '/setting/satuan/delete' => ['controller' => 'SettingController', 'method' => 'deleteSatuan'],
     '/setting/nota' => ['controller' => 'SettingController', 'method' => 'nota'],
+    '/setting/role-permissions' => ['controller' => 'SettingController', 'method' => 'rolePermissions'],
 
     // Backup routes
     '/backup' => ['controller' => 'BackupController', 'method' => 'index'],

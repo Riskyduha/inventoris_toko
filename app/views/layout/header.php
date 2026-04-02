@@ -139,7 +139,20 @@
     } else {
         $displayRole = 'User';
     }
-    $canAccessTransaksi = ($currentRole !== 'inspeksi');
+    $normalizedRole = class_exists('PermissionGate')
+        ? PermissionGate::normalizeRole($rawRole)
+        : ($rawRole === 'user' ? 'kasir' : $rawRole);
+
+    $canViewPembelian = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'pembelian.view') : ($currentRole !== 'inspeksi');
+    $canViewPenjualan = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'penjualan.view') : ($currentRole !== 'inspeksi');
+    $canAccessTransaksi = $canViewPembelian || $canViewPenjualan;
+
+    $canViewLaporanPembelian = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.pembelian.view') : ($currentRole !== 'inspeksi');
+    $canViewLaporanPenjualan = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.penjualan.view') : true;
+    $canViewLaporanStok = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.stok.view') : ($currentRole !== 'inspeksi');
+    $canViewLaporanKeuntungan = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.keuntungan.view') : ($currentRole !== 'inspeksi');
+    $canViewHutang = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'hutang.view') : ($currentRole !== 'inspeksi');
+    $canViewAnyLaporan = $canViewLaporanPembelian || $canViewLaporanPenjualan || $canViewLaporanStok || $canViewLaporanKeuntungan || $canViewHutang;
     ?>
     <nav class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white shadow-2xl sticky top-0 z-50">
         <div class="container mx-auto px-4">
@@ -170,23 +183,20 @@
                         <i class="fas fa-box"></i>
                         <span>Stok</span>
                     </a>
-                    <?php if ($canAccessTransaksi): ?>
+                    <?php if ($canViewPembelian): ?>
                     <a href="/pembelian" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-shopping-cart"></i>
                         <span>Barang Masuk</span>
                     </a>
+                    <?php endif; ?>
+                    <?php if ($canViewPenjualan): ?>
                     <a href="/penjualan" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-cash-register"></i>
                         <span>Penjualan</span>
                     </a>
                     <?php endif; ?>
                     
-                    <?php if ($currentRole === 'user'): ?>
-                        <a href="/laporan/penjualan" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Laporan</span>
-                        </a>
-                    <?php elseif ($currentRole !== 'inspeksi'): ?>
+                    <?php if ($canViewAnyLaporan): ?>
                         <!-- Dropdown Laporan -->
                         <div class="relative" onclick="toggleDropdown(event, this)">
                             <button type="button" class="nav-item px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2">
@@ -198,27 +208,37 @@
                                 <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
                                     <p class="text-xs font-semibold text-gray-500 uppercase">Laporan</p>
                                 </div>
+                                <?php if ($canViewLaporanPembelian): ?>
                                 <a href="/laporan/pembelian" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-shopping-cart text-blue-600 w-4"></i>
                                     <span>Barang Masuk</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($canViewLaporanPenjualan): ?>
                                 <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-cash-register text-green-600 w-4"></i>
                                     <span>Penjualan</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($canViewLaporanStok): ?>
                                 <a href="/laporan/stok" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-boxes text-orange-600 w-4"></i>
                                     <span>Stok</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($canViewLaporanKeuntungan): ?>
                                 <a href="/laporan/keuntungan" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-chart-pie text-purple-600 w-4"></i>
                                     <span>Laba</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($canViewHutang): ?>
                                 <div class="border-t border-gray-200"></div>
                                 <a href="/hutang" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-file-invoice-dollar text-red-600 w-4"></i>
                                     <span>Hutang</span>
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -242,6 +262,10 @@
                                 <a href="/setting/kategori-satuan" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-tags text-green-600 w-4"></i>
                                     <span>Kategori & Satuan</span>
+                                </a>
+                                <a href="/setting/role-permissions" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
+                                    <i class="fas fa-user-shield text-indigo-600 w-4"></i>
+                                    <span>Role Permission</span>
                                 </a>
                                 <a href="/setting/nota" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-receipt text-purple-600 w-4"></i>
@@ -331,43 +355,48 @@
                     <i class="fas fa-box text-green-600 w-5"></i>
                     <span>Stok</span>
                 </a>
-                <?php if ($canAccessTransaksi): ?>
+                <?php if ($canViewPembelian): ?>
                 <a href="/pembelian" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-shopping-cart text-orange-600 w-5"></i>
                     <span>Barang Masuk</span>
                 </a>
+                <?php endif; ?>
+                <?php if ($canViewPenjualan): ?>
                 <a href="/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-cash-register text-purple-600 w-5"></i>
                     <span>Penjualan</span>
                 </a>
                 <?php endif; ?>
                 
-                <?php if ($currentRole !== 'inspeksi'): ?>
+                <?php if ($canViewAnyLaporan): ?>
                     <!-- Laporan Section -->
                     <div class="border-t border-gray-200 pt-2 mt-2">
                         <p class="text-xs font-semibold text-gray-500 uppercase px-4 mb-2">Laporan</p>
-                        <?php if ($currentRole === 'user'): ?>
-                            <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                                <i class="fas fa-chart-line text-green-600 w-5"></i>
-                                <span>Laporan Penjualan</span>
-                            </a>
-                        <?php else: ?>
+                        <?php if ($canViewLaporanPembelian): ?>
                             <a href="/laporan/pembelian" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                                 <i class="fas fa-shopping-cart text-blue-600 w-5"></i>
                                 <span>Barang Masuk</span>
                             </a>
+                        <?php endif; ?>
+                        <?php if ($canViewLaporanPenjualan): ?>
                             <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                                 <i class="fas fa-cash-register text-green-600 w-5"></i>
                                 <span>Penjualan</span>
                             </a>
+                        <?php endif; ?>
+                        <?php if ($canViewLaporanStok): ?>
                             <a href="/laporan/stok" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                                 <i class="fas fa-boxes text-orange-600 w-5"></i>
                                 <span>Stok</span>
                             </a>
+                        <?php endif; ?>
+                        <?php if ($canViewLaporanKeuntungan): ?>
                             <a href="/laporan/keuntungan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                                 <i class="fas fa-chart-pie text-purple-600 w-5"></i>
                                 <span>Laba</span>
                             </a>
+                        <?php endif; ?>
+                        <?php if ($canViewHutang): ?>
                             <a href="/hutang" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                                 <i class="fas fa-file-invoice-dollar text-red-600 w-5"></i>
                                 <span>Hutang</span>
@@ -387,6 +416,10 @@
                         <a href="/setting/kategori-satuan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-tags text-green-600 w-5"></i>
                             <span>Kategori & Satuan</span>
+                        </a>
+                        <a href="/setting/role-permissions" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                            <i class="fas fa-user-shield text-indigo-600 w-5"></i>
+                            <span>Role Permission</span>
                         </a>
                         <a href="/setting/nota" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-receipt text-purple-600 w-5"></i>
