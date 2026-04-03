@@ -401,20 +401,35 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
 <?php if ($currentRole === 'admin'): ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
     const chartEl = document.getElementById('adminSalesChart');
     if (!chartEl || typeof Chart === 'undefined') return;
 
-    const labels = <?= json_encode($trendLabels) ?>;
-    const values = <?= json_encode($trendValues) ?>;
-    const dateKeys = <?= json_encode($trendDateKeys) ?>;
+    const rawLabels = <?= json_encode($trendLabels) ?>;
+    const rawValues = <?= json_encode($trendValues) ?>;
+    const rawDateKeys = <?= json_encode($trendDateKeys) ?>;
+
+    const safeLabels = Array.isArray(rawLabels) ? rawLabels.map((v) => String(v ?? '')) : [];
+    const safeValues = Array.isArray(rawValues) ? rawValues.map((v) => Number(v || 0)) : [];
+    const safeDateKeys = Array.isArray(rawDateKeys) ? rawDateKeys.map((v) => String(v ?? '')) : [];
+
+    const dataLength = Math.min(safeLabels.length, safeValues.length, safeDateKeys.length);
+    if (dataLength <= 0) return;
+
+    const labels = safeLabels.slice(0, dataLength);
+    const values = safeValues.slice(0, dataLength);
+    const dateKeys = safeDateKeys.slice(0, dataLength);
 
     const rupiah = (value) => {
         const num = Number(value || 0);
         return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
     };
 
-    new Chart(chartEl, {
+    if (window.adminSalesChart && typeof window.adminSalesChart.destroy === 'function') {
+        window.adminSalesChart.destroy();
+    }
+
+    window.adminSalesChart = new Chart(chartEl, {
         type: 'line',
         data: {
             labels,
@@ -435,6 +450,9 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 500
+            },
             interaction: {
                 mode: 'index',
                 intersect: false
@@ -488,7 +506,7 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
             }
         }
     });
-})();
+});
 </script>
 <?php endif; ?>
 
