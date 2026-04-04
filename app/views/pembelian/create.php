@@ -178,6 +178,15 @@ function formatThousandID(value) {
     return (parseInt(digits, 10) || 0).toLocaleString('id-ID');
 }
 
+function markPricePairInvalid(hargaBeliInput, hargaJualInput, invalid) {
+    [hargaBeliInput, hargaJualInput].forEach((input) => {
+        if (!input) return;
+        input.classList.toggle('border-red-400', invalid);
+        input.classList.toggle('ring-2', invalid);
+        input.classList.toggle('ring-red-100', invalid);
+    });
+}
+
 function normalizePriceInputs(scope = document) {
     scope.querySelectorAll('input[data-price-input]').forEach((input) => {
         input.value = toDigitOnly(input.value);
@@ -334,6 +343,15 @@ function adjustQty(idx, delta) {
 }
 
 function onItemChange(idx) {
+    const row = document.querySelector(`[data-item-index="${idx}"]`);
+    if (row) {
+        const hargaBeliInput = row.querySelector('input[name*="[harga_satuan]"]');
+        const hargaJualInput = row.querySelector('input[name*="[harga_jual]"]');
+        const hargaBeli = parseCurrencyValue(hargaBeliInput?.value);
+        const hargaJual = parseCurrencyValue(hargaJualInput?.value);
+        const invalidPair = hargaBeli > 0 && hargaJual > 0 && hargaBeli >= hargaJual;
+        markPricePairInvalid(hargaBeliInput, hargaJualInput, invalidPair);
+    }
     updateItemSubtotal(idx);
     hitungTotal();
 }
@@ -378,12 +396,14 @@ function validateForm() {
 
     let isValid = true;
     let hasEmptyHargaBeli = false;
+    let hasInvalidMargin = false;
     items.forEach((row) => {
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
         const hargaInput = row.querySelector('input[name*="[harga_satuan]"]');
+        const hargaJualInput = row.querySelector('input[name*="[harga_jual]"]');
         const hargaRaw = String(hargaInput?.value || '').trim();
         const harga = parseCurrencyValue(hargaRaw);
-        const hargaJual = parseCurrencyValue(row.querySelector('input[name*="[harga_jual]"]').value);
+        const hargaJual = parseCurrencyValue(hargaJualInput?.value);
         if (hargaRaw === '' || toDigitOnly(hargaRaw) === '') {
             hasEmptyHargaBeli = true;
             isValid = false;
@@ -393,12 +413,21 @@ function validateForm() {
         } else if (hargaInput) {
             hargaInput.classList.remove('border-red-400', 'ring-2', 'ring-red-100');
         }
+        if (harga > 0 && hargaJual > 0 && harga >= hargaJual) {
+            hasInvalidMargin = true;
+            isValid = false;
+            markPricePairInvalid(hargaInput, hargaJualInput, true);
+        } else {
+            markPricePairInvalid(hargaInput, hargaJualInput, false);
+        }
         if (jumlah < 1 || harga < 0 || hargaJual < 0) isValid = false;
     });
 
     if (!isValid) {
         if (hasEmptyHargaBeli) {
             showToast('Harga beli harus terisi', 'error');
+        } else if (hasInvalidMargin) {
+            showToast('Harga beli harus lebih kecil dari harga jual', 'error');
         } else {
             showToast('Periksa jumlah, harga beli, dan harga jual setiap item', 'error');
         }
@@ -421,12 +450,28 @@ async function submitAddBarang(event) {
     event.preventDefault();
     const form = document.getElementById('form_add_barang');
     const hargaBeliInput = form.querySelector('input[name="harga_beli"]');
+    const hargaJualInput = form.querySelector('input[name="harga_jual"]');
     const hargaBeliRaw = String(hargaBeliInput?.value || '').trim();
+    const hargaJualRaw = String(hargaJualInput?.value || '').trim();
     if (hargaBeliRaw === '' || toDigitOnly(hargaBeliRaw) === '') {
         showToast('Harga beli harus terisi', 'error');
         if (hargaBeliInput) hargaBeliInput.focus();
         return;
     }
+    if (hargaJualRaw === '' || toDigitOnly(hargaJualRaw) === '') {
+        showToast('Harga jual harus terisi', 'error');
+        if (hargaJualInput) hargaJualInput.focus();
+        return;
+    }
+    const hargaBeli = parseCurrencyValue(hargaBeliRaw);
+    const hargaJual = parseCurrencyValue(hargaJualRaw);
+    if (hargaBeli >= hargaJual) {
+        markPricePairInvalid(hargaBeliInput, hargaJualInput, true);
+        showToast('Harga beli harus lebih kecil dari harga jual', 'error');
+        if (hargaBeliInput) hargaBeliInput.focus();
+        return;
+    }
+    markPricePairInvalid(hargaBeliInput, hargaJualInput, false);
     const stokInput = form.querySelector('input[name="stok"]');
     const stokValue = parseInt(String(stokInput?.value || '0'), 10);
     if (!Number.isFinite(stokValue) || stokValue < 1) {

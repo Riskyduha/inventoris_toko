@@ -60,7 +60,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     <?php endif; ?>
 
     <form id="rolePermissionsForm" method="POST" action="/setting/role-permissions" class="space-y-5">
-        <div class="app-card border border-slate-200 p-4 sm:p-5 md:sticky md:top-20 md:z-20 backdrop-blur bg-white/95 shadow-sm">
+        <div class="app-card border border-slate-200 p-4 sm:p-5 backdrop-blur bg-white/95 shadow-sm">
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
                 <div class="xl:col-span-4">
                     <label for="permissionSearch" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Cari Permission</label>
@@ -101,6 +101,54 @@ unset($_SESSION['success'], $_SESSION['error']);
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div class="app-card border border-indigo-200 bg-indigo-50/50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Preset Role Siap Pakai</p>
+                <p class="text-sm text-slate-600 mt-1">Terapkan paket akses standar (Admin/Manager/Kasir/Inspeksi) ke role target.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
+                    <select id="presetSourceRole" class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <?php foreach ($presetMatrix as $presetKey => $preset): ?>
+                            <option value="<?= htmlspecialchars($presetKey) ?>"><?= htmlspecialchars($preset['label'] ?? ucfirst((string)$presetKey)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select id="presetTargetRole" class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <?php foreach ($roles as $role): ?>
+                            <option value="<?= htmlspecialchars($role) ?>"><?= htmlspecialchars($roleLabels[$role] ?? ucfirst($role)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="button" class="px-3 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700" onclick="applyRolePreset()">
+                        Terapkan Preset
+                    </button>
+                </div>
+                <p id="presetRoleDescription" class="text-xs text-indigo-700 mt-2"></p>
+            </div>
+
+            <div class="app-card border border-emerald-200 bg-emerald-50/50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Template Permission</p>
+                <p class="text-sm text-slate-600 mt-1">Tambahkan atau ganti akses berbasis template modul.</p>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-3">
+                    <select id="templatePermissionKey" class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <?php foreach ($permissionTemplates as $templateKey => $template): ?>
+                            <option value="<?= htmlspecialchars($templateKey) ?>"><?= htmlspecialchars($template['label'] ?? ucfirst((string)$templateKey)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select id="templateTargetRole" class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <?php foreach ($roles as $role): ?>
+                            <option value="<?= htmlspecialchars($role) ?>"><?= htmlspecialchars($roleLabels[$role] ?? ucfirst($role)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select id="templateApplyMode" class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="replace">Ganti Semua Akses</option>
+                        <option value="merge">Tambahkan Ke Akses Saat Ini</option>
+                    </select>
+                    <button type="button" class="px-3 py-2 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700" onclick="applyPermissionTemplate()">
+                        Terapkan Template
+                    </button>
+                </div>
+                <p id="templatePermissionDescription" class="text-xs text-emerald-700 mt-2"></p>
             </div>
         </div>
 
@@ -150,7 +198,7 @@ unset($_SESSION['success'], $_SESSION['error']);
 
                 <div id="moduleBody_<?= htmlspecialchars($moduleKey) ?>" class="module-body overflow-x-auto">
                     <table class="min-w-full text-sm">
-                        <thead class="bg-white border-b border-slate-200 sticky top-0 z-10">
+                        <thead class="bg-white border-b border-slate-200">
                             <tr>
                                 <th class="px-4 py-3 text-left text-slate-600 font-semibold">Permission</th>
                                 <?php foreach ($roles as $role): ?>
@@ -191,7 +239,7 @@ unset($_SESSION['success'], $_SESSION['error']);
             </section>
         <?php endforeach; ?>
 
-        <div class="app-card border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:sticky md:bottom-4 md:z-20 bg-white/95 backdrop-blur">
+        <div class="app-card border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white/95 backdrop-blur">
             <span id="permissionDirtyIndicator" class="hidden inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-700">
                 <i class="fas fa-pen"></i> Perubahan belum disimpan
             </span>
@@ -215,6 +263,128 @@ unset($_SESSION['success'], $_SESSION['error']);
 
 <script>
 let permissionDirty = false;
+const rolePresetMatrix = <?= json_encode($presetMatrix ?? [], JSON_UNESCAPED_UNICODE) ?>;
+const permissionTemplateMatrix = <?= json_encode($permissionTemplates ?? [], JSON_UNESCAPED_UNICODE) ?>;
+
+function showPermissionToast(message, type) {
+    const toastHost = document.getElementById('permissionToastHost');
+    if (!toastHost || !message) return;
+
+    const isSuccess = type === 'success';
+    const toast = document.createElement('div');
+    toast.className = [
+        'pointer-events-auto',
+        'w-[min(92vw,360px)]',
+        'rounded-xl',
+        'border',
+        'shadow-lg',
+        'px-4',
+        'py-3',
+        'backdrop-blur',
+        'transition-all',
+        'duration-300',
+        'translate-y-2',
+        'opacity-0',
+        isSuccess ? 'bg-emerald-50/95 border-emerald-200 text-emerald-800' : 'bg-red-50/95 border-red-200 text-red-800'
+    ].join(' ');
+
+    const iconClass = isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle';
+    toast.innerHTML = `
+        <div class="flex items-start gap-3">
+            <i class="fas ${iconClass} mt-0.5"></i>
+            <div class="flex-1">
+                <p class="text-sm font-semibold">${isSuccess ? 'Berhasil' : 'Gagal'}</p>
+                <p class="text-sm leading-relaxed">${String(message)}</p>
+            </div>
+            <button type="button" class="text-xs font-bold opacity-70 hover:opacity-100" aria-label="Tutup">&times;</button>
+        </div>
+    `;
+
+    const closeBtn = toast.querySelector('button');
+    const removeToast = () => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 250);
+    };
+
+    closeBtn?.addEventListener('click', removeToast);
+    toastHost.appendChild(toast);
+    requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+    });
+    setTimeout(removeToast, 4500);
+}
+
+function sanitizePermissionsForRole(role, permissions) {
+    const list = Array.isArray(permissions) ? permissions.map((p) => String(p || '')) : [];
+    if (role === 'kasir') {
+        return list.filter((p) => !p.startsWith('laporan.keuntungan.'));
+    }
+    return list;
+}
+
+function setRolePermissionsByKeys(role, keys, mode = 'replace') {
+    const allowedKeys = new Set(sanitizePermissionsForRole(role, keys));
+    const checkboxes = document.querySelectorAll('.role-perm-checkbox[data-role="' + role + '"]');
+    if (checkboxes.length === 0) return;
+
+    checkboxes.forEach((checkbox) => {
+        const key = String(checkbox.value || '');
+        if (mode === 'replace') {
+            checkbox.checked = allowedKeys.has(key);
+        } else if (allowedKeys.has(key)) {
+            checkbox.checked = true;
+        }
+    });
+
+    markPermissionDirty();
+    updateRoleStats();
+}
+
+function applyRolePreset() {
+    const source = document.getElementById('presetSourceRole')?.value || '';
+    const target = document.getElementById('presetTargetRole')?.value || '';
+    if (!source || !target) return;
+
+    const preset = rolePresetMatrix[source] || null;
+    if (!preset) return;
+    setRolePermissionsByKeys(target, preset.permissions || [], 'replace');
+    const label = preset.label || source;
+    showPermissionToast(label + ' diterapkan ke role ' + target + '.', 'success');
+}
+
+function applyPermissionTemplate() {
+    const templateKey = document.getElementById('templatePermissionKey')?.value || '';
+    const target = document.getElementById('templateTargetRole')?.value || '';
+    const mode = document.getElementById('templateApplyMode')?.value || 'replace';
+    if (!templateKey || !target) return;
+
+    const template = permissionTemplateMatrix[templateKey] || null;
+    if (!template) return;
+    setRolePermissionsByKeys(target, template.permissions || [], mode === 'merge' ? 'merge' : 'replace');
+    const label = template.label || templateKey;
+    showPermissionToast(label + ' diterapkan ke role ' + target + '.', 'success');
+}
+
+function syncPresetTemplateDescriptions() {
+    const presetKey = document.getElementById('presetSourceRole')?.value || '';
+    const templateKey = document.getElementById('templatePermissionKey')?.value || '';
+    const presetDescEl = document.getElementById('presetRoleDescription');
+    const templateDescEl = document.getElementById('templatePermissionDescription');
+
+    const preset = rolePresetMatrix[presetKey] || null;
+    const template = permissionTemplateMatrix[templateKey] || null;
+
+    if (presetDescEl) {
+        presetDescEl.textContent = preset && preset.description
+            ? preset.description
+            : '';
+    }
+    if (templateDescEl) {
+        templateDescEl.textContent = template && template.description
+            ? template.description
+            : '';
+    }
+}
 
 function toggleRolePermissions(role, checked) {
     document.querySelectorAll('.role-perm-checkbox[data-role="' + role + '"]').forEach((checkbox) => {
@@ -336,65 +506,18 @@ window.addEventListener('beforeunload', function (event) {
 });
 
 updateRoleStats();
+syncPresetTemplateDescriptions();
 
 document.addEventListener('DOMContentLoaded', function () {
     const flashSuccess = <?= json_encode($flashSuccess, JSON_UNESCAPED_UNICODE) ?>;
     const flashError = <?= json_encode($flashError, JSON_UNESCAPED_UNICODE) ?>;
-    const toastHost = document.getElementById('permissionToastHost');
-
-    function showToast(message, type) {
-        if (!toastHost || !message) return;
-
-        const isSuccess = type === 'success';
-        const toast = document.createElement('div');
-        toast.className = [
-            'pointer-events-auto',
-            'w-[min(92vw,360px)]',
-            'rounded-xl',
-            'border',
-            'shadow-lg',
-            'px-4',
-            'py-3',
-            'backdrop-blur',
-            'transition-all',
-            'duration-300',
-            'translate-y-2',
-            'opacity-0',
-            isSuccess ? 'bg-emerald-50/95 border-emerald-200 text-emerald-800' : 'bg-red-50/95 border-red-200 text-red-800'
-        ].join(' ');
-
-        const iconClass = isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle';
-        toast.innerHTML = `
-            <div class="flex items-start gap-3">
-                <i class="fas ${iconClass} mt-0.5"></i>
-                <div class="flex-1">
-                    <p class="text-sm font-semibold">${isSuccess ? 'Berhasil' : 'Gagal'}</p>
-                    <p class="text-sm leading-relaxed">${String(message)}</p>
-                </div>
-                <button type="button" class="text-xs font-bold opacity-70 hover:opacity-100" aria-label="Tutup">&times;</button>
-            </div>
-        `;
-
-        const closeBtn = toast.querySelector('button');
-        const removeToast = () => {
-            toast.classList.add('opacity-0', 'translate-y-2');
-            setTimeout(() => toast.remove(), 250);
-        };
-
-        closeBtn?.addEventListener('click', removeToast);
-        toastHost.appendChild(toast);
-
-        requestAnimationFrame(() => {
-            toast.classList.remove('opacity-0', 'translate-y-2');
-        });
-
-        setTimeout(removeToast, 4500);
-    }
+    document.getElementById('presetSourceRole')?.addEventListener('change', syncPresetTemplateDescriptions);
+    document.getElementById('templatePermissionKey')?.addEventListener('change', syncPresetTemplateDescriptions);
 
     if (flashSuccess) {
-        showToast(flashSuccess, 'success');
+        showPermissionToast(flashSuccess, 'success');
     } else if (flashError) {
-        showToast(flashError, 'error');
+        showPermissionToast(flashError, 'error');
     }
 });
 </script>

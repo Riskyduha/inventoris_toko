@@ -202,6 +202,100 @@ class PermissionGate {
         return $catalog;
     }
 
+    public static function getRolePresetMatrix(): array {
+        $allPermissionKeys = self::getAllPermissionKeys();
+
+        $manager = array_values(array_unique(self::MATRIX['manager'] ?? []));
+        sort($manager);
+
+        $kasir = array_values(array_unique(self::MATRIX['kasir'] ?? []));
+        $kasir = array_values(array_filter($kasir, fn($p) => strpos((string)$p, 'laporan.keuntungan.') !== 0));
+        sort($kasir);
+
+        $inspeksi = array_values(array_unique(self::MATRIX['inspeksi'] ?? []));
+        sort($inspeksi);
+
+        return [
+            'admin' => [
+                'label' => 'Preset Admin',
+                'description' => 'Akses penuh seluruh modul operasional dan laporan.',
+                'permissions' => $allPermissionKeys
+            ],
+            'manager' => [
+                'label' => 'Preset Manager',
+                'description' => 'Operasional lengkap + seluruh laporan tanpa pengaturan role.',
+                'permissions' => $manager
+            ],
+            'kasir' => [
+                'label' => 'Preset Kasir',
+                'description' => 'Fokus transaksi harian dan laporan dasar.',
+                'permissions' => $kasir
+            ],
+            'inspeksi' => [
+                'label' => 'Preset Inspeksi',
+                'description' => 'Fokus inspeksi dan kontrol stok barang.',
+                'permissions' => $inspeksi
+            ]
+        ];
+    }
+
+    public static function getPermissionTemplates(): array {
+        $allKeys = self::getAllPermissionKeys();
+
+        $operasionalTemplate = array_values(array_filter($allKeys, function ($key) {
+            return strpos($key, 'barang.') === 0
+                || strpos($key, 'pembelian.') === 0
+                || strpos($key, 'penjualan.') === 0
+                || strpos($key, 'hutang.') === 0
+                || $key === 'dashboard.view';
+        }));
+        sort($operasionalTemplate);
+
+        $laporanTemplate = array_values(array_filter($allKeys, function ($key) {
+            return strpos($key, 'laporan.') === 0
+                || $key === 'dashboard.view';
+        }));
+        sort($laporanTemplate);
+
+        $stokTemplate = array_values(array_filter($allKeys, function ($key) {
+            return strpos($key, 'barang.') === 0
+                || $key === 'dashboard.view'
+                || $key === 'laporan.stok.view'
+                || $key === 'laporan.stok.export';
+        }));
+        sort($stokTemplate);
+
+        $auditTemplate = array_values(array_filter($allKeys, function ($key) {
+            return $key === 'dashboard.view'
+                || strpos($key, 'laporan.') === 0
+                || $key === 'hutang.view';
+        }));
+        sort($auditTemplate);
+
+        return [
+            'operasional' => [
+                'label' => 'Template Operasional',
+                'description' => 'Transaksi barang masuk, penjualan, stok, dan hutang.',
+                'permissions' => $operasionalTemplate
+            ],
+            'laporan' => [
+                'label' => 'Template Laporan',
+                'description' => 'Akses seluruh laporan untuk analisis.',
+                'permissions' => $laporanTemplate
+            ],
+            'stok' => [
+                'label' => 'Template Gudang/Stok',
+                'description' => 'Fokus penuh pada manajemen dan monitoring stok.',
+                'permissions' => $stokTemplate
+            ],
+            'audit' => [
+                'label' => 'Template Audit',
+                'description' => 'Monitoring dashboard dan laporan tanpa transaksi.',
+                'permissions' => $auditTemplate
+            ]
+        ];
+    }
+
     public static function getRolePermissions(string $role): array {
         $normalizedRole = self::normalizeRole($role);
         $matrix = self::getRuntimeMatrix();
@@ -392,5 +486,12 @@ class PermissionGate {
         $module = $moduleMap[$parts[0]] ?? ucwords(str_replace('_', ' ', $parts[0]));
         $action = $actionMap[end($parts)] ?? ucwords(str_replace('_', ' ', end($parts)));
         return $module . ' - ' . $action;
+    }
+
+    private static function getAllPermissionKeys(): array {
+        $keys = array_values(array_unique(array_filter(array_values(self::ACTION_MAP))));
+        $keys = array_values(array_filter($keys, fn($k) => $k !== 'setting.roles.manage'));
+        sort($keys);
+        return $keys;
     }
 }

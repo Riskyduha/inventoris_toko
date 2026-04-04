@@ -312,9 +312,10 @@ class Barang {
         return $stmt->execute();
     }
 
-    public function updateAtributDariPembelian($id, $satuan, $hargaJual, $tanggalExpired = null) {
+    public function updateAtributDariPembelian($id, $satuan, $hargaBeli, $hargaJual, $tanggalExpired = null) {
         $query = "UPDATE " . $this->table . "
                   SET satuan = COALESCE(NULLIF(:satuan, ''), satuan),
+                      harga_beli = COALESCE(:harga_beli, harga_beli),
                       harga_jual = COALESCE(:harga_jual, harga_jual),
                       tanggal_expired = COALESCE(:tanggal_expired, tanggal_expired),
                       updated_at = NOW()
@@ -322,6 +323,8 @@ class Barang {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->bindParam(':satuan', $satuan);
+        $hargaBeliValue = $hargaBeli !== null && $hargaBeli !== '' ? (float)$hargaBeli : null;
+        $stmt->bindValue(':harga_beli', $hargaBeliValue, $hargaBeliValue === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $hargaJualValue = $hargaJual !== null && $hargaJual !== '' ? (float)$hargaJual : null;
         $stmt->bindValue(':harga_jual', $hargaJualValue, $hargaJualValue === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $expiredValue = !empty($tanggalExpired) ? $tanggalExpired : null;

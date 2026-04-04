@@ -78,6 +78,10 @@ class PembelianController {
                             redirect('/pembelian/create');
                         }
                         $hargaJual = $this->parseNumberInput($item['harga_jual'] ?? null);
+                        if ($hargaJual !== null && $hargaJual <= $hargaSatuan) {
+                            $_SESSION['error'] = 'Harga beli harus lebih kecil dari harga jual pada setiap item.';
+                            redirect('/pembelian/create');
+                        }
                         $items[] = [
                             'id_barang' => $item['id_barang'],
                             'satuan' => trim($item['satuan'] ?? ''),
@@ -101,6 +105,7 @@ class PembelianController {
                 $updated = $this->barangModel->updateAtributDariPembelian(
                     (int)$item['id_barang'],
                     $item['satuan'],
+                    $item['harga_satuan'],
                     $item['harga_jual'],
                     $item['tanggal_expired'] !== '' ? $item['tanggal_expired'] : null
                 );
@@ -167,6 +172,10 @@ class PembelianController {
                             redirect('/pembelian/edit/' . $id);
                         }
                         $hargaJual = $this->parseNumberInput($item['harga_jual'] ?? null);
+                        if ($hargaJual !== null && $hargaJual <= $hargaSatuan) {
+                            $_SESSION['error'] = 'Harga beli harus lebih kecil dari harga jual pada setiap item.';
+                            redirect('/pembelian/edit/' . $id);
+                        }
                         $items[] = [
                             'id_barang' => $item['id_barang'],
                             'satuan' => trim($item['satuan'] ?? ''),
@@ -189,6 +198,7 @@ class PembelianController {
                 $updated = $this->barangModel->updateAtributDariPembelian(
                     (int)$item['id_barang'],
                     $item['satuan'],
+                    $item['harga_satuan'],
                     $item['harga_jual'],
                     $item['tanggal_expired'] !== '' ? $item['tanggal_expired'] : null
                 );

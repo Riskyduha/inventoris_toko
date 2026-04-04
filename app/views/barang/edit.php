@@ -59,6 +59,9 @@
                    value="<?= number_format((float)$barang['harga_jual'], 0, ',', '.') ?>"
                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         </div>
+        <p id="price_notice" class="hidden -mt-2 mb-6 text-sm text-red-600 font-semibold">
+            Harga beli harus lebih kecil dari harga jual.
+        </p>
 
         <div class="mb-8">
             <label for="stok" class="block text-gray-700 font-bold mb-2 text-sm">Stok</label>
@@ -102,13 +105,38 @@ function bindPriceInputFormatting(formId) {
     if (!form) return;
 
     const priceInputs = form.querySelectorAll('[data-price-input]');
+    const hargaBeliInput = form.querySelector('#harga_beli');
+    const hargaJualInput = form.querySelector('#harga_jual');
+    const validatePricePair = () => {
+        const beli = parseInt(toDigitOnly(hargaBeliInput?.value || ''), 10) || 0;
+        const jual = parseInt(toDigitOnly(hargaJualInput?.value || ''), 10) || 0;
+        const invalid = beli > 0 && jual > 0 && beli >= jual;
+        const notice = form.querySelector('#price_notice');
+        [hargaBeliInput, hargaJualInput].forEach((el) => {
+            if (!el) return;
+            el.classList.toggle('border-red-400', invalid);
+            el.classList.toggle('ring-2', invalid);
+            el.classList.toggle('ring-red-100', invalid);
+        });
+        if (notice) {
+            notice.classList.toggle('hidden', !invalid);
+        }
+        return !invalid;
+    };
+
     priceInputs.forEach((input) => {
         input.addEventListener('input', () => {
             input.value = formatThousandID(input.value);
+            validatePricePair();
         });
     });
 
-    form.addEventListener('submit', () => {
+    form.addEventListener('submit', (event) => {
+        if (!validatePricePair()) {
+            event.preventDefault();
+            if (hargaBeliInput) hargaBeliInput.focus();
+            return;
+        }
         priceInputs.forEach((input) => {
             input.value = toDigitOnly(input.value) || '0';
         });

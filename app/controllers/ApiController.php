@@ -62,13 +62,21 @@ class ApiController {
         $nama = trim($_POST['nama_barang'] ?? '');
         $idKategori = $_POST['id_kategori'] ?? null;
         $satuan = trim($_POST['satuan'] ?? 'pcs');
-        $hargaBeli = $_POST['harga_beli'] ?? 0;
-        $hargaJual = $_POST['harga_jual'] ?? 0;
+        $hargaBeli = $this->parseNumberInput($_POST['harga_beli'] ?? null);
+        $hargaJual = $this->parseNumberInput($_POST['harga_jual'] ?? null);
         $stok = (int)($_POST['stok'] ?? 0);
         $tanggalExpired = trim((string)($_POST['tanggal_expired'] ?? ''));
 
         if ($nama === '' || !$idKategori) {
             echo json_encode(['success' => false, 'message' => 'Nama dan kategori wajib diisi']);
+            return;
+        }
+        if ($hargaBeli === null || $hargaJual === null) {
+            echo json_encode(['success' => false, 'message' => 'Harga beli dan harga jual wajib diisi']);
+            return;
+        }
+        if ($hargaBeli >= $hargaJual) {
+            echo json_encode(['success' => false, 'message' => 'Harga beli harus lebih kecil dari harga jual']);
             return;
         }
 
@@ -259,5 +267,17 @@ class ApiController {
                 'message' => 'Gagal memuat notifikasi operasional'
             ]);
         }
+    }
+
+    private function parseNumberInput($value): ?float {
+        $raw = trim((string)$value);
+        if ($raw === '') {
+            return null;
+        }
+        $normalized = preg_replace('/[^\d]/', '', $raw);
+        if ($normalized === null || $normalized === '') {
+            return null;
+        }
+        return (float)$normalized;
     }
 }

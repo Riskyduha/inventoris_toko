@@ -188,6 +188,8 @@ class SettingController {
 
         $roles = PermissionGate::getConfigurableRoles();
         $catalog = PermissionGate::getPermissionCatalog();
+        $presetMatrix = PermissionGate::getRolePresetMatrix();
+        $permissionTemplates = PermissionGate::getPermissionTemplates();
         $currentPermissions = [];
         foreach ($roles as $role) {
             $currentPermissions[$role] = PermissionGate::getRolePermissions($role);

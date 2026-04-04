@@ -33,6 +33,18 @@ class BarangController {
         require_once __DIR__ . '/../views/barang/create.php';
     }
 
+    private function parseNumberInput($value): ?float {
+        $raw = trim((string)$value);
+        if ($raw === '') {
+            return null;
+        }
+        $normalized = preg_replace('/[^\d]/', '', $raw);
+        if ($normalized === null || $normalized === '') {
+            return null;
+        }
+        return (float)$normalized;
+    }
+
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $kodeBarang = trim($_POST['kode_barang'] ?? '');
@@ -46,13 +58,24 @@ class BarangController {
                 redirect('/barang/create');
             }
 
+            $hargaBeli = $this->parseNumberInput($_POST['harga_beli'] ?? null);
+            $hargaJual = $this->parseNumberInput($_POST['harga_jual'] ?? null);
+            if ($hargaBeli === null || $hargaJual === null) {
+                $_SESSION['error'] = 'Harga beli dan harga jual wajib diisi.';
+                redirect('/barang/create');
+            }
+            if ($hargaBeli >= $hargaJual) {
+                $_SESSION['error'] = 'Harga beli harus lebih kecil dari harga jual.';
+                redirect('/barang/create');
+            }
+
             $data = [
                 'kode_barang' => $kodeBarang,
                 'nama_barang' => $_POST['nama_barang'],
                 'id_kategori' => $_POST['id_kategori'],
                 'satuan' => $_POST['satuan'] ?? 'pcs',
-                'harga_beli' => $_POST['harga_beli'],
-                'harga_jual' => $_POST['harga_jual'],
+                'harga_beli' => $hargaBeli,
+                'harga_jual' => $hargaJual,
                 'stok' => $_POST['stok'],
                 'tanggal_expired' => trim((string)($_POST['tanggal_expired'] ?? '')),
                 'stok_updated_by' => $_SESSION['user_id'] ?? null
@@ -92,13 +115,24 @@ class BarangController {
                 redirect('/barang/edit/' . $id);
             }
 
+            $hargaBeli = $this->parseNumberInput($_POST['harga_beli'] ?? null);
+            $hargaJual = $this->parseNumberInput($_POST['harga_jual'] ?? null);
+            if ($hargaBeli === null || $hargaJual === null) {
+                $_SESSION['error'] = 'Harga beli dan harga jual wajib diisi.';
+                redirect('/barang/edit/' . $id);
+            }
+            if ($hargaBeli >= $hargaJual) {
+                $_SESSION['error'] = 'Harga beli harus lebih kecil dari harga jual.';
+                redirect('/barang/edit/' . $id);
+            }
+
             $data = [
                 'kode_barang' => $kodeBarang,
                 'nama_barang' => $_POST['nama_barang'],
                 'id_kategori' => $_POST['id_kategori'],
                 'satuan' => $_POST['satuan'] ?? 'pcs',
-                'harga_beli' => $_POST['harga_beli'],
-                'harga_jual' => $_POST['harga_jual'],
+                'harga_beli' => $hargaBeli,
+                'harga_jual' => $hargaJual,
                 'stok' => $_POST['stok'],
                 'tanggal_expired' => trim((string)($_POST['tanggal_expired'] ?? '')),
                 'stok_updated_by' => $_SESSION['user_id'] ?? null
