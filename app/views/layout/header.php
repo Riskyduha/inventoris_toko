@@ -132,6 +132,8 @@
     }
     if ($rawRole === 'admin') {
         $displayRole = 'Admin';
+    } elseif ($rawRole === 'manager') {
+        $displayRole = 'Manager';
     } elseif ($rawRole === 'kasir') {
         $displayRole = 'Kasir';
     } elseif ($rawRole === 'inspeksi') {

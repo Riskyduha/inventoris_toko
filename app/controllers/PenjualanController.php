@@ -70,7 +70,12 @@ class PenjualanController {
             }
         }
         $summary_total_transaksi = $total_penjualan;
-        $show_profit_admin = strtolower((string)($_SESSION['role'] ?? '')) === 'admin';
+        $normalizedRole = class_exists('PermissionGate')
+            ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+            : strtolower((string)($_SESSION['role'] ?? 'kasir'));
+        $show_profit_admin = class_exists('PermissionGate')
+            ? PermissionGate::allows($normalizedRole, 'laporan.keuntungan.view')
+            : ($normalizedRole === 'admin');
         
         $total_pages = ceil($total_penjualan / $items_per_page);
         $current_page = $page;

@@ -4,13 +4,16 @@ $rawRole = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
 if ($rawRole === 'user') {
     $rawRole = 'kasir';
 }
-$role = $rawRole;
-if ($role === 'kasir' || $role === 'inspeksi') {
-    $role = 'user';
-}
-$isAdmin = ($role === 'admin');
-$canEditStok = ($role === 'admin' || $role === 'user');
-$canDeleteStok = ($rawRole === 'admin' || $rawRole === 'kasir' || $rawRole === 'inspeksi');
+$normalizedRole = class_exists('PermissionGate')
+    ? PermissionGate::normalizeRole($rawRole)
+    : $rawRole;
+$isAdmin = ($normalizedRole === 'admin');
+$canEditStok = class_exists('PermissionGate')
+    ? PermissionGate::allows($normalizedRole, 'barang.edit')
+    : ($normalizedRole === 'admin' || $normalizedRole === 'kasir' || $normalizedRole === 'inspeksi');
+$canDeleteStok = class_exists('PermissionGate')
+    ? PermissionGate::allows($normalizedRole, 'barang.delete')
+    : ($normalizedRole === 'admin' || $normalizedRole === 'kasir' || $normalizedRole === 'inspeksi');
 ?>
 
 <style>
@@ -421,8 +424,7 @@ const totalsByKategori = <?= json_encode((object)array_reduce($totals_by_kategor
 const currentPage = <?= (int)$current_page ?>;
 const itemsPerPage = <?= (int)$items_per_page ?>;
 let currentKategori = <?= json_encode($selected_kategori !== null ? (string)$selected_kategori : 'all') ?>;
-const userRole = <?= json_encode($role) ?>;
-const canEditStok = userRole === 'admin' || userRole === 'user';
+const canEditStok = <?= json_encode($canEditStok) ?>;
 const canDeleteStok = <?= json_encode($canDeleteStok) ?>;
 let currentQuery = '';
 let currentSearchPage = 1;

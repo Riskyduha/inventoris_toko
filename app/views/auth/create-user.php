@@ -63,6 +63,7 @@
                     name="role"
                     required
                 >
+                    <option value="manager">Manager</option>
                     <option value="kasir">Kasir</option>
                     <option value="inspeksi">Inspeksi</option>
                     <option value="admin">Admin</option>

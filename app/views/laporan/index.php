@@ -410,7 +410,7 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
 </div>
 <?php endif; ?>
 
-<?php if ($currentRole === 'admin'): ?>
+<?php if (!$isKasirView && !$isInspeksi): ?>
 <script>
 (function () {
     const canvas = document.getElementById('adminSalesChart');

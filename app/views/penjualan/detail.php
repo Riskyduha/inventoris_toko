@@ -2,7 +2,12 @@
 
 <?php
 $currentRole = strtolower(trim((string)($_SESSION['role'] ?? '')));
-$isAdmin = ($currentRole === 'admin');
+$normalizedRole = class_exists('PermissionGate')
+    ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+    : ($currentRole === 'user' ? 'kasir' : $currentRole);
+$isAdmin = class_exists('PermissionGate')
+    ? PermissionGate::allows($normalizedRole, 'laporan.keuntungan.view')
+    : ($currentRole === 'admin');
 $totalItem = 0;
 $totalDiskon = 0;
 $totalLaba = 0;

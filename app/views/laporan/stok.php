@@ -4,6 +4,12 @@ $user_role = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
 if ($user_role === 'kasir') {
     $user_role = 'user';
 }
+$normalizedRole = class_exists('PermissionGate')
+    ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+    : ($user_role === 'user' ? 'kasir' : $user_role);
+$canViewHargaStok = class_exists('PermissionGate')
+    ? PermissionGate::allows($normalizedRole, 'laporan.keuntungan.view')
+    : ($user_role === 'admin' || $user_role === 'manager');
 ?>
 
 <div class="app-card p-6 app-reveal">
@@ -183,7 +189,7 @@ if ($user_role === 'kasir') {
     </div>
     <?php endif; ?>
 
-    <?php if ($user_role !== 'admin'): ?>
+    <?php if (!$canViewHargaStok): ?>
     <div class="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6 text-sm">
         <div class="border rounded-lg p-5 bg-gray-50 text-center">
             <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-3">
@@ -261,7 +267,7 @@ if ($user_role === 'kasir') {
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Kode Barang</th>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-64">Nama Barang</th>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-20">Satuan</th>
-                    <?php if ($user_role === 'admin'): ?>
+                    <?php if ($canViewHargaStok): ?>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Harga Beli</th>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Harga Jual</th>
                     <?php endif; ?>
@@ -273,7 +279,7 @@ if ($user_role === 'kasir') {
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($stok)): ?>
                     <tr>
-                        <td colspan="<?= $user_role === 'admin' ? 9 : 7 ?>" class="px-4 py-4 text-center text-gray-500">Tidak ada data barang</td>
+                        <td colspan="<?= $canViewHargaStok ? 9 : 7 ?>" class="px-4 py-4 text-center text-gray-500">Tidak ada data barang</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($stok as $index => $item): ?>
@@ -284,7 +290,7 @@ if ($user_role === 'kasir') {
                             <td class="px-4 py-3 text-center text-gray-700 font-semibold">
                                 <?= htmlspecialchars($item['satuan'] ?? '-') ?>
                             </td>
-                            <?php if ($user_role === 'admin'): ?>
+                            <?php if ($canViewHargaStok): ?>
                             <td class="px-4 py-3 text-center"><?= formatRupiah($item['harga_beli']) ?></td>
                             <td class="px-4 py-3 text-center"><?= formatRupiah($item['harga_jual']) ?></td>
                             <?php endif; ?>

@@ -120,10 +120,10 @@ BEGIN
 
     ALTER TABLE users
     ADD CONSTRAINT users_role_check
-    CHECK (role IN ('admin', 'kasir', 'inspeksi'));
+    CHECK (role IN ('admin', 'manager', 'kasir', 'inspeksi'));
 END $$;
 SQL);
-        error_log("✓ Migration: users.role constraint synced (admin, kasir, inspeksi)");
+        error_log("✓ Migration: users.role constraint synced (admin, manager, kasir, inspeksi)");
     } catch (Exception $e) {
         error_log("⚠ Migration: Failed to sync users.role constraint: " . $e->getMessage());
     }

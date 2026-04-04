@@ -92,7 +92,7 @@ class AuthController {
             $password = $_POST['password'] ?? '';
             $nama = $_POST['nama'] ?? '';
             $role = $_POST['role'] ?? 'kasir';
-            $allowedRoles = ['admin', 'kasir', 'inspeksi'];
+            $allowedRoles = ['admin', 'manager', 'kasir', 'inspeksi'];
 
             if (!$username || !$password || !$nama) {
                 $error = 'Semua field harus diisi!';
@@ -128,7 +128,7 @@ class AuthController {
             $username = $_POST['username'] ?? '';
             $nama = $_POST['nama'] ?? '';
             $role = $_POST['role'] ?? 'kasir';
-            $allowedRoles = ['admin', 'kasir', 'inspeksi'];
+            $allowedRoles = ['admin', 'manager', 'kasir', 'inspeksi'];
 
             if (!$username || !$nama) {
                 $error = 'Semua field harus diisi!';

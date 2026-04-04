@@ -1,10 +1,12 @@
 <?php ob_start(); ?>
 <?php
 $roleLabels = [
+    'manager' => 'Manager',
     'kasir' => 'Kasir',
     'inspeksi' => 'Inspeksi',
 ];
 $roleColors = [
+    'manager' => ['bg' => 'bg-indigo-50', 'text' => 'text-indigo-700', 'bar' => 'bg-indigo-500'],
     'kasir' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'bar' => 'bg-emerald-500'],
     'inspeksi' => ['bg' => 'bg-amber-50', 'text' => 'text-amber-700', 'bar' => 'bg-amber-500'],
 ];

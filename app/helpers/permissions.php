@@ -6,6 +6,36 @@ class PermissionGate {
     private const CONFIGURED_MARKER = '__configured__';
     private const MATRIX = [
         'admin' => ['*'],
+        'manager' => [
+            'dashboard.view',
+            'barang.view',
+            'barang.edit',
+            'barang.delete',
+            'barang.export',
+            'pembelian.view',
+            'pembelian.create',
+            'pembelian.edit',
+            'pembelian.delete',
+            'pembelian.export',
+            'penjualan.view',
+            'penjualan.create',
+            'penjualan.edit',
+            'penjualan.delete',
+            'penjualan.export',
+            'hutang.view',
+            'hutang.update',
+            'hutang.delete',
+            'laporan.penjualan.view',
+            'laporan.penjualan.export',
+            'laporan.pembelian.view',
+            'laporan.pembelian.export',
+            'laporan.keuntungan.view',
+            'laporan.keuntungan.export',
+            'laporan.stok.view',
+            'laporan.stok.export',
+            'setting.nota.view',
+            'setting.nota.edit'
+        ],
         'kasir' => [
             'dashboard.view',
             'barang.view',
@@ -44,7 +74,7 @@ class PermissionGate {
         ]
     ];
 
-    private const CONFIGURABLE_ROLES = ['kasir', 'inspeksi'];
+    private const CONFIGURABLE_ROLES = ['manager', 'kasir', 'inspeksi'];
     private static ?array $runtimeMatrixCache = null;
 
     private const ACTION_MAP = [

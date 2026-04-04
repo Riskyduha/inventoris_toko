@@ -19,14 +19,13 @@ class UserController {
 
         $users = $this->userModel->getAllUsers();
         
-        // Urutkan admin di atas
+        // Urutkan admin lalu manager di atas
         usort($users, function($a, $b) {
-            if ($a['role'] === 'admin' && $b['role'] !== 'admin') {
-                return -1;
-            } elseif ($a['role'] !== 'admin' && $b['role'] === 'admin') {
-                return 1;
-            }
-            return 0;
+            $weight = ['admin' => 3, 'manager' => 2, 'kasir' => 1, 'inspeksi' => 1];
+            $wa = $weight[$a['role']] ?? 0;
+            $wb = $weight[$b['role']] ?? 0;
+            if ($wa === $wb) return 0;
+            return $wa > $wb ? -1 : 1;
         });
         
         ob_start();
@@ -34,6 +33,7 @@ class UserController {
         <?php
         $totalUsers = count($users);
         $totalAdmin = count(array_filter($users, fn($u) => $u['role'] === 'admin'));
+        $totalManager = count(array_filter($users, fn($u) => $u['role'] === 'manager'));
         $totalKasir = count(array_filter($users, fn($u) => $u['role'] === 'kasir'));
         $totalInspeksi = count(array_filter($users, fn($u) => $u['role'] === 'inspeksi'));
         ?>
@@ -67,7 +67,7 @@ class UserController {
                 </div>
             <?php endif; ?>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
                 <div class="app-card p-4 border border-blue-200 bg-blue-50">
                     <p class="text-xs uppercase tracking-wide font-semibold text-blue-700">Total Pengguna</p>
                     <p class="text-2xl font-bold text-blue-800 mt-1"><?= $totalUsers ?></p>
@@ -75,6 +75,10 @@ class UserController {
                 <div class="app-card p-4 border border-red-200 bg-red-50">
                     <p class="text-xs uppercase tracking-wide font-semibold text-red-700">Admin</p>
                     <p class="text-2xl font-bold text-red-800 mt-1"><?= $totalAdmin ?></p>
+                </div>
+                <div class="app-card p-4 border border-indigo-200 bg-indigo-50">
+                    <p class="text-xs uppercase tracking-wide font-semibold text-indigo-700">Manager</p>
+                    <p class="text-2xl font-bold text-indigo-800 mt-1"><?= $totalManager ?></p>
                 </div>
                 <div class="app-card p-4 border border-emerald-200 bg-emerald-50">
                     <p class="text-xs uppercase tracking-wide font-semibold text-emerald-700">Kasir</p>
@@ -96,6 +100,7 @@ class UserController {
                         <select id="roleFilterUser" class="w-full md:w-52 px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                             <option value="all">Semua Role</option>
                             <option value="admin">Admin</option>
+                            <option value="manager">Manager</option>
                             <option value="kasir">Kasir</option>
                             <option value="inspeksi">Inspeksi</option>
                         </select>
@@ -150,8 +155,8 @@ class UserController {
                                         </td>
                                         <td class="px-4 py-3 text-slate-700"><?= htmlspecialchars($user['nama']) ?></td>
                                         <td class="px-4 py-3">
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold <?= $isAdmin ? 'bg-red-100 text-red-700' : ($user['role'] === 'kasir' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700') ?>">
-                                                <i class="fas <?= $isAdmin ? 'fa-crown' : ($user['role'] === 'kasir' ? 'fa-cash-register' : 'fa-clipboard-check') ?>"></i>
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold <?= $isAdmin ? 'bg-red-100 text-red-700' : ($user['role'] === 'manager' ? 'bg-indigo-100 text-indigo-700' : ($user['role'] === 'kasir' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')) ?>">
+                                                <i class="fas <?= $isAdmin ? 'fa-crown' : ($user['role'] === 'manager' ? 'fa-briefcase' : ($user['role'] === 'kasir' ? 'fa-cash-register' : 'fa-clipboard-check')) ?>"></i>
                                                 <?= ucfirst($user['role']) ?>
                                             </span>
                                         </td>
@@ -293,6 +298,7 @@ class UserController {
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                                 required>
                             <option value="">-- Pilih Role --</option>
+                            <option value="manager">Manager</option>
                             <option value="kasir">Kasir</option>
                             <option value="inspeksi">Inspeksi</option>
                             <option value="admin">Admin</option>
@@ -360,7 +366,7 @@ class UserController {
             exit;
         }
 
-        if (!in_array($role, ['admin', 'kasir', 'inspeksi'], true)) {
+        if (!in_array($role, ['admin', 'manager', 'kasir', 'inspeksi'], true)) {
             $_SESSION['error'] = 'Role tidak valid';
             header('Location: /user/create');
             exit;
@@ -434,6 +440,7 @@ class UserController {
                         <select id="role" name="role" 
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                                 required>
+                            <option value="manager" <?= $user['role'] === 'manager' ? 'selected' : '' ?>>Manager</option>
                             <option value="kasir" <?= $user['role'] === 'kasir' ? 'selected' : '' ?>>Kasir</option>
                             <option value="inspeksi" <?= $user['role'] === 'inspeksi' ? 'selected' : '' ?>>Inspeksi</option>
                             <option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
@@ -493,7 +500,7 @@ class UserController {
             exit;
         }
 
-        if (!in_array($role, ['admin', 'kasir', 'inspeksi'], true)) {
+        if (!in_array($role, ['admin', 'manager', 'kasir', 'inspeksi'], true)) {
             $_SESSION['error'] = 'Role tidak valid';
             header('Location: /user/edit/' . $id);
             exit;

@@ -1360,7 +1360,12 @@ class LaporanController {
         if ($role === 'kasir') {
             $role = 'user';
         }
-        $showHarga = ($role === 'admin');
+        $normalizedRole = class_exists('PermissionGate')
+            ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+            : $role;
+        $showHarga = class_exists('PermissionGate')
+            ? PermissionGate::allows($normalizedRole, 'laporan.keuntungan.view')
+            : ($role === 'admin' || $role === 'manager');
 
         header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
