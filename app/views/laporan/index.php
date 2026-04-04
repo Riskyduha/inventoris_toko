@@ -7,7 +7,15 @@ if ($currentRole === 'kasir') {
 $isKasirView = ($currentRole === 'user');
 $isInspeksi = ($currentRole === 'inspeksi');
 $selectedPeriode = (string)($quickPeriod ?? '1');
-$periodeLabel = $selectedPeriode === '7' ? '7 Hari Terakhir' : ($selectedPeriode === '30' ? '30 Hari Terakhir' : 'Hari Ini');
+$periodeLabels = [
+    '1' => 'Hari Ini',
+    '7' => '7 Hari Terakhir',
+    '30' => '30 Hari Terakhir',
+    '60' => '60 Hari Terakhir',
+    '90' => '90 Hari Terakhir',
+    '180' => '180 Hari Terakhir',
+];
+$periodeLabel = $periodeLabels[$selectedPeriode] ?? 'Hari Ini';
 $normalizedRole = class_exists('PermissionGate')
     ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
     : (strtolower(trim((string)($_SESSION['role'] ?? 'kasir'))) === 'user' ? 'kasir' : strtolower(trim((string)($_SESSION['role'] ?? 'kasir'))));
@@ -69,6 +77,9 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
             <a href="/laporan?periode=1&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '1' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">Hari Ini</a>
             <a href="/laporan?periode=7&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '7' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">7 Hari</a>
             <a href="/laporan?periode=30&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '30' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">30 Hari</a>
+            <a href="/laporan?periode=60&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '60' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">60 Hari</a>
+            <a href="/laporan?periode=90&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '90' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">90 Hari</a>
+            <a href="/laporan?periode=180&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '180' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">180 Hari</a>
             <span class="ml-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
                 Update terakhir: <?= htmlspecialchars($dashboard_last_updated ?? '-') ?> (<?= htmlspecialchars(date_default_timezone_get()) ?>)
             </span>

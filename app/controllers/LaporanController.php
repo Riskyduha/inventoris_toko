@@ -12,7 +12,7 @@ class LaporanController {
 
     public function index() {
         $quickPeriod = isset($_GET['periode']) ? trim((string)$_GET['periode']) : '1';
-        $allowedPeriods = ['1', '7', '30'];
+        $allowedPeriods = ['1', '7', '30', '60', '90', '180'];
         if (!in_array($quickPeriod, $allowedPeriods, true)) {
             $quickPeriod = '1';
         }
