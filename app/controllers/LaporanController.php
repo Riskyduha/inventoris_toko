@@ -38,7 +38,7 @@ class LaporanController {
         $start = $_GET['start'] ?? date('Y-m-01');
         $end = $_GET['end'] ?? date('Y-m-t');
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $items_per_page = 25;
+        $items_per_page = 50;
         $offset = ($page - 1) * $items_per_page;
 
         $all_pembelian = $this->model->getLaporanPembelian($start, $end);
@@ -58,7 +58,7 @@ class LaporanController {
         $start = $_GET['start'] ?? date('Y-m-01');
         $end = $_GET['end'] ?? date('Y-m-t');
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $items_per_page = 25;
+        $items_per_page = 50;
         $offset = ($page - 1) * $items_per_page;
 
         $all_penjualan = $this->model->getLaporanPenjualan($start, $end);
@@ -342,7 +342,7 @@ class LaporanController {
         $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
         $start = isset($_GET['start']) ? trim((string)$_GET['start']) : '';
         $end = isset($_GET['end']) ? trim((string)$_GET['end']) : '';
-        $items_per_page = 25;
+        $items_per_page = 50;
         $offset = ($page - 1) * $items_per_page;
 
         if ($start !== '' && $end !== '') {
@@ -377,7 +377,7 @@ class LaporanController {
         $start = $_GET['start'] ?? date('Y-m-01');
         $end = $_GET['end'] ?? date('Y-m-t');
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $items_per_page = 10;
+        $items_per_page = 50;
         $offset = ($page - 1) * $items_per_page;
 
         $all_keuntungan = $this->model->getLaporanKeuntungan($start, $end);

@@ -119,7 +119,7 @@
                 <?php else: ?>
                     <?php foreach ($penjualan as $index => $item): ?>
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3"><?= (($current_page - 1) * 10) + $index + 1 ?></td>
+                            <td class="px-4 py-3"><?= (($current_page - 1) * ($items_per_page ?? 50)) + $index + 1 ?></td>
                             <td class="px-4 py-3 font-medium text-blue-600"><?= htmlspecialchars($item['username'] ?? '-') ?></td>
                             <td class="px-4 py-3 font-mono text-sm text-gray-700"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
                             <td class="px-4 py-3 font-medium"><?= htmlspecialchars($item['nama_barang']) ?></td>
