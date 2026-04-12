@@ -115,6 +115,16 @@ CREATE TABLE IF NOT EXISTS konfigurasi_nota (
     telepon_toko VARCHAR(20),
     header_nota TEXT,
     footer_nota TEXT,
+    margin_nota_atas NUMERIC(5,2) DEFAULT 1.50,
+    margin_nota_kanan NUMERIC(5,2) DEFAULT 1.50,
+    margin_nota_bawah NUMERIC(5,2) DEFAULT 1.50,
+    margin_nota_kiri NUMERIC(5,2) DEFAULT 1.50,
+    font_size_nota_body SMALLINT DEFAULT 10,
+    font_size_nota_judul SMALLINT DEFAULT 14,
+    font_size_nota_info SMALLINT DEFAULT 10,
+    font_size_nota_tabel SMALLINT DEFAULT 10,
+    font_size_nota_ringkasan SMALLINT DEFAULT 10,
+    font_size_nota_footer SMALLINT DEFAULT 9,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

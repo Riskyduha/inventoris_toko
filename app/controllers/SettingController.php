@@ -130,6 +130,20 @@ class SettingController {
     public function nota() {
         $config = $this->konfigurasiNota->getConfig();
 
+        $toFloat = function ($value, $default) {
+            if ($value === null || $value === '') {
+                return (float)$default;
+            }
+            return (float)$value;
+        };
+
+        $toInt = function ($value, $default) {
+            if ($value === null || $value === '') {
+                return (int)$default;
+            }
+            return (int)$value;
+        };
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
                 'nama_toko' => $_POST['nama_toko'] ?? 'UD. BERSAUDARA',
@@ -139,6 +153,16 @@ class SettingController {
                 'footer_nota' => $_POST['footer_nota'] ?? '',
                 'lebar_kertas' => (int)($_POST['lebar_kertas'] ?? 80),
                 'font_nota' => $_POST['font_nota'] ?? 'Arial',
+                'margin_nota_atas' => $toFloat($_POST['margin_nota_atas'] ?? null, 1.5),
+                'margin_nota_kanan' => $toFloat($_POST['margin_nota_kanan'] ?? null, 1.5),
+                'margin_nota_bawah' => $toFloat($_POST['margin_nota_bawah'] ?? null, 1.5),
+                'margin_nota_kiri' => $toFloat($_POST['margin_nota_kiri'] ?? null, 1.5),
+                'font_size_nota_body' => $toInt($_POST['font_size_nota_body'] ?? null, 10),
+                'font_size_nota_judul' => $toInt($_POST['font_size_nota_judul'] ?? null, 14),
+                'font_size_nota_info' => $toInt($_POST['font_size_nota_info'] ?? null, 10),
+                'font_size_nota_tabel' => $toInt($_POST['font_size_nota_tabel'] ?? null, 10),
+                'font_size_nota_ringkasan' => $toInt($_POST['font_size_nota_ringkasan'] ?? null, 10),
+                'font_size_nota_footer' => $toInt($_POST['font_size_nota_footer'] ?? null, 9),
                 'tampilkan_jam' => isset($_POST['tampilkan_jam']) ? 1 : 0,
                 'tampilkan_kode_barang' => isset($_POST['tampilkan_kode_barang']) ? 1 : 0,
                 'tampilkan_satuan' => isset($_POST['tampilkan_satuan']) ? 1 : 0,

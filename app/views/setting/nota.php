@@ -1,5 +1,18 @@
 <?php ob_start(); ?>
 
+<?php
+$notaMarginTop = (float)($config['margin_nota_atas'] ?? 1.5);
+$notaMarginRight = (float)($config['margin_nota_kanan'] ?? 1.5);
+$notaMarginBottom = (float)($config['margin_nota_bawah'] ?? 1.5);
+$notaMarginLeft = (float)($config['margin_nota_kiri'] ?? 1.5);
+$notaFontBody = (int)($config['font_size_nota_body'] ?? 10);
+$notaFontTitle = (int)($config['font_size_nota_judul'] ?? 14);
+$notaFontInfo = (int)($config['font_size_nota_info'] ?? 10);
+$notaFontTable = (int)($config['font_size_nota_tabel'] ?? 10);
+$notaFontSummary = (int)($config['font_size_nota_ringkasan'] ?? 10);
+$notaFontFooter = (int)($config['font_size_nota_footer'] ?? 9);
+?>
+
 <div class="space-y-6 app-reveal">
     <div class="app-card p-5 sm:p-6">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -67,7 +80,7 @@
                     <i class="fas fa-sliders-h text-amber-600"></i>Format Nota
                 </h3>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label for="lebar_kertas" class="block text-sm font-semibold text-slate-700 mb-2">Lebar Kertas <span class="text-red-600">*</span></label>
                         <select id="lebar_kertas" name="lebar_kertas" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
@@ -93,6 +106,57 @@
                             <option value="Verdana" <?= ($config['font_nota'] ?? 'Arial') == 'Verdana' ? 'selected' : '' ?>>Verdana</option>
                             <option value="Tahoma" <?= ($config['font_nota'] ?? 'Arial') == 'Tahoma' ? 'selected' : '' ?>>Tahoma</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <label for="margin_nota_atas" class="block text-sm font-semibold text-slate-700 mb-2">Margin Atas (mm)</label>
+                        <input type="number" id="margin_nota_atas" name="margin_nota_atas" min="0" step="0.1" value="<?= htmlspecialchars((string)$notaMarginTop) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="margin_nota_kanan" class="block text-sm font-semibold text-slate-700 mb-2">Margin Kanan (mm)</label>
+                        <input type="number" id="margin_nota_kanan" name="margin_nota_kanan" min="0" step="0.1" value="<?= htmlspecialchars((string)$notaMarginRight) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="margin_nota_bawah" class="block text-sm font-semibold text-slate-700 mb-2">Margin Bawah (mm)</label>
+                        <input type="number" id="margin_nota_bawah" name="margin_nota_bawah" min="0" step="0.1" value="<?= htmlspecialchars((string)$notaMarginBottom) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label for="margin_nota_kiri" class="block text-sm font-semibold text-slate-700 mb-2">Margin Kiri (mm)</label>
+                        <input type="number" id="margin_nota_kiri" name="margin_nota_kiri" min="0" step="0.1" value="<?= htmlspecialchars((string)$notaMarginLeft) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700">
+                        <i class="fas fa-font text-slate-500"></i>Ukuran Tulisan
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="font_size_nota_body" class="block text-xs font-semibold text-slate-600 mb-2">Isi Nota</label>
+                            <input type="number" id="font_size_nota_body" name="font_size_nota_body" min="6" step="1" value="<?= htmlspecialchars((string)$notaFontBody) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label for="font_size_nota_judul" class="block text-xs font-semibold text-slate-600 mb-2">Judul Toko</label>
+                            <input type="number" id="font_size_nota_judul" name="font_size_nota_judul" min="6" step="1" value="<?= htmlspecialchars((string)$notaFontTitle) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label for="font_size_nota_info" class="block text-xs font-semibold text-slate-600 mb-2">Info Tanggal</label>
+                            <input type="number" id="font_size_nota_info" name="font_size_nota_info" min="6" step="1" value="<?= htmlspecialchars((string)$notaFontInfo) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label for="font_size_nota_tabel" class="block text-xs font-semibold text-slate-600 mb-2">Tabel Item</label>
+                            <input type="number" id="font_size_nota_tabel" name="font_size_nota_tabel" min="6" step="1" value="<?= htmlspecialchars((string)$notaFontTable) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label for="font_size_nota_ringkasan" class="block text-xs font-semibold text-slate-600 mb-2">Ringkasan</label>
+                            <input type="number" id="font_size_nota_ringkasan" name="font_size_nota_ringkasan" min="6" step="1" value="<?= htmlspecialchars((string)$notaFontSummary) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label for="font_size_nota_footer" class="block text-xs font-semibold text-slate-600 mb-2">Footer</label>
+                            <input type="number" id="font_size_nota_footer" name="font_size_nota_footer" min="6" step="1" value="<?= htmlspecialchars((string)$notaFontFooter) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        </div>
                     </div>
                 </div>
             </section>
@@ -168,22 +232,22 @@
                 </div>
 
                 <div class="bg-slate-100 border border-slate-200 rounded-xl p-3">
-                    <div id="notaPreview" style="font-family:<?= htmlspecialchars($config['font_nota'] ?? 'Arial') ?>, monospace; width:<?= (int)($config['lebar_kertas'] ?? 80) ?>mm; max-width:100%; background:#fff; border:1px dashed #334155; padding:4mm; margin:0 auto; font-size:9px; line-height:1.35; color:#0f172a;">
+                    <div id="notaPreview" style="font-family:<?= htmlspecialchars($config['font_nota'] ?? 'Arial') ?>, monospace; width:<?= (int)($config['lebar_kertas'] ?? 80) ?>mm; max-width:100%; background:#fff; border:1px dashed #334155; padding:<?= $notaMarginTop ?>mm <?= $notaMarginRight ?>mm <?= $notaMarginBottom ?>mm <?= $notaMarginLeft ?>mm; margin:0 auto; font-size:<?= $notaFontBody ?>px; line-height:1.35; color:#0f172a; box-sizing:border-box;">
                         <div style="text-align:center; border-bottom:1px solid #0f172a; padding-bottom:2mm; margin-bottom:2mm;">
-                            <div id="prevNamaToko" style="font-size:11px; font-weight:700;"><?= htmlspecialchars($config['nama_toko'] ?? 'UD. BERSAUDARA') ?></div>
-                            <div id="prevAlamat" style="font-size:8px; color:#475569; margin-top:1mm;"><?= nl2br(htmlspecialchars($config['alamat_toko'] ?? 'Alamat toko')) ?></div>
-                            <div id="prevTelp" style="font-size:8px; color:#475569;"><?= htmlspecialchars($config['nomor_telepon'] ?? '08xxxxxxxxxx') ?></div>
-                            <div id="prevEmail" style="font-size:8px; color:#475569;"><?= htmlspecialchars($config['email_toko'] ?? 'email@toko.com') ?></div>
+                            <div id="prevNamaToko" style="font-size:<?= $notaFontTitle ?>px; font-weight:700;"><?= htmlspecialchars($config['nama_toko'] ?? 'UD. BERSAUDARA') ?></div>
+                            <div id="prevAlamat" style="font-size:<?= max(6, $notaFontInfo - 2) ?>px; color:#475569; margin-top:1mm;"><?= nl2br(htmlspecialchars($config['alamat_toko'] ?? 'Alamat toko')) ?></div>
+                            <div id="prevTelp" style="font-size:<?= max(6, $notaFontInfo - 2) ?>px; color:#475569;"><?= htmlspecialchars($config['nomor_telepon'] ?? '08xxxxxxxxxx') ?></div>
+                            <div id="prevEmail" style="font-size:<?= max(6, $notaFontInfo - 2) ?>px; color:#475569;"><?= htmlspecialchars($config['email_toko'] ?? 'email@toko.com') ?></div>
                         </div>
 
-                        <div id="prevHeader" style="text-align:center; font-size:8px; margin-bottom:2mm; color:#334155;"><?= nl2br(htmlspecialchars($config['custom_header_text'] ?? 'Terima kasih sudah berbelanja')) ?></div>
+                        <div id="prevHeader" style="text-align:center; font-size:<?= $notaFontInfo ?>px; margin-bottom:2mm; color:#334155;"><?= nl2br(htmlspecialchars($config['custom_header_text'] ?? 'Terima kasih sudah berbelanja')) ?></div>
 
-                        <div style="display:flex; justify-content:space-between; font-size:8px; border-bottom:1px solid #cbd5e1; padding-bottom:1mm; margin-bottom:1.5mm;">
+                        <div style="display:flex; justify-content:space-between; font-size:<?= $notaFontInfo ?>px; border-bottom:1px solid #cbd5e1; padding-bottom:1mm; margin-bottom:1.5mm;">
                             <span>27/01/2026 <span id="prevJam" style="display:<?= ($config['tampilkan_jam'] ?? 1) ? 'inline' : 'none' ?>;">14:30</span></span>
                             <span>No: INV-001</span>
                         </div>
 
-                        <table style="width:100%; border-collapse:collapse; font-size:8px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:<?= $notaFontTable ?>px;">
                             <thead>
                                 <tr style="border-bottom:1px solid #0f172a;">
                                     <th style="text-align:left; padding:1px 0;">Item</th>
@@ -200,8 +264,8 @@
                             </tbody>
                         </table>
 
-                        <div style="margin-top:2mm; border-top:1px solid #0f172a; padding-top:1.5mm; text-align:right; font-weight:700;">Total: 20.000</div>
-                        <div id="prevFooter" style="margin-top:2.5mm; border-top:1px solid #cbd5e1; padding-top:1.5mm; text-align:center; font-size:8px; color:#475569;"><?= nl2br(htmlspecialchars($config['footer_nota'] ?? 'Terima kasih atas pembelian Anda')) ?></div>
+                        <div style="margin-top:2mm; border-top:1px solid #0f172a; padding-top:1.5mm; text-align:right; font-weight:700; font-size:<?= $notaFontSummary ?>px;">Total: 20.000</div>
+                        <div id="prevFooter" style="margin-top:2.5mm; border-top:1px solid #cbd5e1; padding-top:1.5mm; text-align:center; font-size:<?= $notaFontFooter ?>px; color:#475569;"><?= nl2br(htmlspecialchars($config['footer_nota'] ?? 'Terima kasih atas pembelian Anda')) ?></div>
                     </div>
                 </div>
 
@@ -222,7 +286,17 @@
         footer_nota: document.getElementById('footer_nota'),
         font_nota: document.getElementById('font_nota'),
         lebar_kertas: document.getElementById('lebar_kertas'),
-        tampilkan_jam: document.getElementById('tampilkan_jam')
+        tampilkan_jam: document.getElementById('tampilkan_jam'),
+        margin_nota_atas: document.getElementById('margin_nota_atas'),
+        margin_nota_kanan: document.getElementById('margin_nota_kanan'),
+        margin_nota_bawah: document.getElementById('margin_nota_bawah'),
+        margin_nota_kiri: document.getElementById('margin_nota_kiri'),
+        font_size_nota_body: document.getElementById('font_size_nota_body'),
+        font_size_nota_judul: document.getElementById('font_size_nota_judul'),
+        font_size_nota_info: document.getElementById('font_size_nota_info'),
+        font_size_nota_tabel: document.getElementById('font_size_nota_tabel'),
+        font_size_nota_ringkasan: document.getElementById('font_size_nota_ringkasan'),
+        font_size_nota_footer: document.getElementById('font_size_nota_footer')
     };
 
     const preview = {
@@ -259,11 +333,43 @@
         setOrDefault(preview.footer, fields.footer_nota?.value, 'Terima kasih atas pembelian Anda');
 
         const selectedFont = fields.font_nota?.value || 'Arial';
+        const marginTop = parseFloat(fields.margin_nota_atas?.value || '1.5') || 1.5;
+        const marginRight = parseFloat(fields.margin_nota_kanan?.value || '1.5') || 1.5;
+        const marginBottom = parseFloat(fields.margin_nota_bawah?.value || '1.5') || 1.5;
+        const marginLeft = parseFloat(fields.margin_nota_kiri?.value || '1.5') || 1.5;
+        const bodySize = parseInt(fields.font_size_nota_body?.value || '10', 10) || 10;
+        const titleSize = parseInt(fields.font_size_nota_judul?.value || '14', 10) || 14;
+        const infoSize = parseInt(fields.font_size_nota_info?.value || '10', 10) || 10;
+        const tableSize = parseInt(fields.font_size_nota_tabel?.value || '10', 10) || 10;
+        const summarySize = parseInt(fields.font_size_nota_ringkasan?.value || '10', 10) || 10;
+        const footerSize = parseInt(fields.font_size_nota_footer?.value || '9', 10) || 9;
         if (preview.root) {
             preview.root.style.fontFamily = `${selectedFont}, monospace`;
             const width = parseInt(fields.lebar_kertas?.value || '80', 10);
             preview.root.style.width = `${width}mm`;
+            preview.root.style.boxSizing = 'border-box';
+            preview.root.style.padding = `${marginTop}mm ${marginRight}mm ${marginBottom}mm ${marginLeft}mm`;
+            preview.root.style.fontSize = `${bodySize}px`;
+            preview.root.style.lineHeight = '1.35';
             if (preview.paperLabel) preview.paperLabel.textContent = `${width} mm`;
+
+            const headerName = preview.root.querySelector('#prevNamaToko');
+            const headerAlamat = preview.root.querySelector('#prevAlamat');
+            const headerTelp = preview.root.querySelector('#prevTelp');
+            const headerEmail = preview.root.querySelector('#prevEmail');
+            const headerBar = preview.root.querySelector('#prevHeader');
+            const table = preview.root.querySelector('table');
+            const infoBar = preview.root.querySelector('div[style*="border-bottom:1px solid #cbd5e1"]');
+            const totalBar = preview.root.querySelector('div[style*="border-top:1px solid #0f172a"]');
+            if (headerName) headerName.style.fontSize = `${titleSize}px`;
+            if (headerAlamat) headerAlamat.style.fontSize = `${Math.max(6, infoSize - 2)}px`;
+            if (headerTelp) headerTelp.style.fontSize = `${Math.max(6, infoSize - 2)}px`;
+            if (headerEmail) headerEmail.style.fontSize = `${Math.max(6, infoSize - 2)}px`;
+            if (headerBar) headerBar.style.fontSize = `${infoSize}px`;
+            if (infoBar) infoBar.style.fontSize = `${infoSize}px`;
+            if (table) table.style.fontSize = `${tableSize}px`;
+            if (totalBar) totalBar.style.fontSize = `${summarySize}px`;
+            if (preview.footer) preview.footer.style.fontSize = `${footerSize}px`;
         }
 
         if (preview.jam) {

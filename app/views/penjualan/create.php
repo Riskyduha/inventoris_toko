@@ -669,11 +669,22 @@ function printNota() {
     const cfg = notaConfig || {};
     const width = parseInt(cfg.lebar_kertas || 80, 10);
     const fontNota = cfg.font_nota || 'Arial';
+    const marginTop = Math.max(0, parseFloat(cfg.margin_nota_atas ?? 1.5) || 1.5);
+    const marginRight = Math.max(0, parseFloat(cfg.margin_nota_kanan ?? 1.5) || 1.5);
+    const marginBottom = Math.max(0, parseFloat(cfg.margin_nota_bawah ?? 1.5) || 1.5);
+    const marginLeft = Math.max(0, parseFloat(cfg.margin_nota_kiri ?? 1.5) || 1.5);
+    const bodySize = Math.max(6, parseInt(cfg.font_size_nota_body ?? 10, 10) || 10);
+    const titleSize = Math.max(6, parseInt(cfg.font_size_nota_judul ?? 14, 10) || 14);
+    const infoSize = Math.max(6, parseInt(cfg.font_size_nota_info ?? 10, 10) || 10);
+    const tableSize = Math.max(6, parseInt(cfg.font_size_nota_tabel ?? 10, 10) || 10);
+    const summarySize = Math.max(6, parseInt(cfg.font_size_nota_ringkasan ?? 10, 10) || 10);
+    const footerSize = Math.max(6, parseInt(cfg.font_size_nota_footer ?? 9, 10) || 9);
     const escapeMap = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
     const escapeHtml = (text) => text ? String(text).replace(/[&<>"']/g, (c) => escapeMap[c] || c) : '';
     const formatRupiah = (value) => 'Rp ' + Math.floor(value).toLocaleString('id-ID');
 
-    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Nota</title><style>@page{margin:1mm}body{font-family:"' + fontNota + '", monospace;width:' + width + 'mm;margin:0 auto;padding:2mm;font-size:13px}.header{text-align:center;margin-bottom:6mm}.header h2{margin:0;font-size:18px}.header p{margin:2px 0;font-size:12px;color:#444}.header .muted{color:#777;font-size:11px}.header .custom{margin-top:4px;color:#333;font-size:11px;line-height:1.3}hr{margin:4px 0;border:none;border-top:1px solid #000}.info{font-size:13px;margin-bottom:5mm;line-height:1.5}table{width:100%;font-size:13px;border-collapse:collapse;margin-bottom:6mm}table thead tr{border-bottom:1px solid #000}table th{text-align:left;padding:3px 0;font-weight:bold}table td{padding:3px 0}table th:nth-child(2),table td:nth-child(2),table th:nth-child(3),table td:nth-child(3),table th:nth-child(4),table td:nth-child(4){text-align:right}table tbody tr{border-bottom:1px dotted #ccc}table .muted{color:#555;font-size:11px}.summary{font-size:13px;margin-bottom:5mm;line-height:1.5}.summary-row{display:flex;justify-content:space-between}.total-row{border-top:1px solid #000;padding-top:3px;font-weight:bold}.footer{text-align:center;font-size:12px;color:#444;margin-top:6mm;line-height:1.4}@media print{body{margin:0 auto;padding:2mm}}</style></head><body>';
+    const pageMargin = marginTop + 'mm ' + marginRight + 'mm ' + marginBottom + 'mm ' + marginLeft + 'mm';
+    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Nota</title><style>@page{margin:' + pageMargin + '}body{font-family:"' + fontNota + '", monospace;width:' + width + 'mm;box-sizing:border-box;margin:0 auto;padding:' + pageMargin + ';font-size:' + bodySize + 'px;line-height:1.35}.header{text-align:center;margin-bottom:4mm}.header h2{margin:0;font-size:' + titleSize + 'px;line-height:1.15}.header p{margin:1px 0;font-size:' + infoSize + 'px;color:#444}.header .muted{color:#777;font-size:' + Math.max(6, infoSize - 2) + 'px}.header .custom{margin-top:3px;color:#333;font-size:' + infoSize + 'px;line-height:1.25}hr{margin:3px 0;border:none;border-top:1px solid #000}.info{font-size:' + infoSize + 'px;margin-bottom:3.5mm;line-height:1.35}table{width:100%;font-size:' + tableSize + 'px;border-collapse:collapse;margin-bottom:4mm}table thead tr{border-bottom:1px solid #000}table th{text-align:left;padding:2px 0;font-weight:bold;line-height:1.2}table td{padding:2px 0;line-height:1.2}table th:nth-child(2),table td:nth-child(2),table th:nth-child(3),table td:nth-child(3),table th:nth-child(4),table td:nth-child(4){text-align:right}table tbody tr{border-bottom:1px dotted #ccc}table .muted{color:#555;font-size:' + Math.max(6, tableSize - 2) + 'px;line-height:1.15}.summary{font-size:' + summarySize + 'px;margin-bottom:3.5mm;line-height:1.35}.summary-row{display:flex;justify-content:space-between;gap:6px}.total-row{border-top:1px solid #000;padding-top:2px;font-weight:bold}.footer{text-align:center;font-size:' + footerSize + 'px;color:#444;margin-top:4mm;line-height:1.3}@media print{body{margin:0 auto;padding:' + pageMargin + ';}}</style></head><body>';
     html += '<div class="header"><h2>' + escapeHtml(cfg.nama_toko || 'UD. BERSAUDARA') + '</h2>';
     const alamat = escapeHtml(cfg.alamat_toko || '');
     const telp = escapeHtml(cfg.nomor_telepon || '');
