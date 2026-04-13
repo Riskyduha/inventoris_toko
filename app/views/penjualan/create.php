@@ -1,4 +1,11 @@
 <?php ob_start(); ?>
+<?php
+$normalizedRole = class_exists('PermissionGate')
+    ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+    : strtolower(trim((string)($_SESSION['role'] ?? 'kasir')));
+$isKasir = $normalizedRole === 'kasir';
+$backUrl = $isKasir ? '/penjualan/create' : '/penjualan';
+?>
 
 <div class="app-card p-5 sm:p-6 app-reveal">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -28,37 +35,6 @@
             <p class="text-xs text-slate-500 mt-1">Atur manual tanggal transaksi agar sesuai pencatatan.</p>
         </div>
 
-        <!-- Panel Cari & Pilihan Barang -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- Panel Daftar Barang Tersedia -->
-            <div class="lg:col-span-2 rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/60 to-white p-4 min-h-[34rem] flex flex-col">
-                <div class="mb-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-bold text-slate-700">Daftar Barang Tersedia</h3>
-                        <span id="barang_count_info" class="text-xs px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600">0 barang</span>
-                    </div>
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="search_barang_main" placeholder="Cari nama/kode barang..." autocomplete="off"
-                               class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 mb-3">
-                    </div>
-                </div>
-                <div id="barang_list" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto flex-1">
-                    <!-- Barang cards akan di-generate oleh JavaScript -->
-                </div>
-            </div>
-
-            <!-- Panel Barang Dipilih -->
-            <div class="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 min-h-[34rem] flex flex-col">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-bold text-slate-700">Barang Dipilih</h3>
-                    <span id="selected_count" class="text-xs bg-blue-600 text-white px-2.5 py-1 rounded-full font-semibold">0 item</span>
-                </div>
-                <div id="selected_container" class="space-y-2 max-h-[17rem] overflow-y-auto flex-1"></div>
-                <p id="no_items_msg" class="text-slate-500 text-center py-5 text-sm border border-dashed border-slate-300 rounded-xl bg-white/70">Pilih barang dari daftar</p>
-            </div>
-        </div>
-
         <!-- Ringkasan Transaksi -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
             <div class="rounded-xl border border-cyan-200 bg-cyan-50 p-4 text-center">
@@ -75,19 +51,52 @@
             </div>
         </div>
 
-        <!-- Uang & Kembalian -->
-        <div id="payment_section" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-                <label id="uang_diberikan_label" for="uang_diberikan" class="block text-slate-700 font-semibold mb-2">Uang Diberikan Konsumen *</label>
-                <input type="text" id="uang_diberikan" name="uang_diberikan" inputmode="numeric" autocomplete="off" value="0"
-                       class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-                       oninput="handleUangDiberikanInput()">
-                <p id="uang_diberikan_hint" class="text-xs text-slate-500 mt-1">Masukkan nominal yang dibayar sekarang.</p>
+        <!-- Panel Cari & Pilihan Barang -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+            <!-- Panel Daftar Barang Tersedia -->
+            <div class="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-5 min-h-[34rem] flex flex-col shadow-sm">
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-bold text-slate-700">Daftar Barang Tersedia</h3>
+                        <span id="barang_count_info" class="text-xs px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600">0 barang</span>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="search_barang_main" placeholder="Cari nama/kode barang..." autocomplete="off"
+                               class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 mb-3">
+                    </div>
+                </div>
+                <div id="barang_list" class="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto flex-1 pr-1">
+                    <!-- Barang cards akan di-generate oleh JavaScript -->
+                </div>
             </div>
-            <div>
-                <label class="block text-slate-700 font-semibold mb-2">Kembalian</label>
-                <div class="px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-lg font-bold" id="kembalian_display">
-                    Rp 0
+
+            <!-- Panel Barang Dipilih -->
+            <div class="lg:col-span-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-5 min-h-[34rem] flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-bold text-slate-700">Barang Dipilih</h3>
+                    <span id="selected_count" class="text-xs bg-blue-600 text-white px-2.5 py-1 rounded-full font-semibold">0 item</span>
+                </div>
+                <div id="selected_container" class="space-y-4 max-h-[24rem] overflow-y-auto flex-1 pr-1"></div>
+                <p id="no_items_msg" class="text-slate-500 text-center py-5 text-sm border border-dashed border-slate-300 rounded-xl bg-white/70">Pilih barang dari daftar</p>
+            </div>
+        </div>
+
+        <!-- Uang & Kembalian (Sticky Footer Form) -->
+        <div class="sticky bottom-3 z-30 mb-6">
+            <div id="payment_section" class="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur px-4 py-4 shadow-lg">
+                <div>
+                    <label id="uang_diberikan_label" for="uang_diberikan" class="block text-slate-700 font-semibold mb-2">Uang Diberikan Konsumen *</label>
+                    <input type="text" id="uang_diberikan" name="uang_diberikan" inputmode="numeric" autocomplete="off" value="0"
+                           class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                           oninput="handleUangDiberikanInput()">
+                    <p id="uang_diberikan_hint" class="text-xs text-slate-500 mt-1">Masukkan nominal yang dibayar sekarang.</p>
+                </div>
+                <div>
+                    <label class="block text-slate-700 font-semibold mb-2">Kembalian</label>
+                    <div class="px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-lg font-bold" id="kembalian_display">
+                        Rp 0
+                    </div>
                 </div>
             </div>
         </div>
@@ -161,7 +170,7 @@
             Print Nota
         </button>
 
-        <a href="/penjualan" class="w-full sm:w-auto app-btn-secondary px-6 py-3 transition flex items-center justify-center gap-2 font-semibold">
+        <a href="<?= htmlspecialchars($backUrl, ENT_QUOTES, 'UTF-8') ?>" class="w-full sm:w-auto app-btn-secondary px-6 py-3 transition flex items-center justify-center gap-2 font-semibold">
             <i class="fas fa-arrow-left"></i>
             Kembali
         </a>
@@ -297,16 +306,18 @@ function renderBarangList(filterText = '') {
                 ? 'bg-amber-100 text-amber-700'
                 : 'bg-emerald-100 text-emerald-700';
 
-        html += '<div class="border border-slate-200 rounded-xl p-3 bg-white hover:border-teal-300 hover:shadow-md transition">';
-        html += '<div class="flex items-start justify-between gap-2 mb-2">';
-        html += '<div><p class="font-semibold text-slate-800 leading-tight">' + escapeHtml(item.nama_barang) + '</p>';
-        html += '<p class="text-xs text-slate-500 mt-1">' + escapeHtml(item.nama_kategori || '-') + '</p></div>';
-        html += '<span class="text-[11px] bg-teal-100 text-teal-700 px-2 py-1 rounded font-mono">' + escapeHtml(item.kode_barang) + '</span></div>';
-        html += '<div class="flex items-center justify-between text-xs text-slate-600 mb-2"><span>Harga Jual</span><span class="font-semibold text-emerald-700">' + formatRupiah(item.harga_jual) + '</span></div>';
-        html += '<div class="flex items-center justify-between text-xs mb-3"><span class="text-slate-500">Stok tersedia</span><span class="' + stockBadgeClass + ' px-2 py-1 rounded-full font-semibold">' + stock + ' ' + escapeHtml(item.satuan || '') + '</span></div>';
-        html += '<div class="grid grid-cols-2 gap-2 mt-1">';
-        html += '<button type="button" class="w-full rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-1.5 transition disabled:opacity-50 disabled:cursor-not-allowed" onclick="addItemFromBarang(' + itemStr + ')" ' + (stock <= 0 ? 'disabled' : '') + '>' + (stock <= 0 ? 'Stok Habis' : '+ Pilih Barang') + '</button>';
-        html += '<button type="button" class="w-full rounded-lg border border-cyan-300 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 text-xs font-semibold py-1.5 transition" onclick="openTambahStokModal(' + itemStr + ')">+ Tambah Stok</button>';
+        html += '<div class="h-full flex flex-col rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm hover:shadow-md hover:border-teal-300 transition">';
+        html += '<div class="flex items-start justify-between gap-3 mb-2.5">';
+        html += '<div class="min-w-0"><p class="font-semibold text-sm text-slate-800 leading-snug min-h-[2.5rem]">' + escapeHtml(item.nama_barang) + '</p>';
+        html += '<p class="text-xs text-slate-500 mt-0.5">' + escapeHtml(item.nama_kategori || '-') + '</p></div>';
+        html += '<span class="shrink-0 text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">' + escapeHtml(item.kode_barang) + '</span></div>';
+        html += '<div class="rounded-lg bg-slate-50 border border-slate-200 p-2.5 space-y-2 mb-3">';
+        html += '<div class="flex items-center justify-between text-xs text-slate-600"><span>Harga Jual</span><span class="font-semibold text-emerald-700">' + formatRupiah(item.harga_jual) + '</span></div>';
+        html += '<div class="grid grid-cols-2 gap-2">';
+        html += '<button type="button" class="w-full rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-2 transition disabled:opacity-50 disabled:cursor-not-allowed" onclick="addItemFromBarang(' + itemStr + ')" ' + (stock <= 0 ? 'disabled' : '') + '>' + (stock <= 0 ? 'Stok Habis' : 'Pilih Barang') + '</button>';
+        html += '<button type="button" class="w-full rounded-lg border border-cyan-300 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 text-xs font-semibold py-2 transition" onclick="openTambahStokModal(' + itemStr + ')">Tambah Stok</button>';
+        html += '</div>';
+        html += '<div class="flex items-center justify-between text-xs"><span class="text-slate-500">Stok Tersedia</span><span class="' + stockBadgeClass + ' px-2 py-0.5 rounded-full font-semibold">' + stock + ' ' + escapeHtml(item.satuan || '') + '</span></div>';
         html += '</div></div>';
     }
     listDiv.innerHTML = html;
@@ -324,35 +335,36 @@ function addItemFromBarang(barang) {
         const qtyInput = existing.querySelector('input[name*="[jumlah]"]');
         qtyInput.value = (parseInt(qtyInput.value, 10) || 0) + 1;
         checkStokAndHitung(existing.getAttribute('data-item-index'));
+        container.prepend(existing);
         showToast('Jumlah item ditambah');
         return;
     }
 
-    let itemHtml = '<div class="border border-blue-200 bg-white rounded-xl p-3 transition hover:shadow-sm" data-item-index="' + itemIndex + '" data-stok="' + barang.stok + '">';
-    itemHtml += '<div class="flex items-start justify-between gap-2 mb-2"><div>';
-    itemHtml += '<p class="font-semibold text-slate-800 text-sm">' + escapeHtml(barang.nama_barang) + '</p>';
-    itemHtml += '<p class="text-[11px] text-slate-500">' + escapeHtml(barang.kode_barang) + ' • ' + escapeHtml(barang.satuan) + '</p></div>';
-    itemHtml += '<button type="button" class="text-xs text-red-600 hover:text-red-700 font-semibold" onclick="removeItem(' + itemIndex + ')"><i class="fas fa-trash mr-1"></i>Hapus</button></div>';
-    itemHtml += '<div id="warning_' + itemIndex + '" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg px-2 py-1 mb-2 text-[11px] text-yellow-700"><i class="fas fa-exclamation-triangle mr-1"></i>Jumlah melebihi stok tersedia (' + barang.stok + ' ' + barang.satuan + ')</div>';
-    itemHtml += '<div class="grid grid-cols-2 gap-2 text-xs">';
-    itemHtml += '<div><label class="block text-slate-500 mb-1">Jumlah Barang</label>';
-    itemHtml += '<div class="flex items-center border border-slate-300 rounded-lg overflow-hidden"><button type="button" class="px-2 py-1.5 bg-slate-100" onclick="adjustQty(' + itemIndex + ', -1)">-</button>';
-    itemHtml += '<input type="number" name="items[' + itemIndex + '][jumlah]" value="1" min="1" class="w-full text-center py-1.5 outline-none" onchange="checkStokAndHitung(' + itemIndex + ')">';
-    itemHtml += '<button type="button" class="px-2 py-1.5 bg-slate-100" onclick="adjustQty(' + itemIndex + ', 1)">+</button></div></div>';
-    itemHtml += '<div><label class="block text-slate-500 mb-1">Harga</label>';
-    itemHtml += '<div class="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700 font-semibold">' + formatRupiah(barang.harga_jual) + '</div></div>';
-    itemHtml += '<div><label class="block text-slate-500 mb-1">Satuan</label>';
-    itemHtml += '<div class="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700">' + barang.satuan + '</div></div>';
-    itemHtml += '<div><label class="block text-slate-500 mb-1">Diskon (Rp)</label>';
-    itemHtml += '<input type="number" name="items[' + itemIndex + '][diskon]" value="0" min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="hitungTotal()"></div></div>';
-    itemHtml += '<div class="mt-2 text-right text-xs text-slate-500">Subtotal: <span id="subtotal_' + itemIndex + '" class="font-semibold text-emerald-700">' + formatRupiah(barang.harga_jual) + '</span></div>';
+    let itemHtml = '<div class="border border-blue-200 bg-white rounded-2xl p-4 transition hover:shadow-sm" data-item-index="' + itemIndex + '" data-stok="' + barang.stok + '">';
+    itemHtml += '<div class="flex items-start justify-between gap-3 mb-3"><div>';
+    itemHtml += '<p class="font-semibold text-slate-800 text-base leading-tight">' + escapeHtml(barang.nama_barang) + '</p>';
+    itemHtml += '<p class="text-[11px] text-slate-500 mt-1">' + escapeHtml(barang.kode_barang) + ' • ' + escapeHtml(barang.satuan) + '</p></div>';
+    itemHtml += '<button type="button" class="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-600 hover:bg-red-100 font-semibold" onclick="removeItem(' + itemIndex + ')"><i class="fas fa-trash"></i>Hapus</button></div>';
+    itemHtml += '<div id="warning_' + itemIndex + '" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-3 text-[11px] text-yellow-700"><i class="fas fa-exclamation-triangle mr-1"></i>Jumlah melebihi stok tersedia (' + barang.stok + ' ' + barang.satuan + ')</div>';
+    itemHtml += '<div class="grid grid-cols-2 gap-3 text-xs">';
+    itemHtml += '<div><label class="block text-slate-500 mb-1.5">Jumlah Barang</label>';
+    itemHtml += '<div class="flex items-center border border-slate-300 rounded-lg overflow-hidden"><button type="button" class="px-3 py-2 bg-slate-100" onclick="adjustQty(' + itemIndex + ', -1)">-</button>';
+    itemHtml += '<input type="number" name="items[' + itemIndex + '][jumlah]" value="1" min="1" class="w-full text-center py-2 outline-none" onchange="checkStokAndHitung(' + itemIndex + ')">';
+    itemHtml += '<button type="button" class="px-3 py-2 bg-slate-100" onclick="adjustQty(' + itemIndex + ', 1)">+</button></div></div>';
+    itemHtml += '<div><label class="block text-slate-500 mb-1.5">Harga</label>';
+    itemHtml += '<div class="px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700 font-semibold">' + formatRupiah(barang.harga_jual) + '</div></div>';
+    itemHtml += '<div><label class="block text-slate-500 mb-1.5">Satuan</label>';
+    itemHtml += '<div class="px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700">' + barang.satuan + '</div></div>';
+    itemHtml += '<div><label class="block text-slate-500 mb-1.5">Diskon (Rp)</label>';
+    itemHtml += '<input type="number" name="items[' + itemIndex + '][diskon]" value="0" min="0" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg" onchange="hitungTotal()"></div></div>';
+    itemHtml += '<div class="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-right text-sm text-emerald-700">Subtotal: <span id="subtotal_' + itemIndex + '" class="font-bold">' + formatRupiah(barang.harga_jual) + '</span></div>';
     itemHtml += '<input type="hidden" name="items[' + itemIndex + '][id_barang]" value="' + barang.id_barang + '">';
     itemHtml += '<input type="hidden" name="items[' + itemIndex + '][nama_barang]" value="' + escapeHtml(barang.nama_barang) + '">';
     itemHtml += '<input type="hidden" name="items[' + itemIndex + '][kode_barang]" value="' + escapeHtml(barang.kode_barang) + '">';
     itemHtml += '<input type="hidden" name="items[' + itemIndex + '][satuan]" value="' + escapeHtml(barang.satuan) + '">';
     itemHtml += '<input type="hidden" name="items[' + itemIndex + '][harga_satuan]" value="' + barang.harga_jual + '"></div>';
     
-    container.insertAdjacentHTML('beforeend', itemHtml);
+    container.insertAdjacentHTML('afterbegin', itemHtml);
     noItemsMsg.style.display = 'none';
     itemIndex++;
     updateSelectedCount();

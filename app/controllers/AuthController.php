@@ -13,7 +13,7 @@ class AuthController {
     // Show login page
     public function login() {
         if (isset($_SESSION['user_id'])) {
-            header('Location: /');
+            header('Location: ' . $this->getPostLoginRedirect((string)($_SESSION['role'] ?? '')));
             exit;
         }
 
@@ -49,7 +49,7 @@ class AuthController {
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['nama'] = $user['nama'];
                 $_SESSION['role'] = $user['role'];
-                header('Location: /');
+                header('Location: ' . $this->getPostLoginRedirect((string)($user['role'] ?? '')));
                 exit;
             } else {
                 $this->recordFailedLoginAttempt();
@@ -250,5 +250,14 @@ class AuthController {
         $_SESSION['auth_failed_attempts'] = 0;
         $_SESSION['auth_lock_until'] = 0;
         $this->refreshCsrfToken();
+    }
+
+    private function getPostLoginRedirect(string $role): string {
+        $normalizedRole = strtolower(trim($role));
+        if ($normalizedRole === 'kasir' || $normalizedRole === 'user') {
+            return '/penjualan/create';
+        }
+
+        return '/';
     }
 }

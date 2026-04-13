@@ -1,6 +1,33 @@
 <?php ob_start(); ?>
+<?php
+$showUpdateAlert = isset($_GET['updated']) && $_GET['updated'] === '1';
+$stokChanged = isset($_GET['stok_changed']) && $_GET['stok_changed'] === '1';
+$stokBefore = isset($_GET['stok_before']) ? (int)$_GET['stok_before'] : null;
+$stokAfter = isset($_GET['stok_after']) ? (int)$_GET['stok_after'] : null;
+?>
 
 <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8 max-w-2xl mx-auto">
+    <?php if ($showUpdateAlert): ?>
+        <div class="mb-6 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3">
+            <div class="flex items-start gap-3">
+                <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                    <i class="fas fa-check"></i>
+                </span>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-emerald-800">Perubahan berhasil disimpan</p>
+                    <?php if ($stokChanged && $stokBefore !== null && $stokAfter !== null): ?>
+                        <p class="mt-1 text-sm text-emerald-700">
+                            Stok diperbarui dari <span class="font-semibold"><?= number_format($stokBefore, 0, ',', '.') ?></span>
+                            menjadi <span class="font-semibold"><?= number_format($stokAfter, 0, ',', '.') ?></span>.
+                        </p>
+                    <?php else: ?>
+                        <p class="mt-1 text-sm text-emerald-700">Data barang telah diperbarui. Silakan cek kembali sebelum lanjut.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">
         <i class="fas fa-edit text-yellow-600 mr-2"></i>Edit Barang
     </h2>

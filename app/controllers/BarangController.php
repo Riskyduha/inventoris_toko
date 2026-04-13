@@ -104,6 +104,9 @@ class BarangController {
 
     public function update($id) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $existingBarang = $this->model->getById($id);
+            $stokSebelum = isset($existingBarang['stok']) ? (int)$existingBarang['stok'] : null;
+
             $kodeBarang = trim($_POST['kode_barang'] ?? '');
             if ($kodeBarang === '') {
                 $_SESSION['error'] = 'Kode barang wajib diisi.';
@@ -139,8 +142,14 @@ class BarangController {
             ];
 
             if ($this->model->update($id, $data)) {
-                $_SESSION['success'] = 'Barang berhasil diperbarui';
-                redirect('/barang');
+                $stokSesudah = (int)($data['stok'] ?? 0);
+                $query = ['updated' => '1'];
+                if ($stokSebelum !== null && $stokSebelum !== $stokSesudah) {
+                    $query['stok_changed'] = '1';
+                    $query['stok_before'] = (string)$stokSebelum;
+                    $query['stok_after'] = (string)$stokSesudah;
+                }
+                redirect('/barang/edit/' . $id . '?' . http_build_query($query));
             } else {
                 $_SESSION['error'] = 'Gagal memperbarui barang';
                 redirect('/barang/edit/' . $id);

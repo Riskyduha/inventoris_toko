@@ -144,6 +144,12 @@
     $normalizedRole = class_exists('PermissionGate')
         ? PermissionGate::normalizeRole($rawRole)
         : ($rawRole === 'user' ? 'kasir' : $rawRole);
+    $isKasir = $normalizedRole === 'kasir';
+    $dashboardHref = $isKasir ? '/penjualan/create' : '/';
+    $dashboardLabel = $isKasir ? 'Penjualan' : 'Dashboard';
+    $dashboardIconClass = $isKasir ? 'fas fa-cash-register' : 'fas fa-home';
+    $operationalDashboardHref = $isKasir ? '/penjualan/create' : '/laporan';
+    $operationalDashboardLabel = $isKasir ? 'Buka Penjualan' : 'Buka Dashboard';
 
     $canViewPembelian = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'pembelian.view') : ($currentRole !== 'inspeksi');
     $canViewPenjualan = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'penjualan.view') : ($currentRole !== 'inspeksi');
@@ -183,9 +189,9 @@
                 
                 <!-- Desktop Navigation -->
                 <div class="hidden lg:flex items-center space-x-1">
-                    <a href="/" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
-                        <i class="fas fa-home"></i>
-                        <span>Dashboard</span>
+                    <a href="<?= $dashboardHref ?>" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
+                        <i class="<?= $dashboardIconClass ?>"></i>
+                        <span><?= $dashboardLabel ?></span>
                     </a>
                     <a href="/barang" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-box"></i>
@@ -197,7 +203,7 @@
                         <span>Barang Masuk</span>
                     </a>
                     <?php endif; ?>
-                    <?php if ($canViewPenjualan): ?>
+                    <?php if ($canViewPenjualan && !$isKasir): ?>
                     <a href="/penjualan" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-cash-register"></i>
                         <span>Penjualan</span>
@@ -312,8 +318,8 @@
                         <div id="operationalNotifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
                             <div class="px-4 py-3 text-sm text-gray-500">Memuat notifikasi...</div>
                         </div>
-                        <a href="/laporan" class="block px-4 py-2.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 border-t border-gray-100">
-                            Buka Dashboard
+                        <a href="<?= $operationalDashboardHref ?>" class="block px-4 py-2.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 border-t border-gray-100">
+                            <?= $operationalDashboardLabel ?>
                         </a>
                     </div>
                 </div>
@@ -365,9 +371,9 @@
             </div>
             
             <div class="p-4 space-y-2">
-                <a href="/" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                    <i class="fas fa-home text-blue-600 w-5"></i>
-                    <span>Dashboard</span>
+                <a href="<?= $dashboardHref ?>" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                    <i class="<?= $dashboardIconClass ?> text-blue-600 w-5"></i>
+                    <span><?= $dashboardLabel ?></span>
                 </a>
                 <a href="/barang" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-box text-green-600 w-5"></i>
@@ -379,7 +385,7 @@
                     <span>Barang Masuk</span>
                 </a>
                 <?php endif; ?>
-                <?php if ($canViewPenjualan): ?>
+                <?php if ($canViewPenjualan && !$isKasir): ?>
                 <a href="/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-cash-register text-purple-600 w-5"></i>
                     <span>Penjualan</span>

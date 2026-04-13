@@ -25,6 +25,13 @@ class PenjualanController {
     }
 
     public function index() {
+        $normalizedRole = class_exists('PermissionGate')
+            ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+            : strtolower(trim((string)($_SESSION['role'] ?? 'kasir')));
+        if ($normalizedRole === 'kasir') {
+            redirect('/penjualan/create');
+        }
+
         $tanggal_awal_input = isset($_GET['tanggal_awal']) ? trim($_GET['tanggal_awal']) : '';
         $tanggal_akhir_input = isset($_GET['tanggal_akhir']) ? trim($_GET['tanggal_akhir']) : '';
         $hasCustomFilter = ($tanggal_awal_input !== '' || $tanggal_akhir_input !== '');

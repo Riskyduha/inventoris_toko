@@ -11,6 +11,14 @@ class LaporanController {
     }
 
     public function index() {
+        $currentRole = class_exists('PermissionGate')
+            ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+            : strtolower(trim((string)($_SESSION['role'] ?? 'kasir')));
+        if ($currentRole === 'kasir') {
+            header('Location: /penjualan/create');
+            exit;
+        }
+
         $quickPeriod = isset($_GET['periode']) ? trim((string)$_GET['periode']) : '1';
         $allowedPeriods = ['1', '7', '30', '60', '90', '180'];
         if (!in_array($quickPeriod, $allowedPeriods, true)) {
