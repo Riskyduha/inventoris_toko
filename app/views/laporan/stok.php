@@ -259,21 +259,34 @@ $canViewHargaStok = class_exists('PermissionGate')
     </div>
     <?php endif; ?>
 
-    <div class="overflow-x-auto">
-        <table class="min-w-full table-fixed">
-            <thead class="bg-gray-200">
+    <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table class="min-w-full table-fixed bg-white text-center">
+            <colgroup>
+                <col style="width: 64px;">
+                <col style="width: 140px;">
+                <col style="width: auto;">
+                <col style="width: 100px;">
+                <?php if ($canViewHargaStok): ?>
+                <col style="width: 170px;">
+                <col style="width: 170px;">
+                <?php endif; ?>
+                <col style="width: 90px;">
+                <col style="width: 150px;">
+                <col style="width: 120px;">
+            </colgroup>
+            <thead class="bg-slate-100">
                 <tr>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">No</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Kode Barang</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-64">Nama Barang</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-20">Satuan</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">No</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Kode Barang</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Nama Barang</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Satuan</th>
                     <?php if ($canViewHargaStok): ?>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Harga Beli</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Harga Jual</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Harga Beli</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Harga Jual</th>
                     <?php endif; ?>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-16">Stok</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-32">Update Terakhir</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-24">Status</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Stok</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Update Terakhir</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Status</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -283,26 +296,26 @@ $canViewHargaStok = class_exists('PermissionGate')
                     </tr>
                 <?php else: ?>
                     <?php foreach ($stok as $index => $item): ?>
-                        <tr class="hover:bg-gray-50" data-kategori-id="<?= $item['id_kategori'] ?>" data-beli="<?= (float)$item['harga_beli'] ?>" data-jual="<?= (float)$item['harga_jual'] ?>" data-stok="<?= (int)$item['stok'] ?>">
-                            <td class="px-4 py-3 text-center text-gray-700 font-semibold"><?= (($current_page - 1) * ($items_per_page ?? 50)) + $index + 1 ?></td>
-                            <td class="px-4 py-3 text-center font-mono text-sm text-gray-700"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
-                            <td class="px-4 py-3 text-center font-medium truncate max-w-xs" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
-                            <td class="px-4 py-3 text-center text-gray-700 font-semibold">
+                        <tr class="hover:bg-slate-50" data-kategori-id="<?= $item['id_kategori'] ?>" data-beli="<?= (float)$item['harga_beli'] ?>" data-jual="<?= (float)$item['harga_jual'] ?>" data-stok="<?= (int)$item['stok'] ?>">
+                            <td class="px-3 py-3 text-sm text-gray-700 font-semibold align-middle"><?= (($current_page - 1) * ($items_per_page ?? 50)) + $index + 1 ?></td>
+                            <td class="px-3 py-3 text-center font-mono text-sm text-gray-700 align-middle"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
+                            <td class="px-3 py-3 text-center text-sm font-medium text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis align-middle" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
+                            <td class="px-3 py-3 text-center text-sm text-gray-700 font-semibold align-middle">
                                 <?= htmlspecialchars($item['satuan'] ?? '-') ?>
                             </td>
                             <?php if ($canViewHargaStok): ?>
-                            <td class="px-4 py-3 text-center"><?= formatRupiah($item['harga_beli']) ?></td>
-                            <td class="px-4 py-3 text-center"><?= formatRupiah($item['harga_jual']) ?></td>
+                            <td class="px-3 py-3 text-sm font-semibold text-slate-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_beli']) ?></td>
+                            <td class="px-3 py-3 text-sm font-semibold text-emerald-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_jual']) ?></td>
                             <?php endif; ?>
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-center align-middle">
                                 <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-semibold">
                                     <?= $item['stok'] ?>
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-center text-sm text-gray-600">
+                            <td class="px-3 py-3 text-center text-sm text-gray-600 align-middle whitespace-nowrap">
                                 <?= !empty($item['updated_at']) ? formatTanggal($item['updated_at']) : '-' ?>
                             </td>
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-3 py-3 text-center align-middle">
                                 <?php if ($item['stok'] == 0): ?>
                                     <span class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">Habis</span>
                                 <?php elseif ($item['stok'] <= 5): ?>
