@@ -161,7 +161,15 @@ class PenjualanController {
             $result = $this->model->create($data);
             
             if ($result['success']) {
-                $_SESSION['success'] = $result['message'];
+                $normalizedRole = class_exists('PermissionGate')
+                    ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+                    : strtolower(trim((string)($_SESSION['role'] ?? 'kasir')));
+
+                if ($normalizedRole === 'kasir') {
+                    redirect('/penjualan/create?created=1');
+                }
+
+                $_SESSION['success'] = 'Penjualan berhasil disimpan.';
                 redirect('/penjualan');
             } else {
                 $_SESSION['error'] = $result['message'];

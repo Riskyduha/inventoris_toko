@@ -63,8 +63,21 @@ class LaporanController {
     }
 
     public function penjualan() {
-        $start = $_GET['start'] ?? date('Y-m-01');
-        $end = $_GET['end'] ?? date('Y-m-t');
+        $startInput = isset($_GET['start']) ? trim((string)$_GET['start']) : '';
+        $endInput = isset($_GET['end']) ? trim((string)$_GET['end']) : '';
+
+        $start = $startInput;
+        $end = $endInput;
+        if ($start !== '' && $end === '') {
+            $end = $start;
+        } elseif ($start === '' && $end !== '') {
+            $start = $end;
+        } elseif ($start === '' && $end === '') {
+            $today = date('Y-m-d');
+            $start = $today;
+            $end = $today;
+        }
+
         $page = max(1, (int)($_GET['page'] ?? 1));
         $items_per_page = 50;
         $offset = ($page - 1) * $items_per_page;
@@ -91,8 +104,8 @@ class LaporanController {
             $penjualan = $this->model->getLaporanPenjualan($start, $end);
             $total = $this->model->getTotalPenjualan($start, $end);
         } else {
-            $startDate = date('Y-m-01');
-            $endDate = date('Y-m-t');
+            $startDate = date('Y-m-d');
+            $endDate = date('Y-m-d');
             $penjualan = $this->model->getLaporanPenjualan($startDate, $endDate);
             $total = $this->model->getTotalPenjualan($startDate, $endDate);
         }

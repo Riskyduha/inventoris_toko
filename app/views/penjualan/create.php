@@ -5,9 +5,24 @@ $normalizedRole = class_exists('PermissionGate')
     : strtolower(trim((string)($_SESSION['role'] ?? 'kasir')));
 $isKasir = $normalizedRole === 'kasir';
 $backUrl = $isKasir ? '/penjualan/create' : '/penjualan';
+$showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
 ?>
 
 <div class="app-card p-5 sm:p-6 app-reveal">
+    <?php if ($showCreatedAlert): ?>
+        <div class="mb-5 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3">
+            <div class="flex items-start gap-3">
+                <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                    <i class="fas fa-check"></i>
+                </span>
+                <div>
+                    <p class="text-sm font-bold text-emerald-800">Penjualan berhasil disimpan</p>
+                    <p class="text-sm text-emerald-700 mt-0.5">Transaksi baru sudah masuk ke sistem. Silakan cek ringkasan lalu lanjutkan input berikutnya.</p>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
             <h2 class="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
@@ -205,6 +220,34 @@ $backUrl = $isKasir ? '/penjualan/create' : '/penjualan';
     </div>
 </div>
 
+<div id="modal_confirm_penjualan" class="fixed inset-0 bg-black/40 hidden z-[80] items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-2xl p-5 shadow-2xl border border-slate-200">
+        <div class="flex items-start gap-3">
+            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                <i class="fas fa-circle-question"></i>
+            </span>
+            <div>
+                <h3 class="text-base font-bold text-slate-800">Yakin Simpan Penjualan?</h3>
+                <p class="text-sm text-slate-600 mt-1">Periksa kembali data transaksi sebelum disimpan.</p>
+            </div>
+        </div>
+        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm space-y-1.5">
+            <div class="flex items-center justify-between">
+                <span class="text-slate-600">Total Item</span>
+                <span id="confirm_total_items" class="font-semibold text-slate-800">0</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-slate-600">Total Harga</span>
+                <span id="confirm_total_harga" class="font-semibold text-emerald-700">Rp 0</span>
+            </div>
+        </div>
+        <div class="mt-5 flex items-center justify-end gap-2">
+            <button type="button" class="app-btn-secondary px-4 py-2 font-semibold" onclick="closeSubmitConfirmModal()">Cek Lagi</button>
+            <button type="button" class="app-btn-primary px-4 py-2 font-semibold" onclick="confirmSubmitPenjualan()">Ya, Simpan</button>
+        </div>
+    </div>
+</div>
+
 <script>
 let itemIndex = 0;
 const allBarang = <?= json_encode($barang) ?>;
@@ -225,6 +268,7 @@ const notaConfig = Object.assign({
     tampilkan_info_hutang: 1
 }, <?= json_encode($notaConfig ?? []) ?>);
 let stockModalBarang = null;
+let submitPenjualanConfirmed = false;
 
 console.log('DEBUG: Script loaded, barang count:', allBarang.length);
 
@@ -624,7 +668,41 @@ function validateForm() {
         uangDiberikanInput.value = String(parseNominalInput(uangDiberikanInput.value));
     }
 
-    return true;
+    if (submitPenjualanConfirmed) {
+        submitPenjualanConfirmed = false;
+        return true;
+    }
+
+    openSubmitConfirmModal();
+    return false;
+}
+
+function openSubmitConfirmModal() {
+    const modal = document.getElementById('modal_confirm_penjualan');
+    const totalItems = document.getElementById('total_items')?.textContent || '0';
+    const totalHarga = document.getElementById('total_display')?.textContent || 'Rp 0';
+    const confirmItemsEl = document.getElementById('confirm_total_items');
+    const confirmTotalEl = document.getElementById('confirm_total_harga');
+    if (confirmItemsEl) confirmItemsEl.textContent = totalItems;
+    if (confirmTotalEl) confirmTotalEl.textContent = totalHarga;
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function closeSubmitConfirmModal() {
+    const modal = document.getElementById('modal_confirm_penjualan');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function confirmSubmitPenjualan() {
+    closeSubmitConfirmModal();
+    submitPenjualanConfirmed = true;
+    document.getElementById('formPenjualan')?.requestSubmit();
 }
 
 function toggleHutangFields() {
@@ -839,9 +917,22 @@ if (modalTambahStok) {
     });
 }
 
+const modalConfirmPenjualan = document.getElementById('modal_confirm_penjualan');
+if (modalConfirmPenjualan) {
+    modalConfirmPenjualan.addEventListener('click', function(e) {
+        if (e.target === modalConfirmPenjualan) {
+            closeSubmitConfirmModal();
+        }
+    });
+}
+
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && modalTambahStok && !modalTambahStok.classList.contains('hidden')) {
         closeTambahStokModal();
+        return;
+    }
+    if (e.key === 'Escape' && modalConfirmPenjualan && !modalConfirmPenjualan.classList.contains('hidden')) {
+        closeSubmitConfirmModal();
     }
 });
 </script>
