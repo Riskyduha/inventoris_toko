@@ -134,11 +134,12 @@ class Laporan {
                                         b.kode_barang,
                                         b.nama_barang,
                                         b.satuan,
-                                        dp.jumlah,
+                                        COALESCE(dp.jumlah, 0) as jumlah,
                                         COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) as harga_beli,
-                                        dp.harga_satuan as harga_jual,
-                                        (dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) as keuntungan_per_unit,
-                                        ((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah - dp.diskon) as keuntungan_total,
+                                        COALESCE(dp.harga_satuan, 0) as harga_jual,
+                                        (COALESCE(dp.harga_satuan, 0) - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) as keuntungan_per_unit,
+                                        (COALESCE(dp.subtotal, (COALESCE(dp.harga_satuan, 0) * COALESCE(dp.jumlah, 0)) - COALESCE(dp.diskon, 0))
+                                            - (COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) * COALESCE(dp.jumlah, 0))) as keuntungan_total,
                                         p.tanggal
                                     FROM penjualan p
                                     JOIN detail_penjualan dp ON p.id_penjualan = dp.id_penjualan
@@ -189,7 +190,10 @@ class Laporan {
 
         public function getTotalKeuntungan($start, $end) {
                 $query = "SELECT 
-                                        SUM((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah - dp.diskon) as total
+                                        COALESCE(SUM(
+                                            (COALESCE(dp.subtotal, (COALESCE(dp.harga_satuan, 0) * COALESCE(dp.jumlah, 0)) - COALESCE(dp.diskon, 0))
+                                                - (COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) * COALESCE(dp.jumlah, 0)))
+                                        ), 0) as total
                                     FROM penjualan p
                                     JOIN detail_penjualan dp ON p.id_penjualan = dp.id_penjualan
                                     JOIN barang b ON dp.id_barang = b.id_barang

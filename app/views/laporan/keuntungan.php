@@ -131,8 +131,8 @@
                             <td class="px-3 py-3 text-sm text-gray-600 align-middle"><?= htmlspecialchars($item['satuan'] ?? '-') ?></td>
                             <td class="px-3 py-3 text-sm font-semibold text-slate-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_beli']) ?></td>
                             <td class="px-3 py-3 text-sm font-semibold text-emerald-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_jual']) ?></td>
-                            <td class="px-3 py-3 text-sm font-semibold text-green-600 align-middle whitespace-nowrap"><?= formatRupiah($item['keuntungan_per_unit']) ?></td>
-                            <td class="px-3 py-3 text-sm font-bold text-green-700 align-middle whitespace-nowrap"><?= formatRupiah($item['keuntungan_total']) ?></td>
+                            <td class="px-3 py-3 text-sm font-semibold <?= ((float)($item['keuntungan_per_unit'] ?? 0) >= 0) ? 'text-green-600' : 'text-red-600' ?> align-middle whitespace-nowrap"><?= formatRupiah($item['keuntungan_per_unit']) ?></td>
+                            <td class="px-3 py-3 text-sm font-bold <?= ((float)($item['keuntungan_total'] ?? 0) >= 0) ? 'text-green-700' : 'text-red-700' ?> align-middle whitespace-nowrap"><?= formatRupiah($item['keuntungan_total']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
