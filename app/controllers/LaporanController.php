@@ -925,23 +925,27 @@ class LaporanController {
         <table>
             <thead>
                 <tr>
-                    <th style="width: 5%;">No</th>
+                    <th style="width: 4%;">No</th>
                     <th style="width: 12%;">Tanggal</th>
+                    <th style="width: 14%;">Pengguna</th>
+                    <th style="width: 12%;">Kode Barang</th>
                     <th style="width: 25%;">Nama Barang</th>
                     <th style="width: 8%; text-align: center;">Jumlah</th>
-                    <th style="width: 12%; text-align: right;">Harga Beli</th>
-                    <th style="width: 12%; text-align: right;">Harga Jual</th>
-                    <th style="width: 10%; text-align: right;">Diskon</th>
-                    <th style="width: 14%; text-align: right;">Keuntungan/Unit</th>
-                    <th style="width: 14%; text-align: right;">Total Keuntungan</th>
+                    <th style="width: 10%; text-align: right;">Harga Beli</th>
+                    <th style="width: 10%; text-align: right;">Harga Jual</th>
+                    <th style="width: 8%; text-align: right;">Diskon</th>
+                    <th style="width: 12%; text-align: right;">Keuntungan/Unit</th>
+                    <th style="width: 12%; text-align: right;">Total Keuntungan</th>
                 </tr>
             </thead>
             <tbody>';
-        
+
         foreach ($keuntungan as $index => $item) {
             $html .= '<tr>
                 <td class="text-center">' . str_pad($index + 1, 2, '0', STR_PAD_LEFT) . '</td>
                 <td>' . date('d M Y', strtotime($item['tanggal'])) . '</td>
+                <td>' . htmlspecialchars($item['username'] ?? '-') . '</td>
+                <td>' . htmlspecialchars($item['kode_barang'] ?? '-') . '</td>
                 <td><strong>' . htmlspecialchars($item['nama_barang']) . '</strong></td>
                 <td class="text-center">' . $item['jumlah'] . '</td>
                 <td class="text-right">Rp ' . number_format((float)$item['harga_beli'], 0, ',', '.') . '</td>
