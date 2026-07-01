@@ -10,12 +10,27 @@ $selectedPeriode = (string)($quickPeriod ?? '1');
 $periodeLabels = [
     '1' => 'Hari Ini',
     '7' => '7 Hari Terakhir',
-    '30' => '30 Hari Terakhir',
+    '14' => '14 Hari Terakhir',
+    '21' => '21 Hari Terakhir',
+    '30' => '1 Bulan Terakhir',
     '60' => '60 Hari Terakhir',
-    '90' => '90 Hari Terakhir',
-    '180' => '180 Hari Terakhir',
+    '90' => '3 Bulan Terakhir',
+    '180' => '6 Bulan Terakhir',
+    '365' => '1 Tahun Terakhir',
 ];
 $periodeLabel = $periodeLabels[$selectedPeriode] ?? 'Hari Ini';
+$quickPeriodOptions = [
+    '1' => 'Hari Ini',
+    '7' => '7 Hari',
+    '14' => '14 Hari',
+    '21' => '21 Hari',
+    '30' => '1 Bulan',
+    '60' => '2 Bulan',
+    '90' => '3 Bulan',
+    '180' => '6 Bulan',
+    '365' => '1 Tahun',
+];
+$chartPeriodOptions = array_keys($quickPeriodOptions);
 $normalizedRole = class_exists('PermissionGate')
     ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
     : (strtolower(trim((string)($_SESSION['role'] ?? 'kasir'))) === 'user' ? 'kasir' : strtolower(trim((string)($_SESSION['role'] ?? 'kasir'))));
@@ -29,7 +44,7 @@ $canCreatePenjualanMenu = class_exists('PermissionGate') ? PermissionGate::allow
 $canViewLaporanAnyMenu = $canViewLaporanStokMenu || $canViewLaporanPenjualanMenu || $canViewLaporanPembelianMenu;
 $selectedChartDays = (string)($chartDaysParam ?? ($chartDays ?? 7));
 $trendDays = (int)($chartDays ?? 7);
-$allowedChartOptions = ['7', '14', '30', '60', '90', '180'];
+$allowedChartOptions = ['7', '14', '21', '30', '60', '90', '180', '365'];
 if (!in_array($selectedChartDays, $allowedChartOptions, true)) {
     $selectedChartDays = (string)$trendDays;
 }
@@ -56,6 +71,7 @@ $periodStartDate = date('Y-m-d', strtotime('-' . ($periodDaysForStats - 1) . ' d
 $periodEndDate = date('Y-m-d');
 $penjualanDrilldownUrl = '/laporan/penjualan?start=' . rawurlencode($periodStartDate) . '&end=' . rawurlencode($periodEndDate);
 $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodStartDate) . '&end=' . rawurlencode($periodEndDate);
+$chartTitle = $trendDays === 1 ? 'Grafik Penjualan Hari Ini' : 'Grafik Penjualan ' . $trendDays . ' Hari Terakhir';
 ?>
 
 <?php if ($isKasirView): ?>
@@ -71,22 +87,34 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
     </div>
 </div>
 <?php else: ?>
-<div class="app-card p-4 sm:p-5 mb-6 app-reveal backdrop-blur border border-slate-200/80">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Filter Dashboard</p>
-            <p class="text-sm text-slate-600">Periode cepat untuk ringkasan penjualan dan laba</p>
+<div class="app-card mb-6 app-reveal overflow-hidden border border-slate-200/80 shadow-sm">
+    <div class="bg-gradient-to-r from-slate-50 via-white to-teal-50 px-4 py-4 sm:px-5 sm:py-5">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div class="max-w-2xl">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Filter Dashboard</p>
+                <h2 class="mt-1 text-lg font-bold text-slate-800 sm:text-xl">Periode cepat untuk ringkasan penjualan dan laba</h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700">
+                    <span class="h-2 w-2 rounded-full bg-teal-500"></span>
+                    Periode aktif: <?= htmlspecialchars($periodeLabel) ?>
+                </span>
+                <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Update terakhir: <?= htmlspecialchars($dashboard_last_updated ?? '-') ?>
+                </span>
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <a href="/laporan?periode=1&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '1' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">Hari Ini</a>
-            <a href="/laporan?periode=7&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '7' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">7 Hari</a>
-            <a href="/laporan?periode=30&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '30' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">30 Hari</a>
-            <a href="/laporan?periode=60&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '60' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">60 Hari</a>
-            <a href="/laporan?periode=90&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '90' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">90 Hari</a>
-            <a href="/laporan?periode=180&chart_days=<?= urlencode($selectedChartDays) ?>" class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedPeriode === '180' ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">180 Hari</a>
-            <span class="ml-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
-                Update terakhir: <?= htmlspecialchars($dashboard_last_updated ?? '-') ?> (<?= htmlspecialchars(date_default_timezone_get()) ?>)
-            </span>
+
+        <div class="mt-4 rounded-2xl border border-slate-200 bg-white/90 p-3 sm:p-4">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <p class="text-sm font-medium text-slate-600">Pilih periode cepat</p>
+                <div class="flex flex-wrap gap-2">
+                    <?php foreach ($quickPeriodOptions as $periodValue => $periodText): ?>
+                        <a href="/laporan?periode=<?= urlencode($periodValue) ?>&chart_days=<?= urlencode($selectedChartDays) ?>" class="inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition <?= $selectedPeriode === $periodValue ? 'bg-teal-600 text-white shadow-sm shadow-teal-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>"><?= htmlspecialchars($periodText) ?></a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -247,27 +275,38 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
         </div>
     </div>
 
-    <div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Visual Penjualan</p>
-                <h3 class="text-lg font-bold text-slate-800">Grafik Penjualan <?= $trendDays ?> Hari Terakhir</h3>
+    <div class="mt-4 app-card overflow-hidden border border-slate-200/80 shadow-sm">
+        <div class="bg-gradient-to-r from-slate-50 via-white to-teal-50 px-4 py-4 sm:px-5 sm:py-5">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div class="max-w-2xl">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Visual Penjualan</p>
+                    <h3 class="mt-1 text-lg font-bold text-slate-800 sm:text-xl"><?= htmlspecialchars($chartTitle) ?></h3>
+                </div>
+                <span class="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 w-fit">
+                    <i class="fas fa-chart-area"></i>
+                    Interaktif
+                </span>
             </div>
-            <span class="inline-flex items-center gap-2 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 px-3 py-1.5">
-                <i class="fas fa-chart-area"></i>
-                Interaktif
-            </span>
+
+            <div class="mt-4 rounded-2xl border border-slate-200 bg-white/90 p-3 sm:p-4">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <p class="text-sm font-medium text-slate-600">Pilih rentang grafik</p>
+                    <div class="flex flex-wrap gap-2">
+                        <?php foreach ($chartPeriodOptions as $opt): ?>
+                            <a href="/laporan?periode=<?= urlencode($selectedPeriode) ?>&chart_days=<?= urlencode($opt) ?>"
+                               class="inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition <?= $selectedChartDays === $opt ? 'bg-amber-500 text-white shadow-sm shadow-amber-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">
+                                <?= htmlspecialchars($opt === '1' ? 'Hari Ini' : $opt . ' Hari') ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2 mb-4">
-            <?php foreach ($allowedChartOptions as $opt): ?>
-                <a href="/laporan?periode=<?= urlencode($selectedPeriode) ?>&chart_days=<?= urlencode($opt) ?>"
-                   class="px-3 py-1.5 rounded-full text-xs font-semibold <?= $selectedChartDays === $opt ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">
-                    <?= htmlspecialchars($opt) ?> Hari
-                </a>
-            <?php endforeach; ?>
-        </div>
-        <div class="h-[280px] md:h-[320px]">
-            <canvas id="adminSalesChart"></canvas>
+
+        <div class="px-4 pb-4 sm:px-5 sm:pb-5">
+            <div class="h-[280px] md:h-[320px]">
+                <canvas id="adminSalesChart"></canvas>
+            </div>
         </div>
     </div>
 </div>

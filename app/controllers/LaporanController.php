@@ -20,15 +20,22 @@ class LaporanController {
         }
 
         $quickPeriod = isset($_GET['periode']) ? trim((string)$_GET['periode']) : '1';
-        $allowedPeriods = ['1', '7', '30', '60', '90', '180'];
+        $allowedPeriods = ['1', '7', '14', '21', '30', '60', '90', '180', '365'];
         if (!in_array($quickPeriod, $allowedPeriods, true)) {
             $quickPeriod = '1';
         }
         $periodDays = (int)$quickPeriod;
         $chartDaysParam = isset($_GET['chart_days']) ? trim((string)$_GET['chart_days']) : '';
-        $allowedChartDays = ['7', '14', '30', '60', '90', '180'];
+        $allowedChartDays = ['1', '7', '14', '21', '30', '60', '90', '180', '365'];
+        $defaultChartDays = '7';
+        foreach (array_reverse($allowedChartDays) as $allowedChartDay) {
+            if ($periodDays >= (int)$allowedChartDay) {
+                $defaultChartDays = $allowedChartDay;
+                break;
+            }
+        }
         if ($chartDaysParam === '' || !in_array($chartDaysParam, $allowedChartDays, true)) {
-            $chartDaysParam = $periodDays >= 30 ? '30' : '7';
+            $chartDaysParam = $defaultChartDays;
         }
         $chartDays = (int)$chartDaysParam;
 

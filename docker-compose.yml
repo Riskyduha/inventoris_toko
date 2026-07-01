@@ -11,6 +11,8 @@ services:
       APP_ENV: production
       APP_DEBUG: false
       PORT: 80
+    ports:
+      - "8000:80"
     volumes:
       - app_logs:/app/logs
     networks:
