@@ -83,6 +83,11 @@ server {
 }
 ```
 
+## Deployment (Dokploy)
+
+Proyek ini telah dikonfigurasi untuk langsung dapat di-deploy menggunakan **Dokploy** dengan mudah. 
+Silakan baca panduan lengkapnya pada file: **[DEPLOY_DOKPLOY.md](DEPLOY_DOKPLOY.md)**
+
 ## Struktur Direktori
 
 ```
