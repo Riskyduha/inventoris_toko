@@ -19,8 +19,8 @@
     </div>
 
     <form action="/pembelian/store" method="POST" id="formPembelian" onsubmit="return validateForm()">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div class="lg:col-span-2 rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/60 to-white p-4">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+            <div class="lg:col-span-2 rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/60 to-white p-4 min-w-0">
                 <div class="mb-4">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                         <h3 class="text-lg font-bold text-slate-700">Daftar Stok Barang Tersedia</h3>
@@ -37,15 +37,15 @@
                                class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
                     </div>
                 </div>
-                <div id="barang_list" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[28rem] overflow-y-auto pr-1"></div>
+                <div id="barang_list" class="grid grid-cols-1 gap-3 max-h-[28rem] overflow-y-auto pr-1"></div>
             </div>
 
-            <div class="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 h-fit">
+            <div class="lg:col-span-3 rounded-2xl border border-blue-200 bg-blue-50/60 p-4 h-fit min-w-0">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-lg font-bold text-slate-700">Stok Barang Dipilih</h3>
                     <span id="selected_count" class="text-xs bg-blue-600 text-white px-2.5 py-1 rounded-full font-semibold">0 item</span>
                 </div>
-                <div id="selected_container" class="space-y-2 max-h-[24rem] overflow-y-auto pr-1"></div>
+                <div id="selected_container" class="space-y-2 max-h-[30rem] overflow-y-auto pr-1"></div>
                 <p id="no_items_msg" class="text-slate-500 text-center py-5 text-sm border border-dashed border-slate-300 rounded-xl bg-white/70">
                     Belum ada barang dipilih
                 </p>
@@ -167,12 +167,36 @@ function toDigitOnly(value) {
     return String(value ?? '').replace(/[^\d]/g, '');
 }
 
+function normalizeMoneyValue(value) {
+    const raw = String(value ?? '').trim();
+    if (raw === '') return 0;
+
+    const compact = raw.replace(/\s+/g, '');
+
+    if (/^\d{1,3}(?:\.\d{3})+$/.test(compact) || /^\d{1,3}(?:,\d{3})+$/.test(compact)) {
+        return parseInt(compact.replace(/[.,]/g, ''), 10) || 0;
+    }
+
+    const decimalMatch = compact.match(/^(\d+)[.,](\d+)$/);
+    if (decimalMatch) {
+        return Math.round(parseFloat(`${decimalMatch[1]}.${decimalMatch[2]}`)) || 0;
+    }
+
+    const digitsOnly = toDigitOnly(compact);
+    return digitsOnly ? (parseInt(digitsOnly, 10) || 0) : 0;
+}
+
 function parseCurrencyValue(value) {
-    const digits = toDigitOnly(value);
-    return digits ? parseInt(digits, 10) : 0;
+    return normalizeMoneyValue(value);
 }
 
 function formatThousandID(value) {
+    const numericValue = normalizeMoneyValue(value);
+    if (String(value ?? '').trim() === '') return '';
+    return numericValue.toLocaleString('id-ID');
+}
+
+function formatLiveMoneyInput(value) {
     const digits = toDigitOnly(value);
     if (!digits) return '';
     return (parseInt(digits, 10) || 0).toLocaleString('id-ID');
@@ -206,7 +230,7 @@ function showToast(message, type = 'success') {
 function createBarangCard(item) {
     const itemStr = JSON.stringify(item).replace(/"/g, '&quot;');
     return `
-        <div class="border border-slate-200 rounded-xl p-3 bg-white hover:border-teal-300 hover:shadow-md transition cursor-pointer" onclick='addItemFromBarang(${itemStr})'>
+        <div class="border border-slate-200 rounded-xl p-3 bg-white hover:border-teal-300 hover:shadow-md transition cursor-pointer w-full" onclick='addItemFromBarang(${itemStr})'>
             <div class="flex items-start justify-between gap-2 mb-2">
                 <div>
                     <p class="font-semibold text-slate-800 leading-tight">${item.nama_barang}</p>
@@ -264,15 +288,17 @@ function updateItemSubtotal(idx) {
     if (subtotalEl) subtotalEl.textContent = formatRupiah(subtotal < 0 ? 0 : subtotal);
 }
 
-function addItemFromBarang(barang) {
+function addItemFromBarang(barang, initialQty = 1) {
     const container = document.getElementById('selected_container');
     const noItemsMsg = document.getElementById('no_items_msg');
+    const qty = Math.max(1, parseInt(initialQty, 10) || 1);
 
     const existing = document.querySelector(`[data-barang-id="${barang.id_barang}"]`);
     if (existing) {
         const qtyInput = existing.querySelector('input[name*="[jumlah]"]');
-        qtyInput.value = (parseInt(qtyInput.value, 10) || 0) + 1;
+        qtyInput.value = (parseInt(qtyInput.value, 10) || 0) + qty;
         updateItemSubtotal(existing.getAttribute('data-item-index'));
+        container.prepend(existing);
         hitungTotal();
         showToast('Jumlah barang ditambah');
         return;
@@ -296,7 +322,7 @@ function addItemFromBarang(barang) {
                     <label class="block text-slate-500 mb-1">Jumlah</label>
                     <div class="flex items-center border border-slate-300 rounded-lg overflow-hidden">
                         <button type="button" class="px-2 py-1.5 bg-slate-100" onclick="adjustQty(${idx}, -1)">-</button>
-                        <input type="number" name="items[${idx}][jumlah]" value="1" min="1" class="w-full text-center py-1.5 outline-none" onchange="onItemChange(${idx})">
+                        <input type="number" name="items[${idx}][jumlah]" value="${qty}" min="1" class="w-full text-center py-1.5 outline-none" onchange="onItemChange(${idx})">
                         <button type="button" class="px-2 py-1.5 bg-slate-100" onclick="adjustQty(${idx}, 1)">+</button>
                     </div>
                 </div>
@@ -319,14 +345,14 @@ function addItemFromBarang(barang) {
             </div>
 
             <div class="text-right text-xs text-slate-500">
-                Subtotal: <span class="subtotal-item font-bold text-emerald-700">${formatRupiah(barang.harga_beli)}</span>
+                Subtotal: <span class="subtotal-item font-bold text-emerald-700">${formatRupiah(qty * parseCurrencyValue(barang.harga_beli))}</span>
             </div>
 
             <input type="hidden" name="items[${idx}][id_barang]" value="${barang.id_barang}">
         </div>
     `;
 
-    container.insertAdjacentHTML('beforeend', itemHtml);
+    container.insertAdjacentHTML('afterbegin', itemHtml);
     noItemsMsg.style.display = 'none';
     itemIndex++;
     hitungTotal();
@@ -493,7 +519,7 @@ async function submitAddBarang(event) {
 
         const barangBaru = data.barang;
         allBarang.push(barangBaru);
-        addItemFromBarang(barangBaru);
+        addItemFromBarang(barangBaru, stokValue);
         form.reset();
         closeAddBarangModal();
         document.getElementById('search_barang_main').value = '';
@@ -512,7 +538,19 @@ document.addEventListener('input', function (event) {
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
     if (!target.matches('input[data-price-input]')) return;
-    target.value = formatThousandID(target.value);
+    const previousLength = target.value.length;
+    const previousCaret = target.selectionStart ?? previousLength;
+    target.value = formatLiveMoneyInput(target.value);
+    const nextLength = target.value.length;
+    const caretOffset = nextLength - previousLength;
+    const nextCaret = Math.max(0, Math.min(nextLength, previousCaret + caretOffset));
+    requestAnimationFrame(() => {
+        try {
+            target.setSelectionRange(nextCaret, nextCaret);
+        } catch (e) {
+            // Ignore when the browser does not allow restoring the caret.
+        }
+    });
     hitungTotal();
 });
 

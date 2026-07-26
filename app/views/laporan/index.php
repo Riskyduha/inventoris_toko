@@ -30,7 +30,16 @@ $quickPeriodOptions = [
     '180' => '6 Bulan',
     '365' => '1 Tahun',
 ];
-$chartPeriodOptions = array_keys($quickPeriodOptions);
+$chartPeriodOptions = [
+    '7' => '7 Hari',
+    '14' => '14 Hari',
+    '21' => '21 Hari',
+    '30' => '1 Bulan',
+    '60' => '2 Bulan',
+    '90' => '3 Bulan',
+    '180' => '6 Bulan',
+    '360' => '360 Hari',
+];
 $normalizedRole = class_exists('PermissionGate')
     ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
     : (strtolower(trim((string)($_SESSION['role'] ?? 'kasir'))) === 'user' ? 'kasir' : strtolower(trim((string)($_SESSION['role'] ?? 'kasir'))));
@@ -71,7 +80,7 @@ $periodStartDate = date('Y-m-d', strtotime('-' . ($periodDaysForStats - 1) . ' d
 $periodEndDate = date('Y-m-d');
 $penjualanDrilldownUrl = '/laporan/penjualan?start=' . rawurlencode($periodStartDate) . '&end=' . rawurlencode($periodEndDate);
 $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodStartDate) . '&end=' . rawurlencode($periodEndDate);
-$chartTitle = $trendDays === 1 ? 'Grafik Penjualan Hari Ini' : 'Grafik Penjualan ' . $trendDays . ' Hari Terakhir';
+$chartTitle = 'Grafik Penjualan ' . $trendDays . ' Hari Terakhir';
 ?>
 
 <?php if ($isKasirView): ?>
@@ -292,10 +301,10 @@ $chartTitle = $trendDays === 1 ? 'Grafik Penjualan Hari Ini' : 'Grafik Penjualan
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <p class="text-sm font-medium text-slate-600">Pilih rentang grafik</p>
                     <div class="flex flex-wrap gap-2">
-                        <?php foreach ($chartPeriodOptions as $opt): ?>
+                        <?php foreach ($chartPeriodOptions as $opt => $label): ?>
                             <a href="/laporan?periode=<?= urlencode($selectedPeriode) ?>&chart_days=<?= urlencode($opt) ?>"
                                class="inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition <?= $selectedChartDays === $opt ? 'bg-amber-500 text-white shadow-sm shadow-amber-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">
-                                <?= htmlspecialchars($opt === '1' ? 'Hari Ini' : $opt . ' Hari') ?>
+                                <?= htmlspecialchars($label) ?>
                             </a>
                         <?php endforeach; ?>
                     </div>

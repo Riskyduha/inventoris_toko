@@ -26,7 +26,7 @@ class LaporanController {
         }
         $periodDays = (int)$quickPeriod;
         $chartDaysParam = isset($_GET['chart_days']) ? trim((string)$_GET['chart_days']) : '';
-        $allowedChartDays = ['1', '7', '14', '21', '30', '60', '90', '180', '365'];
+        $allowedChartDays = ['7', '14', '21', '30', '60', '90', '180', '360'];
         $defaultChartDays = '7';
         foreach (array_reverse($allowedChartDays) as $allowedChartDay) {
             if ($periodDays >= (int)$allowedChartDay) {

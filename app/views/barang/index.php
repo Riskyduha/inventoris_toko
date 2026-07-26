@@ -534,7 +534,15 @@ function updateVisibleCount() {
 }
 
 function formatRupiah(num) {
-    const value = Number(num) || 0;
+    const raw = String(num ?? '').trim();
+    if (raw === '') return 'Rp 0';
+
+    let value;
+    if (/^\d{1,3}(?:\.\d{3})+$/.test(raw) || /^\d{1,3}(?:,\d{3})+$/.test(raw)) {
+        value = parseInt(raw.replace(/[.,]/g, ''), 10) || 0;
+    } else {
+        value = Number(raw.replace(/\s+/g, '').replace(/,/g, '.')) || 0;
+    }
     return 'Rp ' + value.toLocaleString('id-ID', { maximumFractionDigits: 0 });
 }
 
