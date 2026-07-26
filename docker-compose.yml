@@ -15,12 +15,6 @@ services:
       - "8000:80"
     volumes:
       - app_logs:/app/logs
-    networks:
-      - web
 
 volumes:
   app_logs:
-
-networks:
-  web:
-    external: true
