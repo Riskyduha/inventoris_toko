@@ -172,16 +172,6 @@ function normalizeMoneyValue(value) {
     if (raw === '') return 0;
 
     const compact = raw.replace(/\s+/g, '');
-
-    if (/^\d{1,3}(?:\.\d{3})+$/.test(compact) || /^\d{1,3}(?:,\d{3})+$/.test(compact)) {
-        return parseInt(compact.replace(/[.,]/g, ''), 10) || 0;
-    }
-
-    const decimalMatch = compact.match(/^(\d+)[.,](\d+)$/);
-    if (decimalMatch) {
-        return Math.round(parseFloat(`${decimalMatch[1]}.${decimalMatch[2]}`)) || 0;
-    }
-
     const digitsOnly = toDigitOnly(compact);
     return digitsOnly ? (parseInt(digitsOnly, 10) || 0) : 0;
 }
@@ -199,7 +189,7 @@ function formatThousandID(value) {
 function formatLiveMoneyInput(value) {
     const digits = toDigitOnly(value);
     if (!digits) return '';
-    return (parseInt(digits, 10) || 0).toLocaleString('id-ID');
+    return formatThousandID(digits);
 }
 
 function markPricePairInvalid(hargaBeliInput, hargaJualInput, invalid) {
@@ -538,15 +528,12 @@ document.addEventListener('input', function (event) {
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
     if (!target.matches('input[data-price-input]')) return;
-    const previousLength = target.value.length;
-    const previousCaret = target.selectionStart ?? previousLength;
+
     target.value = formatLiveMoneyInput(target.value);
-    const nextLength = target.value.length;
-    const caretOffset = nextLength - previousLength;
-    const nextCaret = Math.max(0, Math.min(nextLength, previousCaret + caretOffset));
+    const caretPosition = target.value.length;
     requestAnimationFrame(() => {
         try {
-            target.setSelectionRange(nextCaret, nextCaret);
+            target.setSelectionRange(caretPosition, caretPosition);
         } catch (e) {
             // Ignore when the browser does not allow restoring the caret.
         }

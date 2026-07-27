@@ -154,6 +154,14 @@ function bindPriceInputFormatting(formId) {
     priceInputs.forEach((input) => {
         input.addEventListener('input', () => {
             input.value = formatThousandID(input.value);
+            const caretPosition = input.value.length;
+            requestAnimationFrame(() => {
+                try {
+                    input.setSelectionRange(caretPosition, caretPosition);
+                } catch (e) {
+                    // Ignore when the browser disallows cursor restoration.
+                }
+            });
             validatePricePair();
         });
     });

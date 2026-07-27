@@ -92,16 +92,6 @@ function normalizeMoneyValue(value) {
     if (raw === '') return 0;
 
     const compact = raw.replace(/\s+/g, '');
-
-    if (/^\d{1,3}(?:\.\d{3})+$/.test(compact) || /^\d{1,3}(?:,\d{3})+$/.test(compact)) {
-        return parseInt(compact.replace(/[.,]/g, ''), 10) || 0;
-    }
-
-    const decimalMatch = compact.match(/^(\d+)[.,](\d+)$/);
-    if (decimalMatch) {
-        return Math.round(parseFloat(`${decimalMatch[1]}.${decimalMatch[2]}`)) || 0;
-    }
-
     const digits = toDigitOnly(compact);
     return digits ? (parseInt(digits, 10) || 0) : 0;
 }
@@ -138,15 +128,11 @@ function bindPriceInputFormatting(formId) {
 
     priceInputs.forEach((input) => {
         input.addEventListener('input', () => {
-            const previousLength = input.value.length;
-            const previousCaret = input.selectionStart ?? previousLength;
             input.value = formatThousandID(input.value);
-            const nextLength = input.value.length;
-            const caretOffset = nextLength - previousLength;
-            const nextCaret = Math.max(0, Math.min(nextLength, previousCaret + caretOffset));
+            const caretPosition = input.value.length;
             requestAnimationFrame(() => {
                 try {
-                    input.setSelectionRange(nextCaret, nextCaret);
+                    input.setSelectionRange(caretPosition, caretPosition);
                 } catch (e) {
                     // Ignore when the browser disallows cursor restoration.
                 }
